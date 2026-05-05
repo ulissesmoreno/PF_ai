@@ -161,3 +161,24 @@
 - **Metrics:** Domain and API tests now cover agent creation without provider; Go suite passed; frontend syntax passed.
 - **References:** `NEW-INSTRUCTIONS.md` human notes, `src\domain\agent.go`, `src\infrastructure\httpapi\server.go`, `db\migrations\001_phase1_mvp_schema.sql`, `pf-ai-web\index.html`, `pf-ai-web\src\app.js`.
 - **Remaining Focus:** Manual browser validation for provider create, agent with provider, and agent without provider.
+
+### [2026-05-05 19:57] - [QA:Pleno]: Provider/agent UX validation passed
+- **Delivery description:** Validated served dashboard after provider ownership correction. UI includes `Save Agent`, optional `No provider`, provider registry form, memory read, and handoff create controls.
+- **Tests Performed:** `node --check pf-ai-web\src\app.js`; `node --check pf-ai-web\server.mjs`; `go test ./...`; HTML scan through `http://127.0.0.1:5173`.
+- **Metrics:** Required post-human-test controls present; Go and Node validations passed.
+- **References:** `pf-ai-web\index.html`, `pf-ai-web\src\app.js`, `DOC\PLAN.md` Phase 1 acceptance criteria.
+- **Remaining Focus:** Manual browser E2E with backend running interactively remains the only runtime validation gap.
+
+### [2026-05-05 20:01] - [DEV_FRONTEND:Pleno]: Local-save fallback and mandatory core agents added
+- **Delivery description:** Added explicit `Save Provider` button and localStorage fallback for provider, agent, and handoff saves when the backend API is unavailable. The dashboard now initializes with mandatory core agents CEO, CTO, and BA for new-project operation.
+- **Tests Performed:** `node --check pf-ai-web\src\app.js`; `node --check pf-ai-web\server.mjs`; `go test ./...`; HTML scan through `http://127.0.0.1:5173`.
+- **Metrics:** Required save controls present; frontend syntax passed; Go suite passed.
+- **References:** `NEW-INSTRUCTIONS.md` human notes, `pf-ai-web\index.html`, `pf-ai-web\src\app.js`.
+- **Remaining Focus:** Human browser validation of local-save fallback and API-backed save when backend is interactive.
+
+### [2026-05-05 20:03] - [QA:Pleno]: MVP operational control validation complete
+- **Delivery description:** Revalidated Phase 1 MVP controls after local-save fallback. Dashboard contains mandatory controls for provider save, agent save, no-provider agent mode, memory read, handoff creation, and mandatory core roles CEO/CTO/BA.
+- **Tests Performed:** `node --check pf-ai-web\src\app.js`; `node --check pf-ai-web\server.mjs`; `go test ./...`; served HTML scan at `http://127.0.0.1:5173`.
+- **Metrics:** Go suite passed; Node syntax passed; required controls present in served UI.
+- **References:** `pf-ai-web\index.html`, `pf-ai-web\src\app.js`, `DOC\PLAN.md` Phase 1 acceptance criteria.
+- **Remaining Focus:** Start Phase 1 closure package after [HUMAN] confirms browser behavior or sends additional test notes.

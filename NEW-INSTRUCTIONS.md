@@ -41,6 +41,8 @@
 - Não há botão para salvar o agente.
 - Agora visualisei na tela que o Provider do agente tem um cadastro próprio. Então os ajustes sobre modelo online ou local devem ser no cadastro de providers, que deve ser selecionado no Agente.
 - Deve ter a opção de não apontar provider, para ambiente como Codex ou Claude Code que já tem modelo imbutido.
+- Salvamente não está funcional, e não há botão para salver Provider (assim testar se aparece em Agente). Sem o salvamento não consigo validar visualização de agente salvos.
+- Todo novo projeto deve possuir CEO, CTO e BA, restante são opcionais.
 
 ## Inspirations
 This session consolidates the foundational frameworks, technical skills, and design philosophies that drive the Agentic Enterprise architecture. These resources provide the "how" and "why" for building a high-performance, cost-efficient, and well-governed AI agent ecosystem.

@@ -6,11 +6,29 @@ const memory = [
   "QUESTIONS.md",
 ];
 
+const defaultAgents = [
+  { id: "ceo", name: "CEO", role: "CEO", seniority: "Senior", provider_id: "", description: "Orchestration" },
+  { id: "cto", name: "CTO", role: "CTO", seniority: "Senior", provider_id: "", description: "Architecture" },
+  { id: "ba", name: "BA", role: "BA", seniority: "Senior", provider_id: "", description: "Business analysis" },
+];
+
 const state = {
   apiBase: globalThis.localStorage?.getItem("pf_ai_api_base") ?? "http://127.0.0.1:8081",
   apiToken: globalThis.localStorage?.getItem("pf_ai_token") ?? "",
   selectedMemory: "DOC/STATE.md",
 };
+
+function localItems(key, fallback = []) {
+  try {
+    return JSON.parse(globalThis.localStorage?.getItem(key) ?? "null") ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function setLocalItems(key, items) {
+  globalThis.localStorage?.setItem(key, JSON.stringify(items));
+}
 
 function token() {
   return state.apiToken;
@@ -46,11 +64,14 @@ async function requestJSON(path, options = {}) {
   return payload;
 }
 
-async function loadJSON(path, fallback) {
+async function loadJSON(path, fallback, localKey = "") {
   try {
     return await requestJSON(path);
   } catch (error) {
     setStatus(error.message === "token required" ? "Token required" : "API unavailable", false);
+    if (localKey) {
+      return localItems(localKey, fallback);
+    }
     return fallback;
   }
 }
@@ -149,8 +170,8 @@ function renderHandoffPreview(path = "") {
 
 async function refresh() {
   const [agents, providers] = await Promise.all([
-    loadJSON("/api/agents", []),
-    loadJSON("/api/providers", []),
+    loadJSON("/api/agents", defaultAgents, "pf_ai_agents"),
+    loadJSON("/api/providers", [], "pf_ai_providers"),
   ]);
 
   renderAgents(agents);
@@ -204,31 +225,43 @@ document.querySelector("#readMemory").addEventListener("click", async () => {
 
 document.querySelector("#providerForm").addEventListener("submit", async (event) => {
   event.preventDefault();
+  const payload = formData(event.currentTarget);
   try {
     await requestJSON("/api/providers", {
       method: "POST",
-      body: JSON.stringify(formData(event.currentTarget)),
+      body: JSON.stringify(payload),
     });
     event.currentTarget.reset();
     await refresh();
     setStatus("Provider configured", true);
   } catch (error) {
-    setStatus(error.message, false);
+    const providers = localItems("pf_ai_providers", []);
+    const nextProviders = [...providers.filter((provider) => provider.id !== payload.id), payload];
+    setLocalItems("pf_ai_providers", nextProviders);
+    event.currentTarget.reset();
+    await refresh();
+    setStatus("Provider saved locally", true);
   }
 });
 
 document.querySelector("#agentForm").addEventListener("submit", async (event) => {
   event.preventDefault();
+  const payload = agentPayload(event.currentTarget);
   try {
     await requestJSON("/api/agents", {
       method: "POST",
-      body: JSON.stringify(agentPayload(event.currentTarget)),
+      body: JSON.stringify(payload),
     });
     event.currentTarget.reset();
     await refresh();
     setStatus("Agent created", true);
   } catch (error) {
-    setStatus(error.message, false);
+    const agents = localItems("pf_ai_agents", defaultAgents);
+    const nextAgents = [...agents.filter((agent) => agent.id !== payload.id), payload];
+    setLocalItems("pf_ai_agents", nextAgents);
+    event.currentTarget.reset();
+    await refresh();
+    setStatus("Agent saved locally", true);
   }
 });
 
@@ -251,7 +284,11 @@ document.querySelector("#handoffForm").addEventListener("submit", async (event) 
     renderHandoffPreview(result.path);
     setStatus("Handoff created", true);
   } catch (error) {
-    setStatus(error.message, false);
+    const localPath = `.agent_handoff/local_${Date.now()}_${values.task_ref}.json`;
+    const handoffs = localItems("pf_ai_handoffs", []);
+    setLocalItems("pf_ai_handoffs", [...handoffs, { path: localPath, request: values }]);
+    renderHandoffPreview(localPath);
+    setStatus("Handoff staged locally", true);
   }
 });
 
