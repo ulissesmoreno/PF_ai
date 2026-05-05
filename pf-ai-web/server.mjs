@@ -4,6 +4,7 @@ import { extname, join, normalize, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const port = Number.parseInt(process.env.PF_AI_WEB_PORT ?? "5173", 10);
+const apiBase = process.env.PF_AI_API_BASE ?? "http://127.0.0.1:8081";
 const root = fileURLToPath(new URL(".", import.meta.url));
 
 const contentTypes = {
@@ -14,6 +15,11 @@ const contentTypes = {
 
 createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
+  if (url.pathname === "/health" || url.pathname.startsWith("/api/")) {
+    await proxyAPI(request, response, url);
+    return;
+  }
+
   const requestedPath = url.pathname === "/" ? "/index.html" : url.pathname;
   const normalized = normalize(requestedPath).replace(/^[/\\]+/, "").replace(/^(\.\.[/\\])+/, "");
   const filePath = join(root, normalized);
@@ -38,3 +44,23 @@ createServer(async (request, response) => {
 }).listen(port, () => {
   console.log(`PF_ai web listening on http://localhost:${port}`);
 });
+
+async function proxyAPI(request, response, url) {
+  const target = new URL(url.pathname + url.search, apiBase);
+  try {
+    const upstream = await fetch(target, {
+      method: request.method,
+      headers: request.headers,
+      body: ["GET", "HEAD"].includes(request.method ?? "GET") ? undefined : request,
+      duplex: "half",
+    });
+    const body = await upstream.arrayBuffer();
+    response.writeHead(upstream.status, {
+      "Content-Type": upstream.headers.get("content-type") ?? "application/json",
+    });
+    response.end(Buffer.from(body));
+  } catch {
+    response.writeHead(502, { "Content-Type": "application/json" });
+    response.end(JSON.stringify({ error: "backend unavailable" }));
+  }
+}

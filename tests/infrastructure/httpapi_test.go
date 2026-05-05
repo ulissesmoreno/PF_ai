@@ -38,6 +38,33 @@ func TestHealthRouteDoesNotRequireToken(t *testing.T) {
 	}
 }
 
+func TestOptionsPreflightDoesNotRequireToken(t *testing.T) {
+	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
+
+	request := httptest.NewRequest(http.MethodOptions, "/api/agents", nil)
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", response.Code)
+	}
+	if response.Header().Get("Access-Control-Allow-Origin") != "*" {
+		t.Fatal("expected CORS allow origin header")
+	}
+}
+
+func TestProtectedRoutesIncludeCORSHeaders(t *testing.T) {
+	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
+
+	request := httptest.NewRequest(http.MethodGet, "/api/agents", nil)
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+
+	if response.Header().Get("Access-Control-Allow-Headers") == "" {
+		t.Fatal("expected CORS allow headers")
+	}
+}
+
 func TestPostAgentCreatesAgent(t *testing.T) {
 	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
 

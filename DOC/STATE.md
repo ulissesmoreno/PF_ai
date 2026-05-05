@@ -119,3 +119,17 @@
 - **Metrics:** Go tests passed; JavaScript syntax checks passed; frontend returned HTTP 200; no real secrets identified in reviewed hits.
 - **References:** `DOC/TESTS.md` Phase 1 Parallel Review Snapshot, `DOC/ROADMAP.md` Phase 1.
 - **Remaining Focus:** Resolve or explicitly defer backend OS-level background runtime validation before presenting Phase 1 Stage Closure Gate to [HUMAN].
+
+### [2026-05-05 19:29] - [DEVOPS:Pleno]: Backend persistent runner retry failed
+- **Delivery description:** Retried backend persistent launch through hidden PowerShell wrapper using compiled `.gocache\pf-ai-service.exe` with local `PF_AI_AUTH_SECRET` and `PF_AI_HTTP_PORT=8081`.
+- **Tests Performed:** HTTP checks for `/health`, unauthenticated `/api/agents`, and authenticated `/api/agents`.
+- **Metrics:** Process did not remain active; port `8081` was not listening; HTTP checks could not connect.
+- **References:** `cmd/pf-ai-service/main.go`, `.gocache\pf-ai-service.exe`, `TEST-PHASE1-BACK-001`.
+- **Remaining Focus:** Treat OS-level persistent runner as an environment/process-runner blocker. MVP API behavior remains validated by `httptest`; closure decision must explicitly defer or require manual interactive backend run.
+
+### [2026-05-05 19:41] - [DEV_FRONTEND:Pleno]: MVP dashboard operational controls added
+- **Delivery description:** Reworked the Phase 1 dashboard from static shell to operational UI with API base/token connection, provider configuration form, agent creation form, memory read action, handoff creation form, live handoff preview, and non-misleading empty states.
+- **Tests Performed:** `node --check pf-ai-web\src\app.js`; `node --check pf-ai-web\server.mjs`; `go test ./...`.
+- **Metrics:** Frontend syntax passed; backend route/CORS tests passed; Go suite passed across domain and infrastructure packages.
+- **References:** `pf-ai-web\index.html`, `pf-ai-web\src\app.js`, `pf-ai-web\src\styles.css`, `src\infrastructure\httpapi\server.go`.
+- **Remaining Focus:** Manual browser validation with backend running interactively at `http://127.0.0.1:8081` and frontend at `http://127.0.0.1:5173`.

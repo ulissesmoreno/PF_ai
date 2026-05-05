@@ -26,7 +26,7 @@ func (s *Server) Routes() http.Handler {
 	mux.Handle("/api/providers", s.protected(http.HandlerFunc(s.providers)))
 	mux.Handle("/api/memory", s.protected(http.HandlerFunc(s.memory)))
 	mux.Handle("/api/handoffs", s.protected(http.HandlerFunc(s.handoffs)))
-	return mux
+	return cors(mux)
 }
 
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
@@ -173,4 +173,17 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func cors(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }

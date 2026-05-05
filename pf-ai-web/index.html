@@ -24,7 +24,14 @@
           <p class="eyebrow">Phase 1</p>
           <h1>Agent, model, memory, and file handoffs</h1>
         </div>
-        <span class="status">Implementation authorized</span>
+        <form class="auth-bar" id="authForm">
+          <label for="apiBase">API</label>
+          <input id="apiBase" name="apiBase" type="url" value="http://127.0.0.1:8081" />
+          <label for="authToken">Token</label>
+          <input id="authToken" name="authToken" type="password" autocomplete="off" placeholder="PF_AI_AUTH_SECRET" />
+          <button type="submit">Connect</button>
+          <span class="status" id="apiStatus">Disconnected</span>
+        </form>
       </header>
 
       <section class="grid" id="dashboard">
@@ -49,8 +56,20 @@
         <article class="panel" id="agents">
           <div class="panel-header">
             <h2>Agents</h2>
-            <button type="button">New</button>
+            <button type="submit" form="agentForm">New</button>
           </div>
+          <form class="inline-form" id="agentForm">
+            <input name="id" placeholder="id" required />
+            <input name="name" placeholder="name" required />
+            <input name="role" placeholder="role" required />
+            <select name="seniority" required>
+              <option>Junior</option>
+              <option selected>Pleno</option>
+              <option>Senior</option>
+            </select>
+            <input name="provider_id" placeholder="provider id" required />
+            <input name="description" placeholder="description" />
+          </form>
           <table>
             <thead>
               <tr>
@@ -67,8 +86,23 @@
         <article class="panel" id="providers">
           <div class="panel-header">
             <h2>Providers</h2>
-            <button type="button">Configure</button>
+            <button type="submit" form="providerForm">Configure</button>
           </div>
+          <form class="stack-form" id="providerForm">
+            <div class="form-grid">
+              <input name="id" placeholder="id" required />
+              <input name="name" placeholder="name" required />
+              <select name="mode" required>
+                <option value="api">api</option>
+                <option value="local">local</option>
+                <option value="hybrid">hybrid</option>
+              </select>
+              <input name="model" placeholder="model" required />
+              <input name="endpoint" placeholder="endpoint" />
+              <input name="secret_ref" placeholder="secret ref" />
+              <input name="local_runtime" placeholder="local runtime" />
+            </div>
+          </form>
           <div id="providerList" class="list"></div>
         </article>
       </section>
@@ -77,16 +111,31 @@
         <article class="panel" id="memory">
           <div class="panel-header">
             <h2>Memory</h2>
-            <button type="button">Read</button>
+            <button type="button" id="readMemory">Read</button>
           </div>
           <ul id="memoryList" class="memory-list"></ul>
+          <pre id="memoryContent" class="output">Select a memory file and read.</pre>
         </article>
 
         <article class="panel" id="handoffs">
           <div class="panel-header">
             <h2>Handoff</h2>
-            <button type="button">Create</button>
+            <button type="submit" form="handoffForm">Create</button>
           </div>
+          <form class="stack-form" id="handoffForm">
+            <div class="form-grid">
+              <input name="sender" value="CEO" required />
+              <input name="recipient" value="DEV_BACKEND" required />
+              <input name="task_ref" value="PHASE1-MVP-UI" required />
+              <select name="intent" required>
+                <option>PHASE_KICKOFF</option>
+                <option>CLARIFICATION_REQUEST</option>
+                <option>REVIEW_RESULT</option>
+                <option>STAGE_APPROVAL</option>
+              </select>
+            </div>
+            <textarea name="payload" rows="5">{ "summary": "MVP UI handoff" }</textarea>
+          </form>
           <pre id="handoffPreview"></pre>
         </article>
       </section>
