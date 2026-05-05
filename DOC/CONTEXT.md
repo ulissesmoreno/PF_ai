@@ -59,3 +59,32 @@ Record decisions and context before execution. Maintain transparency between pha
 
 - **[YYYY-MM-DD HH:MM] — CEO:** Initial template. Ownership clarified: management agents only.
 - [Add new entries here without deleting.]
+---
+
+## 8. Activation Log
+
+### [2026-05-05 14:51] - [CEO]: GSD activation stop-gate
+- **Context:** GSD activation requested by [HUMAN]. CEO mandatory reading sequence executed using available files: `DOC/GSD-RULES.md`, `PLAYBOOK.md`, `NEW-INSTRUCTIONS.md`, `DOC/PLAN.md`, and `DOC/ONBOARDING.md`.
+- **Finding:** Root `GSD-RULES.md` and root `PROJECT.md` are absent; canonical files exist under `DOC/`. `DOC/PROJECT.md`, `NEW-INSTRUCTIONS.md`, and `DOC/PLAN.md` still contain placeholders/templates.
+- **Decision:** Phase execution is blocked. `DOC/ONBOARDING.md` is active and the 5-block onboarding conversation must be completed before any implementation or roadmap phase.
+- **Impact:** Business / Architectural / Security.
+- **References:** `QUESTIONS.md` entry `[2026-05-05 14:51:40] Project onboarding required`.
+
+### [2026-05-05 15:00] - [CEO]: Onboarding answer reviewed
+- **Context:** [HUMAN] answered the onboarding request in `QUESTIONS.md`.
+- **Finding:** Product identity, visual inspiration, team model, and high-level objective are present. Stack and MVP remain decision points because [HUMAN] explicitly asked whether Go or Ruby on Rails can be used and requested MVP suggestions.
+- **Decision:** Proposed Go as the recommended backend direction and a web-first MVP focused on agent/model/memory management, GSD file visibility, and structured handoffs. Auto-fill remains blocked until [HUMAN] confirms the proposal.
+- **Impact:** Business / Architectural.
+- **References:** `QUESTIONS.md` entry `[2026-05-05 15:00:16] Confirm onboarding auto-fill proposal`.
+
+### [2026-05-05 15:06] - [CEO]: Onboarding completed
+- **Context:** [HUMAN] confirmed Go, the suggested MVP, API/local agent execution, Docker local model runtime, file handoffs for MVP, MCP handoffs for the final stage, and the rule that `CONTEXT.md` is updated only after onboarding.
+- **Decision:** PF_ai is defined as a Go-backed, TypeScript web, PostgreSQL, Docker-enabled agent/model/memory manager with file-based MVP handoffs and MCP planned for later.
+- **Impact:** Business / Architectural / Security.
+- **References:** `DOC/PROJECT.md`, `README.md`, `DOC/DESIGN.md`, `DOC/ROADMAP.md`, `DOC/PLAN.md`, `DOC/ENV_SETUP.md`, `DOC/ARCHITECTURE.md`, `PLAYBOOK.md`, `QUESTIONS.md`.
+
+### [2026-05-05 15:14] - [CEO]: New instruction intake
+- **Context:** [HUMAN] sent `[USER_DONE]`; `NEW-INSTRUCTIONS.md` now includes wiki timing preference and a Go/Hexagonal Architecture question.
+- **Decision:** Wiki updates happen only at phase end unless explicitly requested. Go remains compatible with Hexagonal Architecture; PF_ai keeps domain/application/infrastructure boundaries.
+- **Impact:** Architectural / Process.
+- **References:** `NEW-INSTRUCTIONS.md`, `QUESTIONS.md` entry `[2026-05-05 15:14:57] Go and Hexagonal Architecture compatibility`, `PLAYBOOK.md`.

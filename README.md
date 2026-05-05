@@ -1,173 +1,76 @@
-> 🇧🇷 [Português](#português) | 🇺🇸 [English](#english)
+# PF_ai
 
-<a name="português"></a>
+## Portugues
 
-# [Nome do Projeto]
+### Descricao
+PF_ai e uma camada operacional agentica para gerenciar modelos, memoria, agentes e handoffs GSD. O projeto cria uma interface humano-agentes para coordenar execucao, consultar estado, manter rastreabilidade e garantir que o boilerplate funcione com governanca tecnica.
 
-## Descrição
-[Descrição concisa do projeto — preenchida após onboarding.]
+### Objetivo
+Centralizar a operacao de agentes de IA, permitindo execucao via APIs externas ou modelos locais em Docker, com memoria baseada em arquivos Markdown e handoffs estruturados.
 
-## Objetivo
-[Resumo do propósito — preenchido após onboarding.]
+### Publico-alvo
+Ulisses como operador principal e, futuramente, usuarios tecnicos que precisam de um workspace agentico local-first, auditavel e orientado por fases.
 
-## Público-Alvo
-[Quem usa o sistema — preenchido após onboarding.]
+### Instalacao
+1. Prerequisitos: Go, Node.js, Docker, Docker Compose e PostgreSQL via Compose.
+2. Clone o repositorio e entre na pasta do projeto.
+3. Configure variaveis de ambiente conforme `DOC/ENV_SETUP.md`.
+4. Suba os servicos locais com Docker Compose quando disponiveis.
+5. Execute os comandos de backend/frontend definidos na fase de implementacao.
 
----
+### Uso
+- Frontend web: interface humano-agentes para painel, agentes, modelos, memoria e handoffs.
+- Backend Go: API local para orquestracao, leitura dos arquivos GSD e integracao com provedores.
+- Handoffs MVP: arquivos JSON em `.agent_handoff/`.
+- Handoffs finais: MCP planejado em fase posterior.
 
-## 🤖 Prompt Inicial para IA (Ignition Protocol)
+### Desenvolvimento
+- Arquitetura: `DOC/ARCHITECTURE.md`
+- Regras GSD: `DOC/GSD-RULES.md`
+- Setup: `DOC/ENV_SETUP.md`
+- Roadmap: `DOC/ROADMAP.md`
+- Duvidas: `QUESTIONS.md`
 
-```text
-[SISTEMA DE ATIVAÇÃO GSD]
-Você é o Agente de Orquestração. Sua missão é executar o framework GSD priorizando rastreabilidade, consistência e qualidade técnica.
+### Testes
+Resultados obrigatorios devem ser registrados em `DOC/TESTS.md`.
 
-PROTOCOLOS OBRIGATÓRIOS:
-1. Leia GSD-RULES.md e PLAYBOOK.md antes de qualquer ação.
-2. Cada ciclo começa após o sinal [USER_DONE] do humano. CEO age primeiro.
-3. Se PROJECT.md contiver placeholders, acione DOC/ONBOARDING.md imediatamente.
+## English
 
-HIERARQUIA: [HUMAN] → CEO → BA/CTO → Agentes Técnicos
-- [HUMAN]: autoridade final. Aprova Stage Closure Gates e autoriza avanço do roadmap.
-- [CEO]: único ponto de contato com [HUMAN]. Orquestra todos os agentes.
-- [BA] / [CTO]: camada gerencial. Avaliam complexidade e definem senioridade no kickoff.
-- Agentes técnicos: executam com seniority_level definido no handoff de kickoff.
-- [SECURITY]: fundamento estrutural — threat modeling no kickoff, auditoria no closure.
-- [TECH_LEAD]: consolida revisões paralelas, arbitra conflitos, primeira escalação antes do CTO.
+### Description
+PF_ai is an agentic operating layer for managing AI models, memory, agents, and GSD handoffs. It provides a human-agent interface for coordinating execution, inspecting state, preserving traceability, and keeping the boilerplate technically governed.
 
-FLUXO POR FASE:
-1. CEO + CTO + BA: intake completo (uma vez por fase).
-2. SECURITY: threat modeling.
-3. Kickoff handoff único para todos os agentes técnicos.
-4. Agentes executam. Escalação via CLARIFICATION_REQUEST (uma vez por fase).
-5. Revisão paralela no closure: SECURITY + CODE_REVIEWER + QA.
-6. TECH_LEAD consolida → CTO/BA aprovam → [HUMAN] libera PR.
+### Objective
+Centralize AI-agent operations with support for external API providers and local Docker-based models, using Markdown memory and structured handoff files.
 
-REGRAS DE SAÍDA:
-- Chat: só o essencial. "Criando repositório Y" — não descrições de processo.
-- Agente ativo assina cada resposta: [DEV_BACKEND:Pleno].
-- Detalhes vão nos arquivos .md, nunca no chat.
-- Histórico imutável: nunca deletar, sempre append com timestamp.
-```
+### Target Audience
+Ulisses as the primary operator, with future support for technical users who need a local-first, auditable, phase-driven agentic workspace.
 
----
+### Installation
+1. Prerequisites: Go, Node.js, Docker, Docker Compose, and PostgreSQL through Compose.
+2. Clone the repository and enter the project directory.
+3. Configure environment variables according to `DOC/ENV_SETUP.md`.
+4. Start local services with Docker Compose when available.
+5. Run backend/frontend commands defined during implementation.
 
-## Instalação
+### Usage
+- Web frontend: human-agent interface for dashboard, agents, models, memory, and handoffs.
+- Go backend: local orchestration API, GSD file reading, and provider integration.
+- MVP handoffs: JSON files in `.agent_handoff/`.
+- Final handoffs: MCP planned for a later stage.
 
-1. **Pré-requisitos:** [Preenchido após onboarding — tecnologias do stack definido]
-2. **Clone:** `git clone [url]` → `cd [projeto]`
-3. **Ambiente:** Consulte [ENV_SETUP.md](DOC/ENV_SETUP.md)
-4. **Execute:** `docker-compose up` + [comandos de build do stack]
+### Development
+- Architecture: `DOC/ARCHITECTURE.md`
+- GSD rules: `DOC/GSD-RULES.md`
+- Setup: `DOC/ENV_SETUP.md`
+- Roadmap: `DOC/ROADMAP.md`
+- Questions: `QUESTIONS.md`
 
-## Uso
-- **Frontend:** [URL após onboarding]
-- **APIs:** [Endpoints após onboarding]
+### Testing
+Mandatory results must be recorded in `DOC/TESTS.md`.
 
-## Desenvolvimento
-- **Arquitetura:** [ARCHITECTURE.md](DOC/ARCHITECTURE.md)
-- **Regras:** [GSD-RULES.md](DOC/GSD-RULES.md)
-- **Preferências:** [PLAYBOOK.md](PLAYBOOK.md)
-- **Dúvidas:** [QUESTIONS.md](QUESTIONS.md) — nunca iniciar com dúvidas pendentes.
+## GSD Ignition
 
-## Testes
-- Java: `./mvnw test` | Python: `pytest` | Frontend: `npm test`
-- Resultados: [TESTS.md](DOC/TESTS.md)
-
-## Roadmap
-- Progresso: [ROADMAP.md](DOC/ROADMAP.md)
-- Estado atual: [STATE.md](DOC/STATE.md)
-
-## Contribuição
-1. Leia [GSD-RULES.md](DOC/GSD-RULES.md) e [ONBOARDING.md](DOC/ONBOARDING.md).
-2. Preencha `PROJECT.md` antes de implementar.
-3. Registre dúvidas em [QUESTIONS.md](QUESTIONS.md).
-4. Siga TDD e atualize `TESTS.md`, `STATE.md`, `ROADMAP.md` após cada entrega.
-
-## Licença
-[Preenchido após onboarding]
-
----
-
-<a name="english"></a>
-
-# [Project Name]
-
-## Description
-[Concise project description — filled after onboarding.]
-
-## Objective
-[Purpose summary — filled after onboarding.]
-
-## Target Audience
-[Who uses the system — filled after onboarding.]
-
----
-
-## 🤖 Initial AI Prompt (Ignition Protocol)
-
-```text
-[GSD ACTIVATION SYSTEM]
-You are the Orchestration Agent. Your mission is to execute the GSD framework prioritizing traceability, consistency, and technical quality.
-
-MANDATORY PROTOCOLS:
-1. Read GSD-RULES.md and PLAYBOOK.md before any action.
-2. Every cycle starts after the [USER_DONE] signal from the human. CEO acts first.
-3. If PROJECT.md contains placeholders, trigger DOC/ONBOARDING.md immediately.
-
-HIERARCHY: [HUMAN] → CEO → BA/CTO → Technical Agents
-- [HUMAN]: final authority. Approves Stage Closure Gates and authorizes roadmap advancement.
-- [CEO]: single point of contact with [HUMAN]. Orchestrates all agents.
-- [BA] / [CTO]: management layer. Assess complexity and define seniority at kickoff.
-- Technical agents: execute with seniority_level defined in kickoff handoff.
-- [SECURITY]: structural foundation — threat modeling at kickoff, audit at closure.
-- [TECH_LEAD]: consolidates parallel reviews, arbitrates conflicts, first escalation before CTO.
-
-PHASE FLOW:
-1. CEO + CTO + BA: full intake (once per phase).
-2. SECURITY: threat modeling.
-3. Single kickoff handoff to all technical agents.
-4. Agents execute. Escalation via CLARIFICATION_REQUEST (once per phase).
-5. Parallel review at closure: SECURITY + CODE_REVIEWER + QA.
-6. TECH_LEAD consolidates → CTO/BA approve → [HUMAN] releases PR.
-
-OUTPUT RULES:
-- Chat: only the essential. "Creating repository Y" — not process descriptions.
-- Active agent signs every response: [DEV_BACKEND:Pleno].
-- Details go into .md files, never in chat.
-- Immutable history: never delete, always append with timestamp.
-```
-
----
-
-## Installation
-
-1. **Prerequisites:** [Filled after onboarding]
-2. **Clone:** `git clone [url]` → `cd [project]`
-3. **Environment:** See [ENV_SETUP.md](DOC/ENV_SETUP.md)
-4. **Run:** `docker-compose up` + [stack build commands]
-
-## Usage
-- **Frontend:** [URL after onboarding]
-- **APIs:** [Endpoints after onboarding]
-
-## Development
-- **Architecture:** [ARCHITECTURE.md](DOC/ARCHITECTURE.md)
-- **Rules:** [GSD-RULES.md](DOC/GSD-RULES.md)
-- **Preferences:** [PLAYBOOK.md](PLAYBOOK.md)
-- **Questions:** [QUESTIONS.md](QUESTIONS.md) — never start with pending questions.
-
-## Testing
-- Java: `./mvnw test` | Python: `pytest` | Frontend: `npm test`
-- Results: [TESTS.md](DOC/TESTS.md)
-
-## Roadmap
-- Progress: [ROADMAP.md](DOC/ROADMAP.md)
-- Current state: [STATE.md](DOC/STATE.md)
-
-## Contributing
-1. Read [GSD-RULES.md](DOC/GSD-RULES.md) and [ONBOARDING.md](DOC/ONBOARDING.md).
-2. Fill `PROJECT.md` before implementing.
-3. Register questions in [QUESTIONS.md](QUESTIONS.md).
-4. Follow TDD and update `TESTS.md`, `STATE.md`, `ROADMAP.md` after each delivery.
+Every cycle starts only after `[USER_DONE]`. CEO acts first, then delegates through the GSD chain of command. Chat stays compact; details live in Markdown files.
 
 ## License
-[Filled after onboarding]
+To be defined by [HUMAN:Ulisses].

@@ -52,6 +52,7 @@
 | [2026-04-25 21:25] | **Java 21 + Spring Boot 3** | Primary backend. |
 | [2026-04-29 20:35] | **C# / .NET** | Replacing Java for full CRUD in specific projects. |
 | [2026-04-25 21:25] | **Python 3.12** | Data processing, ML pipelines. |
+| [2026-05-05 15:06] | **Go for agent orchestration services.** | Preferred for PF_ai-style local/API agent runtimes, process control, and efficient services. |
 
 ### 3.2 Frontend
 | Timestamp | Choice | Context |
@@ -121,6 +122,8 @@
 | [2026-05-05 00:00] | **Escalation via handoff, once per phase.** | Technical agents escalate once. Management resolves via handoff if possible. |
 | [2026-05-05 00:00] | **NEW-INSTRUCTIONS.md is [HUMAN]-only.** | CEO formats and timestamps — never modifies content. |
 | [2026-05-05 00:00] | **PLAYBOOK.md updated on understanding change.** | Not on schedule — triggered when any interaction reveals or changes a [HUMAN] work preference. |
+| [2026-05-05 15:06] | **Caveman-style chat.** | Responses should be compact; operational detail belongs in Markdown files. |
+| [2026-05-05 15:06] | **CONTEXT.md after onboarding.** | During project setup, update `CONTEXT.md` only after onboarding is complete. |
 
 ---
 
@@ -136,6 +139,7 @@
 | [2026-05-05 00:00] | **STATE.md owned by technical agents.** | CONTEXT.md owned by management agents. Separate concerns. |
 | [2026-05-05 00:00] | **RETROSPECTIVE.md per phase.** | CEO consolidates from handoff notes. Feeds PLAYBOOK.md when preference revealed. |
 | [2026-05-05 00:00] | **wiki/user-manual/ for end-user docs.** | Non-technical, task-oriented. Owned by DOCUMENTATION agent. |
+| [2026-05-05 15:14] | **Wiki updates at phase end.** | Fill or update `wiki/` only at the end of each phase unless [HUMAN] explicitly requests otherwise. |
 
 ---
 
@@ -162,6 +166,8 @@
 | [2026-04-25 21:25] | Developer | Initial PLAYBOOK created. Sections 1–7 populated. |
 | [2026-04-30 16:03] | AI Agent | Branching, file verification, agent/task identification preferences added. |
 | [2026-05-05 00:00] | CEO | Major update: multi-agent orchestration preferences, phase-based reading, chat conciseness, seniority model, security as foundation, rollback/bugfix protocols, memory ownership, retrospective, PLAYBOOK trigger rules. |
+| [2026-05-05 15:06] | CEO | Added PF_ai onboarding preferences: Go orchestration, Caveman-style chat, and `CONTEXT.md` update timing. |
+| [2026-05-05 15:14] | CEO | Added wiki update timing preference from `NEW-INSTRUCTIONS.md`. |
 
 ---
 

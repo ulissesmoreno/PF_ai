@@ -75,3 +75,17 @@ Register project versions, rollbacks, bugfixes, and significant incidents with f
 ## 8. Update History (Immutable)
 - **[YYYY-MM-DD HH:MM] — CEO:** Template updated. Phase-closing agent ownership added. Rollback and bugfix entry templates added.
 - [Add new entries here without deleting.]
+
+---
+
+## 9. PF_ai Release Entries
+
+### 1.2.0-alpha.1 - 2026-05-05 - [CEO]
+- **Type:** Release
+- **Main Commit:** pending
+- **Description:** PF_ai project onboarding milestone. Product vision, Go architecture, TypeScript web direction, PostgreSQL persistence, Docker local runtime path, API/local provider strategy, file handoffs for MVP, and MCP final-stage direction documented.
+- **Files Changed:** `DOC/PROJECT.md`, `README.md`, `DOC/DESIGN.md`, `DOC/ROADMAP.md`, `DOC/PLAN.md`, `DOC/ENV_SETUP.md`, `DOC/ARCHITECTURE.md`, `QUESTIONS.md`, `PLAYBOOK.md`, `DOC/CONTEXT.md`, `DOC/TESTS.md`, `DOC/STATE.md`, `DOC/TASKS.md`.
+- **Tests / Validation:** `DOC/TESTS.md#8-phase-0-validation-results`.
+- **Security Clearance:** Documentation secret scan passed; implementation threat model pending before Phase 1.
+- **Deploy Notes:** No deployable code yet.
+- **Retrospective Reference:** Pending Phase 0 retrospective.

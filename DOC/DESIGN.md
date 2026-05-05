@@ -1,62 +1,57 @@
 ---
 version: "alpha"
-name: "[Project Name]"
-description: "[One-line visual identity summary — e.g.: Bold dark-mode dashboard with electric-blue accents and sharp geometric rhythm]"
+name: "PF_ai"
+description: "Clean technical workbench with a light neutral base, sharp hierarchy, calm green accents, and dense operational layouts."
 
 colors:
-  primary:          "[#XXXXXX]"   # Main interactive color — buttons, links, primary actions
-  primary-dark:     "[#XXXXXX]"   # Hover / pressed state of primary
-  secondary:        "[#XXXXXX]"   # Supporting accents, badges, tags
-  accent:           "[#XXXXXX]"   # Highlight, focus ring, notification indicators
-  background:       "[#XXXXXX]"   # Page/app background
-  surface:          "[#XXXXXX]"   # Cards, panels, raised surfaces
-  surface-alt:      "[#XXXXXX]"   # Alternate surface (sidebars, modals)
-  on-primary:       "[#XXXXXX]"   # Text/icon color over primary
-  on-surface:       "[#XXXXXX]"   # Default body text color
-  on-surface-muted: "[#XXXXXX]"   # Captions, placeholders, metadata
-  border:           "[#XXXXXX]"   # Default border/divider color
-  error:            "[#XXXXXX]"   # Validation errors, destructive actions
-  success:          "[#XXXXXX]"   # Confirmations, success badges
-  warning:          "[#XXXXXX]"   # Warnings, alerts
+  primary:          "#1F7A5C"
+  primary-dark:     "#155C45"
+  secondary:        "#2F5D9F"
+  accent:           "#D97706"
+  background:       "#F7F8F6"
+  surface:          "#FFFFFF"
+  surface-alt:      "#EEF1ED"
+  on-primary:       "#FFFFFF"
+  on-surface:       "#1D2320"
+  on-surface-muted: "#5E6B64"
+  border:           "#D6DDD8"
+  error:            "#B42318"
+  success:          "#1F7A5C"
+  warning:          "#B54708"
 
 typography:
   h1:
-    fontFamily: "[Font Name]"
-    fontSize:   "2.5rem"
+    fontFamily: "Inter"
+    fontSize:   "2.25rem"
     fontWeight: "700"
     lineHeight: "1.15"
   h2:
-    fontFamily: "[Font Name]"
-    fontSize:   "2rem"
-    fontWeight: "600"
+    fontFamily: "Inter"
+    fontSize:   "1.75rem"
+    fontWeight: "650"
     lineHeight: "1.2"
   h3:
-    fontFamily: "[Font Name]"
-    fontSize:   "1.5rem"
-    fontWeight: "600"
+    fontFamily: "Inter"
+    fontSize:   "1.25rem"
+    fontWeight: "650"
     lineHeight: "1.25"
   body-md:
-    fontFamily: "[Font Name]"
+    fontFamily: "Inter"
     fontSize:   "1rem"
     fontWeight: "400"
-    lineHeight: "1.6"
+    lineHeight: "1.55"
   body-sm:
-    fontFamily: "[Font Name]"
+    fontFamily: "Inter"
     fontSize:   "0.875rem"
     fontWeight: "400"
-    lineHeight: "1.5"
+    lineHeight: "1.45"
   label:
-    fontFamily: "[Font Name]"
+    fontFamily: "Inter"
     fontSize:   "0.875rem"
-    fontWeight: "500"
-    letterSpacing: "0.02em"
-  label-caps:
-    fontFamily: "[Font Name]"
-    fontSize:   "0.75rem"
     fontWeight: "600"
-    letterSpacing: "0.08em"
+    letterSpacing: "0"
   code:
-    fontFamily: "[Monospace Font]"
+    fontFamily: "JetBrains Mono"
     fontSize:   "0.875rem"
     fontWeight: "400"
 
@@ -64,8 +59,7 @@ rounded:
   none: "0"
   sm:   "4px"
   md:   "8px"
-  lg:   "16px"
-  xl:   "24px"
+  lg:   "8px"
   full: "9999px"
 
 spacing:
@@ -73,189 +67,120 @@ spacing:
   sm:  "8px"
   md:  "16px"
   lg:  "24px"
-  xl:  "48px"
-  2xl: "80px"
+  xl:  "40px"
+  2xl: "64px"
 
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor:       "{colors.on-primary}"
     rounded:         "{rounded.md}"
-    padding:         "10px 20px"
+    padding:         "9px 14px"
     typography:      "{typography.label}"
-  button-primary-hover:
-    backgroundColor: "{colors.primary-dark}"
   button-secondary:
-    backgroundColor: "transparent"
-    textColor:       "{colors.primary}"
-    rounded:         "{rounded.md}"
-    padding:         "10px 20px"
-  card:
     backgroundColor: "{colors.surface}"
-    rounded:         "{rounded.lg}"
-    padding:         "{spacing.lg}"
+    textColor:       "{colors.on-surface}"
+    rounded:         "{rounded.md}"
+    padding:         "9px 14px"
+  panel:
+    backgroundColor: "{colors.surface}"
+    rounded:         "{rounded.md}"
+    padding:         "{spacing.md}"
   input:
     backgroundColor: "{colors.surface}"
     textColor:       "{colors.on-surface}"
     rounded:         "{rounded.md}"
-    padding:         "10px 14px"
+    padding:         "9px 12px"
   badge:
-    backgroundColor: "{colors.secondary}"
-    textColor:       "{colors.on-primary}"
+    backgroundColor: "{colors.surface-alt}"
+    textColor:       "{colors.on-surface}"
     rounded:         "{rounded.full}"
-    padding:         "2px 10px"
+    padding:         "2px 8px"
 ---
 
-# DESIGN.md — Visual Identity
-
-> **GSD Rule — no inspiration references here.**
-> This file contains only the **final, decided design values** the agent must implement.
-> References to products, apps, or visual sources that inspired the design belong in `PROJECT.md`.
-> If the user says *"make it look like Product X"*, extract the relevant values (colors, fonts, spacing)
-> and record them here as concrete tokens. Never mention Product X in this file.
-
-> **Immutability Rule — append only.**
-> Do not overwrite existing values. When a decision changes, add a new commented entry with a
-> timestamp below the old one. Format: `# [YYYY-MM-DD HH:MM] — superseded by: [new value]`
-
-> **Agent protocol — how to collect design preferences (run once per project):**
-> Before filling this file, ask the developer:
-> 1. "What is the overall visual mood? (e.g.: dark/light, minimal/rich, serious/playful)"
-> 2. "Are there any colors you want as a starting point? (brand colors, hex codes)"
-> 3. "Any font preferences? (type 'system default' if no preference)"
-> 4. "Any apps, sites, or UI patterns you like the feel of? (I will extract values — not copy them)"
-> 5. "Any animations or motion preferences? (subtle/none, energetic, smooth/bouncy)"
-> 6. "Any layout preferences? (card-heavy, list-based, sidebar navigation, etc.)"
-> Record answers in `PROJECT.md` if inspiration sources are mentioned, then translate to tokens here.
-
----
+# DESIGN.md - Visual Identity
 
 ## Overview
+PF_ai should feel like a precise technical workbench: calm, readable, structured, and built for repeated operational use. The UI prioritizes scanning, comparison, and control over marketing-style presentation.
 
-> *High-level description of the visual identity — mood, metaphor, and design philosophy.*
-> *Written once; updated only when the identity significantly changes (with timestamp).*
-
-[Describe the visual personality of this project. E.g.: "Clean, professional dashboard aesthetic
-with a dark base and electric-blue primary accents. Typography is sharp and utilitarian.
-Interactions are smooth but not showy — micro-animations under 200ms only."]
-
-**Last updated:** [YYYY-MM-DD HH:MM] — [Responsible]
-
----
+**Last updated:** 2026-05-05 15:06 - [CEO]
 
 ## Colors
+- **`primary`** - Green communicates active operation, successful orchestration, and system readiness.
+- **`secondary`** - Blue supports informational states without turning the palette into a single-hue UI.
+- **`accent`** - Amber marks attention, pending decisions, and user intervention.
+- **`background` / `surface`** - Light neutral layers keep the interface calm and document-like.
+- **`error` / `success` / `warning`** - Semantic colors are reserved for system states and validation.
 
-> *Rationale for each color decision. Reference the token name from YAML front matter.*
-
-- **`primary`** — [Explain the choice and its emotional/functional role]
-- **`secondary`** — [Explain]
-- **`accent`** — [Explain]
-- **`background` / `surface`** — [Explain the depth layering logic]
-- **`error` / `success` / `warning`** — [Explain semantic color choices]
-
-**Dark mode:** [Yes / No / Planned — describe any token overrides for dark mode if applicable]
-
-**Contrast compliance:** All text-on-background combinations must meet WCAG AA (4.5:1 for body, 3:1 for large text).
-Validate with: `npx @google/design.md lint DESIGN.md`
-
----
+**Dark mode:** Planned after MVP.
+**Contrast compliance:** All text-on-background combinations must meet WCAG AA.
 
 ## Typography
-
-> *Font choices, their loading method, and usage rules.*
-
-- **Primary font (`[Font Name]`):** [Why this font — personality, legibility, licensing]
-  - Loading: [Google Fonts / self-hosted / system stack] — `@import url('[URL]')`
-- **Monospace font (`[Font Name]`):** [For code blocks, terminal-style labels]
-- **Fallback stack:** `[Primary], [Category fallback], sans-serif`
-
-**Scale rationale:** [Describe the type scale — modular scale? fixed scale? visual hierarchy goal?]
-
----
+- **Primary font (`Inter`):** Neutral, highly legible, suited for dashboards and tools.
+- **Monospace font (`JetBrains Mono`):** Used for handoff JSON, paths, model names, and logs.
+- **Fallback stack:** `Inter, system-ui, sans-serif`
 
 ## Motion & Animations
 
-> *Rules for micro-animations, transitions, and motion behavior.*
-
 | Element | Duration | Easing | Notes |
 | :--- | :--- | :--- | :--- |
-| Page transitions | [e.g.: 200ms] | [e.g.: ease-out] | [e.g.: fade + slight translate-Y] |
-| Button hover | [e.g.: 120ms] | [e.g.: ease-in-out] | [e.g.: scale(1.02) + shadow] |
-| Modal open/close | [e.g.: 250ms] | [e.g.: cubic-bezier(0.16,1,0.3,1)] | [e.g.: slide-up + fade] |
-| Sidebar expand | [e.g.: 300ms] | [e.g.: ease-in-out] | |
-| Toast / notification | [e.g.: 350ms] | [e.g.: spring] | [e.g.: slide-in from right] |
-| Loading skeleton | [e.g.: 1.5s loop] | [e.g.: linear] | [e.g.: shimmer effect] |
+| Page transitions | 160ms | ease-out | Fade only |
+| Button hover | 120ms | ease-in-out | Color and border change |
+| Modal open/close | 180ms | ease-out | Fade plus small vertical movement |
+| Sidebar expand | 180ms | ease-in-out | Width transition |
+| Toast | 220ms | ease-out | Slide from top-right |
+| Loading skeleton | 1.2s loop | linear | Subtle shimmer |
 
-**Motion philosophy:** [Subtle and purposeful / Energetic and expressive / Minimal — content first]
-**Reduced motion:** All animations must be disabled or minimized when `prefers-reduced-motion: reduce`.
-
----
+**Motion philosophy:** Subtle and purposeful.
+**Reduced motion:** Disable non-essential animation when `prefers-reduced-motion: reduce`.
 
 ## Layout & Spacing
-
-> *Grid system, spacing philosophy, and responsive behavior.*
-
-- **Grid:** [e.g.: 12-column, 24px gutter / CSS Grid with named areas]
-- **Max content width:** [e.g.: 1280px]
-- **Sidebar width (if applicable):** [e.g.: 240px collapsed → 280px expanded]
+- **Grid:** CSS Grid and flex layouts with 8px spacing base.
+- **Max content width:** 1440px for operational screens.
+- **Sidebar width:** 248px expanded; 64px collapsed.
 - **Breakpoints:**
 
 | Name | Min-width | Description |
 | :--- | :--- | :--- |
-| mobile | 0px | Single column, bottom navigation |
-| tablet | 768px | Two-column, collapsible sidebar |
-| desktop | 1024px | Full layout, persistent sidebar |
-| wide | 1440px | Max-width container centered |
-
-**Spacing philosophy:** [e.g.: 8px base unit — all spacing is a multiple of 8]
-
----
+| mobile | 0px | Single column, compact navigation |
+| tablet | 768px | Two-column layouts |
+| desktop | 1024px | Persistent sidebar and dense panels |
+| wide | 1440px | Full workbench layout |
 
 ## Component Patterns
 
-> *Specific UI component rules beyond what's in the token schema.*
-
 ### Navigation
-- [e.g.: Top bar on mobile, left sidebar on desktop]
-- [Active state: primary color left border + background tint]
+- Persistent left sidebar on desktop.
+- Compact top or bottom navigation on mobile.
+- Active state uses primary left border and subtle surface-alt background.
 
 ### Forms
-- [e.g.: Labels above inputs, not inline]
-- [Error messages below inputs in `error` color]
-- [Focus ring: 2px solid `{colors.accent}` with 2px offset]
+- Labels above inputs.
+- Inline validation below fields.
+- Focus ring uses `accent` with 2px offset.
 
-### Cards
-- [e.g.: Flat cards (no shadow by default), hover adds shadow-md]
-- [Clickable cards: add `cursor: pointer` + scale(1.01) on hover]
+### Panels
+- Use panels for tools, registries, logs, and repeated items.
+- Do not nest panels.
+- Keep radius at 8px or less.
 
 ### Tables
-- [e.g.: Zebra striping / dividers only / full borders]
-- [Sticky header on scroll]
+- Dividers and sticky headers for agent/model registries.
+- Prefer dense rows with clear status badges.
 
 ### Feedback States
-- [e.g.: Empty states with illustration + CTA]
-- [Loading: skeleton screens, not spinners]
-- [Errors: inline (inputs), toast (server), full-page (critical)]
-
----
+- Loading uses skeletons.
+- Empty states should expose the next action directly.
+- Errors must be specific and actionable.
 
 ## Aesthetic Notes
-
-> *Qualitative guidelines that don't reduce to tokens but guide implementation decisions.*
-
-[E.g.: "Prefer iconography over text labels in dense UIs. Use line icons, not filled.
-Avoid drop shadows on flat-design surfaces — rely on surface color layering instead.
-Photography (if used) must be high-contrast, desaturated to fit the palette."]
-
----
+- Prefer icons plus concise labels for commands.
+- Avoid decorative gradients, oversized heroes, and marketing composition.
+- Use real operational data as the main visual signal.
+- Keep text compact and scannable.
 
 ## Version History (Immutable)
 
 | Timestamp | Author | Change |
 | :--- | :--- | :--- |
-| [YYYY-MM-DD HH:MM] | [Responsible] | Initial DESIGN.md created. All values are placeholders — to be filled with project-specific decisions. |
-
----
-
-*Validate tokens: `npx @google/design.md lint DESIGN.md`*
-*Compare versions: `npx @google/design.md diff DESIGN.md DESIGN-v2.md`*
+| [2026-05-05 15:06] | [CEO] | Initial PF_ai design tokens filled during onboarding. |

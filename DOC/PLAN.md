@@ -1,127 +1,114 @@
-# PLAN
+# PLAN - PF_ai
 
-This file must be filled **completely and without fail** for each roadmap stage, ensuring consistency, traceability, and total documentation. Nothing can be lost along the way. Reminder: Fill before code; tests are mandatory (TDD).
+This file defines the active roadmap stage before code. Tests are mandatory before implementation.
 
-## Updated on: YYYY-MM-DD HH:MM:SS
+## Updated on: 2026-05-05 15:06:38
 
 ## 1. Stage Objective
-- Describe the purpose of this roadmap phase.
-- What must be delivered and why.
+Complete Phase 0 onboarding and prepare Phase 1 MVP execution for PF_ai. The project must establish the product vision, stack, architecture, design direction, environment setup, roadmap, and MVP acceptance criteria before any code is written.
 
 ## 2. Roadmap Stage
-- Stage name: [E.g.: MVP Implementation]
-- Related to which roadmap item: [Link to ROADMAP.md]
+- **Stage name:** Phase 0 - Onboarding and Foundation
+- **Related roadmap item:** `DOC/ROADMAP.md#phase-0-onboarding-and-foundation-status-done`
 
 ## 3. Detailed Description
-- What will be implemented: [Details]
-- Expected behavior: [Description]
-- Impacted components: [List]
+- **What will be implemented:** No production code in Phase 0. This stage fills project documents and prepares the management handoff for Phase 1.
+- **Expected behavior:** All required onboarding files contain real PF_ai-specific content and no onboarding placeholders in required sections.
+- **Impacted components:** Documentation, architecture baseline, environment setup, design tokens, roadmap, and MVP plan.
 
 ## 4. Acceptance Criteria
-- Criterion 1: [Measurable]
-- Criterion 2: [Measurable]
-- Criterion 3: [Measurable]
+- Criterion 1: `DOC/PROJECT.md` defines PF_ai vision, objectives, scope, stack, team, risks, and KPIs.
+- Criterion 2: `README.md` describes PF_ai in Portuguese and English without onboarding placeholders.
+- Criterion 3: `DOC/ARCHITECTURE.md` documents Go, TypeScript web, PostgreSQL, Docker, API/local providers, file handoffs, and MCP future scope.
+- Criterion 4: `DOC/DESIGN.md` contains concrete design tokens and layout guidance.
+- Criterion 5: `DOC/ENV_SETUP.md` defines local prerequisites and environment variables without real secrets.
+- Criterion 6: `DOC/ROADMAP.md` defines Phase 0 through Phase 3.
+- Criterion 7: `QUESTIONS.md` records the onboarding answers and decisions.
 
 ## 5. Business Rules
-- Rule 1: [Description]
-- Rule 2: [Description]
-- Rule 3: [Description]
+- Rule 1: [HUMAN:Ulisses] is the final authority for roadmap advancement.
+- Rule 2: PF_ai must support agents through API providers and local runtime paths.
+- Rule 3: MVP handoffs use files; MCP handoffs are final-stage scope.
+- Rule 4: Chat responses must stay compact; detailed state belongs in Markdown files.
+- Rule 5: `CONTEXT.md` must be updated only after onboarding completion or later phase intake.
 
 ## 6. Recommended Tests
-- Unit test 1: description and coverage.
-- Integration test 1: description and coverage.
-- Acceptance test 1: description and scenario.
-- Security test 1: mandatory validations.
-- Regression test 1: critical scenario.
+- Documentation test 1: Scan required onboarding files for placeholder markers.
+- Documentation test 2: Verify stack consistency across `PROJECT.md`, `ARCHITECTURE.md`, `ENV_SETUP.md`, `ROADMAP.md`, and `README.md`.
+- Security test 1: Confirm no real secrets were written to documentation.
+- Process test 1: Confirm `QUESTIONS.md` contains [HUMAN] answers and decisions.
+- Regression test 1: Confirm GSD chain of command and Stage Closure Gate rules remain documented.
 
 ## 7. Security Validations
-- Validation 1: [E.g.: JWT active]
-- Validation 2: [E.g.: Data sanitized]
-- Validation 3: [E.g.: Zero leak]
-- Security notes: [Notes]
+- Validation 1: Secrets are represented only as environment variable names.
+- Validation 2: API routes are planned as deny-by-default.
+- Validation 3: Logs are planned as structured and sanitized.
+- Validation 4: Local model runtime is isolated through Docker Compose.
+- Security notes: Threat modeling is mandatory before Phase 1 implementation.
 
 ## 8. Developer Validation Steps
-1. Prepare environment: [Instructions]
-2. Execute unit/module test: [Commands]
-3. Execute integration test: [Commands]
-4. Verify acceptance criteria: [How]
-5. Validate business rules: [How]
-6. Validate security: [How]
-7. Document results in `tests.md`: [How]
+1. Review onboarding files listed in acceptance criteria.
+2. Confirm the stack and MVP scope.
+3. Confirm no required file still has onboarding placeholders.
+4. Approve or correct Phase 0 closure.
+5. Authorize Phase 1 kickoff only after Stage Closure Gate.
+6. Record any corrections in `QUESTIONS.md`.
+7. Record test results in `DOC/TESTS.md` during closure validation.
 
 ## 9. Responsible and Dependencies
-- Responsible: [Name]
-- Dependencies: [Prerequisites, e.g.: Previous phase complete]
-- Time Estimate: [Hours/days]
-- **Extra-Code Prerequisites:** [Non-code aspects that must be ready, e.g.: API keys, configured environment variables. Notify developer to arrange before starting.]
+- **Responsible:** [CEO] for onboarding documents; [CTO]/[BA] for Phase 1 kickoff validation.
+- **Dependencies:** [HUMAN] confirmation in `QUESTIONS.md`.
+- **Time Estimate:** Phase 0 documentation pass: same work cycle.
+- **Extra-Code Prerequisites:** Docker availability and provider/model decisions before implementation.
 
 ## 10. Risks and Mitigations
-- Risk 1: [Description]
-  - Mitigation: [Action]
-- Risk 2: [Description]
-  - Mitigation: [Action]
+- Risk 1: Local model runtime may exceed machine resources.
+  - Mitigation: Keep provider mode configurable and validate local runtime in Phase 2.
+- Risk 2: Handoff schemas may change before MCP migration.
+  - Mitigation: Version file handoff schemas from the MVP.
+- Risk 3: Documentation and application state may drift.
+  - Mitigation: Treat Markdown memory as an explicit adapter with tests.
 
 ## 11. Integration with Other Files
-- **ROADMAP.md:** Related stage.
-- **STATE.md:** Current progress.
-- **TESTS.md:** Validations performed.
+- **ROADMAP.md:** Defines Phase 0 through Phase 3.
+- **STATE.md:** Updated by technical agents after implementation begins.
+- **TESTS.md:** Receives validation results at closure.
+- **CONTEXT.md:** Updated after onboarding completion per [HUMAN] instruction.
 
 ## 12. Version History (Immutable)
-- **[YYYY-MM-DD HH:MM] - Responsible:** Initial stage version.
-- [Add new entries here without deleting.]
+- **[2026-05-05 15:06] - [CEO]:** Phase 0 onboarding plan filled from [HUMAN] answers.
 
 ## 13. Plan Validation
-- **Technical Feasibility:** [Confirm if components and stack support the stage.]
-- **Project Alignment:** [Verify if it meets PROJECT.md objectives.]
-- **Risks Assessed:** [Review mitigations; register in QUESTIONS.md if questions.]
-- **Approval:** [Status: Approved / Rejected - Reason.]
-- **ROADMAP.md Reference:** This plan is validated here; ROADMAP.md serves only for development tracking (To Do/Doing/Done status).
+- **Technical Feasibility:** Approved for planning. Go, TypeScript web, PostgreSQL, Docker, and file handoffs are feasible for the MVP.
+- **Project Alignment:** Aligned with PF_ai objective as agent/model/memory manager.
+- **Risks Assessed:** Local model runtime and MCP migration risks documented.
+- **Approval:** Approved for Phase 0 documentation completion. Phase 1 implementation still requires Stage Closure Gate.
+- **ROADMAP.md Reference:** This plan is validated here; `ROADMAP.md` tracks phase progress.
 
-## 9. Dependencies and Preconditions
-- Dependency 1:
-- Dependency 2:
-- Precondition 1:
-- Precondition 2:
+## 14. Stage Closure Gate
 
-## 10. Risks and Attention
-- Risk 1:
-- Risk 2:
-- Mitigation:
-
-## 11. References
-- Related files:
-- Technical documents:
-- Additional notes:
-
----
-
-## 14. Stage Closure Gate ⛔ (Fill before advancing)
-
-> This section must be **filled in by the agent at the end of the stage** and presented to the user for approval. Advancement to the next stage is **blocked** until the user explicitly confirms.
-
-### Completed Stage: [Stage name — e.g.: MVP Phase 1]
-### Closure Date: [YYYY-MM-DD HH:MM]
-### Responsible: [Name]
+### Completed Stage: Phase 0 - Onboarding and Foundation
+### Closure Date: 2026-05-05 15:16
+### Responsible: [CEO]
 
 ### Closure Checklist
 
 | # | File | Status | Note |
 | :- | :--- | :---: | :--- |
-| 1 | `TESTS.md` | `[ ]` | [All tests recorded with real results and timestamp?] |
-| 2 | `STATE.md` | `[ ]` | ["What Was Completed" section updated?] |
-| 3 | `TASKS.md` | `[ ]` | [All stage tasks marked as Done?] |
-| 4 | `CONTEXT.md` | `[ ]` | [Stage context and decisions documented?] |
-| 5 | `README.md` | `[ ]` | [Reflects the reality of the delivered code?] |
-| 6 | `ROADMAP.md` | `[ ]` | [Stage marked as `[x]` by the user?] |
-| 7 | `VERSIONS.md` | `[ ]` | [New entry added if there was a version delivery?] |
+| 1 | `TESTS.md` | `[x]` | Phase 0 validation results recorded. |
+| 2 | `STATE.md` | `[x]` | Phase 0 onboarding completion recorded. |
+| 3 | `TASKS.md` | `[x]` | Phase 0 documentation and architecture tasks recorded as Done. |
+| 4 | `CONTEXT.md` | `[x]` | Updated after onboarding completion and new instruction intake. |
+| 5 | `README.md` | `[x]` | Filled during onboarding. |
+| 6 | `ROADMAP.md` | `[x]` | Phase 0 approved by [HUMAN:Ulisses] and marked Done. |
+| 7 | `VERSIONS.md` | `[x]` | `1.2.0-alpha.1` onboarding milestone recorded. |
 
 ### Pending Items / Blockers
-- [Describe any incomplete item and the reason]
+- None.
 
 ### Delivery Summary
-- [Brief description of what was delivered in this stage]
-- Metrics: [E.g.: 82% test coverage, 0 security failures]
+- Phase 0 onboarding documentation was filled from [HUMAN] answers and validated.
+- Metrics: 0 onboarding placeholders found; 0 real secrets found; Go/Hexagonal compatibility confirmed.
 
-### ✅ User Approval
-> **Awaiting user confirmation to advance to the next stage.**
-- [ ] User confirmed stage closure and authorizes start of the next stage.
+### User Approval
+- [x] User confirmed stage closure and authorizes roadmap advancement on 2026-05-05 15:20.

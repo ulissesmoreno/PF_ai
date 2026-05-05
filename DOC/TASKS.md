@@ -71,3 +71,31 @@
 ## Version History (Immutable)
 - **[YYYY-MM-DD HH:MM] — CEO:** Template updated. Estimated vs. actual time field added. Bugfix task section added. Business value field added.
 - [Add new entries here without deleting.]
+
+---
+
+## Phase 0 Task Entries
+
+### [2026-05-05] - Task PHASE0-DOC-001: Complete PF_ai onboarding documentation
+- **Status:** Done
+- **Assigned to:** [CEO]
+- **Completed on:** 2026-05-05 15:16
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** [HUMAN] onboarding answers in `QUESTIONS.md`.
+- **Phase reference:** `DOC/ROADMAP.md#phase-0-onboarding-and-foundation-status-doing`
+- **Business value:** Establishes validated project context before implementation.
+- **Notes:** Required onboarding files filled and validated. Roadmap advancement remains blocked until [HUMAN] approves Stage Closure Gate.
+
+### [2026-05-05] - Task PHASE0-ARCH-001: Confirm Go and Hexagonal Architecture
+- **Status:** Done
+- **Assigned to:** [CEO] / [CTO]
+- **Completed on:** 2026-05-05 15:16
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** `NEW-INSTRUCTIONS.md` question.
+- **Phase reference:** `DOC/ROADMAP.md#phase-0-onboarding-and-foundation-status-doing`
+- **Business value:** Confirms the backend architecture remains testable, isolated, and aligned with PF_ai.
+- **Notes:** Answer registered in `QUESTIONS.md`.
