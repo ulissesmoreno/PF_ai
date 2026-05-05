@@ -35,6 +35,12 @@
 - Playbook decisões na forma como trabalho, minhas preferências 
 - Contexto decisões sobre o projeto arquiteturais 
 - State memória do agente
+- Role do agente deve ser uma lista, com a opção Outro para criação de novos.
+- ID deve ser automático.
+- Agentes podem ser locais ou online. Se for local informar onde ele será chamado, se for online modelo e chave de API.
+- Não há botão para salvar o agente.
+- Agora visualisei na tela que o Provider do agente tem um cadastro próprio. Então os ajustes sobre modelo online ou local devem ser no cadastro de providers, que deve ser selecionado no Agente.
+- Deve ter a opção de não apontar provider, para ambiente como Codex ou Claude Code que já tem modelo imbutido.
 
 ## Inspirations
 This session consolidates the foundational frameworks, technical skills, and design philosophies that drive the Agentic Enterprise architecture. These resources provide the "how" and "why" for building a high-performance, cost-efficient, and well-governed AI agent ecosystem.

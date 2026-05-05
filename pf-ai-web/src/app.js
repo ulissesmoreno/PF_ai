@@ -74,6 +74,29 @@ function formData(form) {
   return Object.fromEntries(new FormData(form).entries());
 }
 
+function slug(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function agentPayload(form) {
+  const values = formData(form);
+  const role = values.role === "OTHER" ? values.custom_role : values.role;
+  return {
+    id: slug(`${role}-${values.name}`),
+    name: values.name,
+    role,
+    seniority: values.seniority,
+    provider_id: values.provider_id,
+    description: values.description,
+  };
+}
+
 function renderAgents(agents) {
   document.querySelector("#agentRows").innerHTML = agents.length
     ? agents
@@ -101,6 +124,12 @@ function renderProviders(providers) {
     )
     .join("")
     : `<div class="list-item"><strong>No providers configured.</strong><span>Use Configure.</span></div>`;
+
+  const options = [
+    `<option value="">No provider</option>`,
+    ...providers.map((provider) => `<option value="${escapeHTML(provider.id)}">${escapeHTML(provider.name)} (${escapeHTML(provider.mode)})</option>`),
+  ];
+  document.querySelector("#agentProvider").innerHTML = options.join("");
 }
 
 document.querySelector("#memoryList").innerHTML = memory
@@ -152,6 +181,16 @@ document.querySelectorAll("#memoryList li").forEach((item) => {
 });
 
 document.querySelector("#memoryList li[data-path='DOC/STATE.md']")?.classList.add("selected");
+document.querySelector("#agentRole").addEventListener("change", (event) => {
+  const customRole = document.querySelector("#customRole");
+  const isOther = event.currentTarget.value === "OTHER";
+  customRole.hidden = !isOther;
+  customRole.required = isOther;
+  if (!isOther) {
+    customRole.value = "";
+  }
+});
+
 document.querySelector("#readMemory").addEventListener("click", async () => {
   try {
     const result = await requestJSON(`/api/memory?path=${encodeURIComponent(state.selectedMemory)}`);
@@ -183,7 +222,7 @@ document.querySelector("#agentForm").addEventListener("submit", async (event) =>
   try {
     await requestJSON("/api/agents", {
       method: "POST",
-      body: JSON.stringify(formData(event.currentTarget)),
+      body: JSON.stringify(agentPayload(event.currentTarget)),
     });
     event.currentTarget.reset();
     await refresh();

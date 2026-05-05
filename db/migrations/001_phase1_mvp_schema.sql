@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS agents (
     name TEXT NOT NULL,
     role TEXT NOT NULL,
     seniority TEXT NOT NULL CHECK (seniority IN ('Junior', 'Pleno', 'Senior')),
-    provider_id TEXT NOT NULL,
+    provider_id TEXT NOT NULL DEFAULT '',
     description TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

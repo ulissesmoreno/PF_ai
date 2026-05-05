@@ -133,3 +133,31 @@
 - **Metrics:** Frontend syntax passed; backend route/CORS tests passed; Go suite passed across domain and infrastructure packages.
 - **References:** `pf-ai-web\index.html`, `pf-ai-web\src\app.js`, `pf-ai-web\src\styles.css`, `src\infrastructure\httpapi\server.go`.
 - **Remaining Focus:** Manual browser validation with backend running interactively at `http://127.0.0.1:8081` and frontend at `http://127.0.0.1:5173`.
+
+### [2026-05-05 19:43] - [QA:Pleno]: MVP dashboard controls validated
+- **Delivery description:** Validated that the served dashboard contains operational controls required by Phase 1 MVP: API base, token, provider form, agent form, memory read action, and handoff form.
+- **Tests Performed:** `node --check pf-ai-web\src\app.js`; `node --check pf-ai-web\server.mjs`; `go test ./...`; HTML control scan through `http://127.0.0.1:5173`.
+- **Metrics:** 5 required UI control groups present; Go and Node syntax validations passed.
+- **References:** `pf-ai-web\index.html`, `pf-ai-web\src\app.js`, `DOC\PLAN.md` Phase 1 acceptance criteria.
+- **Remaining Focus:** End-to-end browser execution still depends on backend running interactively at `http://127.0.0.1:8081`.
+
+### [2026-05-05 19:47] - [DEV_FRONTEND:Pleno]: Human test notes applied to agent form
+- **Delivery description:** Updated agent creation UI so `role` is selected from a predefined list with `Outro` for custom roles, and agent `id` is generated automatically from role and name.
+- **Tests Performed:** `node --check pf-ai-web\src\app.js`; `go test ./...`.
+- **Metrics:** Frontend syntax passed; Go suite passed across domain and infrastructure packages.
+- **References:** `NEW-INSTRUCTIONS.md` human notes, `pf-ai-web\index.html`, `pf-ai-web\src\app.js`.
+- **Remaining Focus:** Manual browser validation of custom role path and generated ID with backend running interactively.
+
+### [2026-05-05 19:51] - [DEV_BACKEND:Pleno] / [DEV_FRONTEND:Pleno]: Agent runtime mode notes applied
+- **Delivery description:** Added local/online agent runtime fields across domain, HTTP API, PostgreSQL contract, and frontend agent form. Online agents require model and API key reference; local agents require local runtime command/path. Hybrid agents may carry both.
+- **Tests Performed:** `node --check pf-ai-web\src\app.js`; `go test ./...`.
+- **Metrics:** Domain validations added for local and online agent runtime requirements; HTTP API unhappy-path test added for missing local runtime; Go suite passed.
+- **References:** `NEW-INSTRUCTIONS.md` human notes, `src\domain\agent.go`, `src\infrastructure\httpapi\server.go`, `db\migrations\001_phase1_mvp_schema.sql`, `pf-ai-web\index.html`, `pf-ai-web\src\app.js`.
+- **Remaining Focus:** Manual browser validation with a local agent and an online agent after backend starts interactively.
+
+### [2026-05-05 19:55] - [DEV_BACKEND:Pleno] / [DEV_FRONTEND:Pleno]: Provider ownership corrected from human test notes
+- **Delivery description:** Moved local/online runtime responsibility back to provider registration, removed runtime fields from agent registration, added explicit `Save Agent` button, populated agent provider selection from provider registry, and allowed agents without provider for embedded-model environments such as Codex or Claude Code.
+- **Tests Performed:** `node --check pf-ai-web\src\app.js`; `go test ./...`.
+- **Metrics:** Domain and API tests now cover agent creation without provider; Go suite passed; frontend syntax passed.
+- **References:** `NEW-INSTRUCTIONS.md` human notes, `src\domain\agent.go`, `src\infrastructure\httpapi\server.go`, `db\migrations\001_phase1_mvp_schema.sql`, `pf-ai-web\index.html`, `pf-ai-web\src\app.js`.
+- **Remaining Focus:** Manual browser validation for provider create, agent with provider, and agent without provider.

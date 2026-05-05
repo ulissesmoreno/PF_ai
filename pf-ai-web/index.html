@@ -56,19 +56,34 @@
         <article class="panel" id="agents">
           <div class="panel-header">
             <h2>Agents</h2>
-            <button type="submit" form="agentForm">New</button>
           </div>
           <form class="inline-form" id="agentForm">
-            <input name="id" placeholder="id" required />
             <input name="name" placeholder="name" required />
-            <input name="role" placeholder="role" required />
+            <select name="role" id="agentRole" required>
+              <option value="CEO">CEO</option>
+              <option value="BA">BA</option>
+              <option value="CTO">CTO</option>
+              <option value="TECH_LEAD">TECH_LEAD</option>
+              <option value="DEV_BACKEND">DEV_BACKEND</option>
+              <option value="DEV_FRONTEND">DEV_FRONTEND</option>
+              <option value="DBA">DBA</option>
+              <option value="DEVOPS">DEVOPS</option>
+              <option value="SECURITY">SECURITY</option>
+              <option value="QA">QA</option>
+              <option value="CODE_REVIEWER">CODE_REVIEWER</option>
+              <option value="OTHER">Outro</option>
+            </select>
+            <input name="custom_role" id="customRole" placeholder="new role" hidden />
             <select name="seniority" required>
               <option>Junior</option>
               <option selected>Pleno</option>
               <option>Senior</option>
             </select>
-            <input name="provider_id" placeholder="provider id" required />
+            <select name="provider_id" id="agentProvider">
+              <option value="">No provider</option>
+            </select>
             <input name="description" placeholder="description" />
+            <button type="submit">Save Agent</button>
           </form>
           <table>
             <thead>
@@ -93,7 +108,7 @@
               <input name="id" placeholder="id" required />
               <input name="name" placeholder="name" required />
               <select name="mode" required>
-                <option value="api">api</option>
+                <option value="api">online</option>
                 <option value="local">local</option>
                 <option value="hybrid">hybrid</option>
               </select>

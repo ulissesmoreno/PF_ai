@@ -79,6 +79,20 @@ func TestPostAgentCreatesAgent(t *testing.T) {
 	}
 }
 
+func TestPostAgentAllowsNoProvider(t *testing.T) {
+	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
+
+	body := bytes.NewBufferString(`{"id":"codex","name":"Codex","role":"DEV_BACKEND","seniority":"Senior","description":"embedded model runtime"}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/agents", body)
+	request.Header.Set("Authorization", "Bearer local-test-secret")
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+
+	if response.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", response.Code)
+	}
+}
+
 func TestPostProviderRejectsMissingSecretReference(t *testing.T) {
 	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
 

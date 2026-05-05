@@ -18,7 +18,7 @@ type AgentDefinition struct {
 	Name        string    `json:"name"`
 	Role        string    `json:"role"`
 	Seniority   Seniority `json:"seniority"`
-	ProviderID  string    `json:"provider_id"`
+	ProviderID  string    `json:"provider_id,omitempty"`
 	Description string    `json:"description"`
 }
 
@@ -44,10 +44,6 @@ func NewAgentDefinition(id, name, role string, seniority Seniority, providerID, 
 	if !agent.Seniority.Valid() {
 		return AgentDefinition{}, errors.New("agent seniority is invalid")
 	}
-	if agent.ProviderID == "" {
-		return AgentDefinition{}, errors.New("agent provider id is required")
-	}
-
 	return agent, nil
 }
 
