@@ -19,12 +19,14 @@ Ulisses como operador principal e, futuramente, usuarios tecnicos que precisam d
 5. Suba PostgreSQL com `docker compose up -d postgres`.
 6. Execute backend com `go run ./cmd/pf-ai-service` quando Go estiver instalado.
 7. Execute frontend com `cd pf-ai-web` e `npm start`.
+8. Acesse a UI local em `http://127.0.0.1:5173`.
 
 ### Uso
 - Frontend web: interface humano-agentes para painel, agentes, modelos, memoria e handoffs.
 - Backend Go: API local para orquestracao, leitura dos arquivos GSD e integracao com provedores.
 - Handoffs MVP: arquivos JSON em `.agent_handoff/`.
 - Handoffs finais: MCP planejado em fase posterior.
+- Persistencia MVP: schema PostgreSQL e adapters Go compativeis com `database/sql` para agentes, provedores, sessoes e auditoria.
 
 ### Desenvolvimento
 - Arquitetura: `DOC/ARCHITECTURE.md`
@@ -37,6 +39,8 @@ Ulisses como operador principal e, futuramente, usuarios tecnicos que precisam d
 Resultados obrigatorios devem ser registrados em `DOC/TESTS.md`.
 - Backend Go: `go test ./...`
 - Frontend shell: `node --check pf-ai-web/src/app.js` e `node --check pf-ai-web/server.mjs`
+
+Nota local: se o cache Go em `AppData` estiver bloqueado, defina `GOCACHE` para `.gocache` dentro do workspace antes de rodar testes.
 
 ## English
 
@@ -57,6 +61,7 @@ Ulisses as the primary operator, with future support for technical users who nee
 5. Start PostgreSQL with `docker compose up -d postgres`.
 6. Run the backend with `go run ./cmd/pf-ai-service` when Go is installed.
 7. Run the frontend with `cd pf-ai-web` and `npm start`.
+8. Open the local UI at `http://127.0.0.1:5173`.
 
 Current local note: if the Go cache under `AppData` is blocked, set `GOCACHE` to `.gocache` inside the workspace before running tests.
 
@@ -65,6 +70,7 @@ Current local note: if the Go cache under `AppData` is blocked, set `GOCACHE` to
 - Go backend: local orchestration API, GSD file reading, and provider integration.
 - MVP handoffs: JSON files in `.agent_handoff/`.
 - Final handoffs: MCP planned for a later stage.
+- MVP persistence: PostgreSQL schema and `database/sql`-compatible Go adapters for agents, providers, sessions, and audit events.
 
 ### Development
 - Architecture: `DOC/ARCHITECTURE.md`

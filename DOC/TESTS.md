@@ -464,3 +464,82 @@ After executing all tests:
 - **Status:** Blocked.
 - **Notes:** Static syntax checks pass; runtime launch needs a durable process method outside the current shell constraints.
 - **Corrective action:** Run `cd pf-ai-web && npm start` in an interactive terminal, or use an approved persistent process runner.
+
+### [2026-05-05 18:50] TEST-PHASE1-DB-003 - PostgreSQL Repository Contract Adapters
+- **Type:** Integration / Contract
+- **Objective:** Validate repository-level persistence contracts for agents, providers, sessions, and audit events without introducing an external PostgreSQL driver dependency.
+- **Preconditions:** Phase 1 migration exists; Go installed at `C:\Program Files\Go\bin\go.exe`; workspace-local `GOCACHE` configured.
+- **Step by step:**
+  1. Added repository contract tests for provider upsert, agent listing, session save, and audit event save.
+  2. Added PostgreSQL adapter package using `database/sql`-compatible interfaces.
+  3. Ran `go test ./...` with workspace-local `GOCACHE`.
+- **Expected result:** Repository contract tests pass and SQL targets the Phase 1 tables.
+- **Obtained result:** Passed. `pf-ai/tests/domain` and `pf-ai/tests/infrastructure` passed; `src/infrastructure/postgres` compiled successfully.
+- **Status:** Passed.
+- **Notes:** Runtime database wiring still needs a concrete PostgreSQL driver decision; adapter contracts remain standard-library compatible.
+- **Corrective action:** None for contract layer. Wire runtime persistence after approving a Go PostgreSQL driver policy.
+
+### [2026-05-05 18:56] TEST-PHASE1-FRONT-004 - Local Web Server Runtime Validation
+- **Type:** Frontend / Runtime
+- **Objective:** Start the dependency-free web server and verify the MVP workbench responds over HTTP.
+- **Preconditions:** Node.js installed at `C:\Program Files\nodejs\node.exe`; `pf-ai-web/server.mjs` exists.
+- **Step by step:**
+  1. Started `node pf-ai-web\server.mjs` through `Start-Process`.
+  2. Checked port `5173` with `netstat -ano`.
+  3. Requested `http://127.0.0.1:5173`.
+- **Expected result:** Server process remains active and the web root returns HTTP 200.
+- **Obtained result:** Passed. Port `5173` is listening and `http://127.0.0.1:5173` returned HTTP 200.
+- **Status:** Passed.
+- **Notes:** `http://localhost:5173` failed in this shell, while `127.0.0.1` succeeded. Use the IPv4 loopback URL for local validation.
+- **Corrective action:** None.
+
+### [2026-05-05 18:57] TEST-PHASE1-BACK-001 - Local Backend Runtime Launch
+- **Type:** Backend / Runtime
+- **Objective:** Start the Go API service and verify `/health` plus protected-route behavior over HTTP.
+- **Preconditions:** Go installed at `C:\Program Files\Go\bin\go.exe`; workspace-local `GOCACHE` configured.
+- **Step by step:**
+  1. Ran `go run ./cmd/pf-ai-service` with `PF_AI_HTTP_PORT=8081` and `PF_AI_AUTH_SECRET` set locally.
+  2. Confirmed the service starts in foreground and logs `starting pf-ai service`.
+  3. Attempted background launch through `Start-Process` using `go run` and a compiled binary under `.gocache`.
+  4. Attempted HTTP requests to `/health` and `/api/agents`.
+- **Expected result:** Service remains active in background and HTTP checks return expected statuses.
+- **Obtained result:** Foreground startup succeeded; background-launched process did not remain reachable from the shell.
+- **Status:** Blocked.
+- **Notes:** Automated Go tests still validate route behavior through `httptest`. Runtime background validation needs a durable process runner or interactive terminal.
+- **Corrective action:** Run backend in an interactive terminal with `PF_AI_AUTH_SECRET` set, or provide an approved persistent process method for background services.
+
+### [2026-05-05 19:02] TEST-PHASE1-E2E-002 - MVP API Flow via HTTP Handler
+- **Type:** Acceptance / Security
+- **Objective:** Validate the MVP backend flow through HTTP routes without relying on a persistent OS background process.
+- **Preconditions:** Go installed at `C:\Program Files\Go\bin\go.exe`; workspace-local `GOCACHE` configured.
+- **Step by step:**
+  1. Created a temporary GSD memory file and handoff directory.
+  2. Called protected API routes with `Authorization: Bearer local-test-secret`.
+  3. Created one provider and one agent.
+  4. Read `DOC/STATE.md` through `/api/memory`.
+  5. Created one handoff through `/api/handoffs`.
+  6. Verified the generated handoff file does not contain the local auth secret.
+  7. Ran `go test ./...`.
+- **Expected result:** Provider, agent, memory read, and handoff creation all succeed; generated handoff contains no secret.
+- **Obtained result:** Passed. `pf-ai/tests/domain` and `pf-ai/tests/infrastructure` passed.
+- **Status:** Passed.
+- **Notes:** This validates the backend MVP behavior at HTTP handler level; OS-level background runtime remains separately blocked.
+- **Corrective action:** None for MVP API behavior.
+
+## 12. Phase 1 Parallel Review Snapshot
+
+### [2026-05-05 19:03] REVIEW-PHASE1-001 - SECURITY / CODE_REVIEWER / QA Closure Review
+- **Type:** Security / Review / QA
+- **Objective:** Consolidate Phase 1 quality review before Stage Closure Gate.
+- **Preconditions:** MVP backend, frontend, and persistence implementation completed; latest docs updated.
+- **Step by step:**
+  1. Ran `go test ./...`.
+  2. Ran `node --check pf-ai-web\src\app.js` and `node --check pf-ai-web\server.mjs`.
+  3. Requested `http://127.0.0.1:5173`.
+  4. Scanned repository for `password`, `secret`, `token`, `api_key`, and `apikey`.
+  5. Reviewed scan hits for real credential exposure.
+- **Expected result:** Tests pass; frontend runtime responds; no real secrets are present.
+- **Obtained result:** Go tests passed; JavaScript syntax checks passed; frontend returned HTTP 200; secret scan showed only placeholders, documented variable names, schema fields, and test sentinels.
+- **Status:** Passed with blocker note.
+- **Notes:** SECURITY approves current implementation for no real-secret exposure. CODE_REVIEWER finds no blocking code issue in the MVP scope. QA marks API-handler MVP flow and frontend runtime as validated. Backend OS-level background runtime remains blocked as `TEST-PHASE1-BACK-001`.
+- **Corrective action:** Resolve or explicitly defer OS-level backend persistent runner before Phase 1 Stage Closure Gate.

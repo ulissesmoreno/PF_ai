@@ -21,15 +21,15 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
   - Criteria: Acceptance criteria, tests, business rules, and dependencies finalized in `DOC/PLAN.md`.
   - Tests: BA/CTO validation and SECURITY threat modeling.
   - Responsible: [BA] / [CTO].
-- [ ] **MVP Backend** (Status: Doing)
+- [x] **MVP Backend** (Status: Done)
   - Criteria: Go API supports agent registry, model/provider registry, GSD memory reads, and file handoff creation.
   - Tests: Unit and integration tests created before production code.
   - Responsible: [DEV_BACKEND].
-- [ ] **MVP Frontend** (Status: Doing)
+- [x] **MVP Frontend** (Status: Done)
   - Criteria: Web UI shows active phase/status, agents, models, key GSD memory files, and handoff actions.
   - Tests: Component and acceptance tests.
   - Responsible: [DEV_FRONTEND].
-- [ ] **MVP Persistence** (Status: Doing)
+- [x] **MVP Persistence** (Status: Done)
   - Criteria: PostgreSQL schema stores agents, providers, sessions, and audit metadata.
   - Tests: Migration and repository contract tests.
   - Responsible: [DBA].
@@ -73,3 +73,7 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
 - **[2026-05-05 15:20] - [CEO]:** [HUMAN:Ulisses] approved Phase 0 roadmap closure; phase status set to Done.
 - **[2026-05-05 15:23] - [CEO]:** Phase 1 planning opened after `[USER_DONE]`; implementation remains blocked until Phase 1 plan, threat model, and kickoff handoff are complete.
 - **[2026-05-05 15:30] - [CEO]:** Phase 1 implementation authorized by [HUMAN]; planning marked complete; backend, frontend, and persistence implementation started.
+- **[2026-05-05 18:50] - [DBA]:** Phase 1 MVP Persistence marked Done after migration validation and repository contract tests for agents, providers, sessions, and audit events passed.
+- **[2026-05-05 18:56] - [DEV_FRONTEND]:** Phase 1 MVP Frontend marked Done after static checks and local runtime validation at `http://127.0.0.1:5173`.
+- **[2026-05-05 19:02] - [DEV_BACKEND]:** Phase 1 MVP Backend marked Done after HTTP handler acceptance flow validated provider, agent, memory, and handoff behavior.
+- **[2026-05-05 19:03] - [TECH_LEAD]:** Phase 1 parallel review consolidated; no blocking implementation defect found, but OS-level backend background runtime validation remains unresolved before Stage Closure Gate.

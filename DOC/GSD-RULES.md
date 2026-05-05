@@ -1,4 +1,4 @@
-# GSD-RULES.md - Technical Execution Protocol (v1.3)
+# GSD-RULES.md - Technical Execution Protocol (v1.5)
 
 This document defines the inviolable development rules. Any deviation invalidates the "Done" state.
 
@@ -6,268 +6,385 @@ This document defines the inviolable development rules. Any deviation invalidate
 
 ## 👑 §0. Agent Orchestration Protocol (Chain of Command)
 
-This section is the **highest-priority rule in the entire framework**. It governs how agents activate, read, and delegate before any execution begins.
-
 ### 0.1 CEO Precedence — Inviolable
 
-The **[CEO] Agent is invariably the first to act** in every new work cycle or session. No other agent may begin execution without prior CEO intake and delegation.
+The **[CEO]** is the first to act in every new phase. Reading sequence (strict order, once per phase):
+1. `DOC/GSD-RULES.md`
+2. `PLAYBOOK.md`
+3. `NEW-INSTRUCTIONS.md`
+4. `DOC/PLAN.md`
+5. `DOC/ONBOARDING.md` — only on new projects with placeholder `PROJECT.md`
 
-**CEO Mandatory Reading Sequence (strict order):**
-1. `DOC/GSD-RULES.md` — Align with inviolable rules. This is non-negotiable before any action.
-2. `PLAYBOOK.md` *(root)* — Review developer preferences and recurring patterns.
-3. `NEW-INSTRUCTIONS.md` *(root)* — Understand the current cycle's user directives and scope.
-4. `DOC/PLAN.md` — Validate business context and acceptance criteria before delegating.
-5. `DOC/ONBOARDING.md` — **Trigger only at the start of a brand-new project** (when `PROJECT.md` still contains placeholder values). Run the full 5-block protocol before any other action.
+> Re-reading only occurs after direct [HUMAN] intervention mid-phase.
 
-> **Rule:** If `NEW-INSTRUCTIONS.md` contains pending questions or ambiguities, the CEO MUST register them in `QUESTIONS.md` and halt. Nothing proceeds with open questions.
+### 0.2 Human Interface
 
-### 0.2 Management Layer — CEO → BA / CTO
+- **[HUMAN]** communicates exclusively with **[CEO]**.
+- Every chat response is signed by the **active agent** (e.g., `[CTO]`, `[DEV_BACKEND:Senior]`).
+- Active agent responds directly — CEO does not paraphrase.
+- **Chat responses: state only what is being done. No narration, no process description.**
+  - ✅ `[DEV_BACKEND:Pleno] Implementing JWT filter.`
+  - ❌ `[DEV_BACKEND:Pleno] I will now proceed to implement the JWT filter as described in PLAN.md...`
+- Detailed content goes into `.md` files, never into chat.
+- **[HUMAN] acts only at phase closure** — approves or rejects the deliverable.
+- Mid-phase interruptions only for: Critical bug, credential leak, impasse after 3 review rounds.
 
-After CEO intake, execution is delegated to the **Management Layer**:
+### 0.3 Management Autonomy
 
-| Agent | Layer | Primary Responsibility |
+- CEO, CTO, and BA have full autonomy to execute phases until the deliverable is ready.
+- No human approval required mid-phase unless one of the three exceptions above occurs.
+- **Explicit Stage Conclusion Authorization:** [HUMAN] may extend autonomy explicitly in `NEW-INSTRUCTIONS.md`, specifying the stage limit. Expires automatically. Active agent notes: `[CEO] Concluding Stage X — authorized via NEW-INSTRUCTIONS.md [YYYY-MM-DD].`
+
+### 0.4 Phase Kickoff — Single Intake
+
+At the start of each phase:
+1. CEO + CTO + BA perform full intake — **once per phase only**.
+2. CTO assigns seniority based on BA business complexity input — recorded in `.agent_handoff/`, never in chat.
+3. SECURITY performs **threat modeling** — maps attack surfaces, defines phase security criteria.
+4. CEO generates `phase_context` snapshot and dispatches single `PHASE_KICKOFF` handoff to all technical agents.
+5. Technical agents work from the handoff snapshot — no file reading for Junior/Pleno tasks.
+
+### 0.5 Seniority Assignment (CTO-led)
+
+- **BA** assesses business complexity → informs CTO via handoff.
+- **CTO** decides seniority — BA does not co-decide.
+
+| Complexity | Seniority | File Reading |
 | :--- | :--- | :--- |
-| **[BA]** | Management | Translates user instructions into structured BDD requirements in `PLAN.md` |
-| **[CTO]** | Management | Validates architectural feasibility and assigns technical tasks |
+| Low — mechanical, well-defined | Junior | Handoff only |
+| Medium — standard with some design | Pleno | Handoff only |
+| High — architectural, complex domain | Senior | Handoff + `ARCHITECTURE.md` if needed |
 
-**Management Layer Mandatory Rule:** Both `[CTO]` and `[BA]` MUST read `DOC/GSD-RULES.md` **before executing or validating any task**, to confirm that technical orders comply with the protocol and no constraint is violated.
+> **Token Economy Rule:** Always assign the lowest sufficient seniority. The multi-agent objective is token economy — specialized agents with limited scope consume less context than a single generalist. When an external orchestrator is available, it **should** route to specific models per tier.
 
-### 0.3 Technical Agents — Management → Technical
+### 0.6 Technical Agents
 
-Technical agents receive work **only after** the Management Layer has processed and validated the CEO's delegation:
+| Agent | Scope |
+| :--- | :--- |
+| `[DEV_BACKEND]` | Backend implementation (TDD) |
+| `[DEV_FRONTEND]` | Frontend implementation (TDD) |
+| `[DBA]` | Schema, migrations, persistence |
+| `[DS/ML]` | ML models, data pipelines |
+| `[DEVOPS]` | CI/CD, containers, infrastructure |
+| `[DATA_ENGINEER]` | ETL, data pipelines, data quality |
 
-| Agents | Layer | Scope |
+### 0.7 Escalation Protocol
+
+- Technical agents escalate **once per phase** via `CLARIFICATION_REQUEST` handoff.
+- Management responds via handoff if possible — no [HUMAN] interruption.
+- If management cannot resolve → `QUESTIONS.md` → [HUMAN] → development freezes.
+- **Autonomous decision rule:** Agent decides independently on *how to implement*. Escalates only for *what to implement* or *architectural scope*.
+
+### 0.8 Quality & Review Gates
+
+**Parallel review at phase closure:**
+
+| Reviewer | Scope | Always included |
 | :--- | :--- | :--- |
-| `[DEV_BACKEND]`, `[DEV_FRONTEND]` | Technical | Feature implementation (TDD) |
-| `[DBA]` | Technical | Schema, migrations, persistence optimization |
-| `[DS/ML]` | Technical | ML models, data pipelines, intelligence layer |
-| `[DEVOPS]` | Technical | CI/CD, containers, infrastructure, observability |
+| `[SECURITY]` | Vulnerabilities, JWT, sanitization, credential scan | ✅ |
+| `[CODE_REVIEWER]` | SOLID, Clean Code, Hexagonal isolation | ✅ |
+| `[QA]` | Acceptance criteria, test coverage | ✅ |
+| `[DBA]` | Schema/migration changes | Only if applicable |
+| `[DEVOPS]` | Infrastructure/pipeline changes | Only if applicable |
 
-### 0.4 Quality & Review Gates
+**Conflict resolution:**
+- *How code was written* → `[CODE_REVIEWER]` decides.
+- *Whether behavior is correct* → `[QA]` decides.
+- Cross-scope → `[TECH_LEAD]` arbitrates → `[CTO]` last resort.
 
-Quality agents act as **mandatory gates** after technical deliveries:
+**Review rounds:** Max 3. After 3rd without resolution → `QUESTIONS.md` → [HUMAN].
 
-| Agent | When | Authority |
-| :--- | :--- | :--- |
-| `[SECURITY]` | After every stage; anytime a vulnerability is suspected | **Veto power** — can block Stage Closure Gate |
-| `[REVIEWER]` | After every atomic DEV delivery, before QA | **Reject authority** — can block QA handoff |
-| `[QA]` | After REVIEWER approval | **Stage approval** — validates acceptance criteria |
+**Approval flow:**
+```
+Reviewers (parallel) → TECH_LEAD consolidates → CTO/BA approve → [HUMAN] releases PR → Merge
+```
 
-### 0.5 Creative & Market Agents
+> Every phase must produce a functional, validated, and tested codebase ready for merge.
 
-Activated on demand by the CEO or CMO when marketing or design output is required:
+### 0.9 SECURITY as Structural Foundation
 
-| Agent | Activated By | Output |
-| :--- | :--- | :--- |
-| `[CMO]` | CEO (market validation cycles) | KPI review, roadmap alignment |
-| `[WRITER]` | CMO | Marketing copy |
-| `[ARTIST]` | CMO / WRITER | Visual marketing assets |
+- **Phase Kickoff:** Threat modeling — attack surfaces, security criteria for the phase.
+- **Phase Closure:** Conformance audit — verifies implementation against kickoff threat model.
+- **Pre-production:** Full audit before any merge to production branch. Veto power active.
+- These are distinct activities — no overlap.
 
-> **Dormant Agent Rule:** Agents are called only when their domain is active. An agent with no relevant task in the current stage remains dormant and does not consume context.
+### 0.10 Creative & Market Agents
+
+Activated on demand by CEO or CMO:
+
+| Agent | Output |
+| :--- | :--- |
+| `[CMO]` | KPI review, roadmap alignment |
+| `[WRITER]` | Marketing copy |
+| `[ARTIST]` | Visual marketing assets |
+
+> **Dormant Agent Rule:** Agents with no active domain remain dormant and do not consume context.
 
 ---
 
-## Fundamental Principles
-Development must focus on **consistency**, **traceability**, **documentation**, and **context** over speed. All documents must be filled in **without fail** so that nothing is lost along the way. Documentation is the foundation of execution: without it, progress is invalid.
+## §1. Document Ownership & Write Rules
 
-### Inviolable Rule: Complete File Population
-All project files (especially .md files such as PROJECT.md, STATE.md, TASKS.md, TESTS.md, CONTEXT.md, QUESTIONS.md, PLAN.md, ROADMAP.md, ARCHITECTURE.md, README.md, and NEW-INSTRUCTIONS.md) must be filled in **completely and without fail** as required by each stage. Placeholders must be replaced with real content, and no file may remain incomplete or with gaps. Any deviation invalidates the "Done" state and halts progress until corrected.
+### 1.1 When to Write
 
-### Immutability Rule: History with Timestamps
-No file may have information deleted; everything must maintain cumulative history with timestamps (YYYY-MM-DD HH:MM) and responsible parties. Add "History" sections to relevant files (e.g.: STATE.md, TESTS.md, CONTEXT.md) to track versions without data loss.
-
-## 1. Pre-Execution Phase (The Stop-Gate)
-1.1 **Mandatory Context:** Before any code, the scope, stack, security, and Antigravity environment must be declared in `.md` files.
-1.2 **QUESTIONS.md:** Sole clarification channel. If there is ambiguity, register the question and **halt execution**. Nothing starts with pending questions.
-1.3 **Immutable History:** Answers in `QUESTIONS.md` must never be deleted; they serve as an architectural decision log.
-1.4 **Decisions and Context:** All decisions, hypotheses, contexts, and intentions must be documented before proceeding. Use `QUESTIONS.md` for questions and `CONTEXT.md` for structured context.
-1.5 **Direct Order:** Development only begins after an explicit user command and clearing of questions.
-
-## 1.8 Stage Closure Gate
-Before starting any new ROADMAP stage, the agent **must mandatorily**:
-
-1. **Verify and present to the user** the closure checklist below, with the real status of each item.
-2. **Block advancement** while any item is incomplete.
-3. **Wait for explicit confirmation** from the user (verbal OK or `[x]` marking in ROADMAP.md) before continuing.
-
-### Stage Closure Checklist (mandatory)
-
-| # | File | What to Check | Status |
-| :- | :--- | :--- | :--- |
-| 1 | `TESTS.md` | All stage tests recorded with real results (Passed/Failed), timestamp, and corrective action if applicable. | `[ ]` |
-| 2 | `STATE.md` | "What Was Completed" section updated with delivery description, metrics, and timestamp. | `[ ]` |
-| 3 | `TASKS.md` | All stage tasks marked as `Done`. | `[ ]` |
-| 4 | `CONTEXT.md` | Context summary updated with decisions made in the stage. | `[ ]` |
-| 5 | `README.md` | Reflecting the reality of the delivered code (no placeholders relating to the stage). | `[ ]` |
-| 6 | `ROADMAP.md` | Previous stage marked as `[x]` **by the user**. | `[ ]` |
-| 7 | `PLAN.md` | "Stage Closure Gate" section (§14) filled in and approved. | `[ ]` |
-| 8 | `VERSIONS.md` | New entry added if there was a version delivery or significant milestone. | `[ ]` |
-
-> **Rule:** The agent must not start the next stage until the **[HUMAN]** explicitly confirms the previous stage is complete. A simple instruction "start stage X" **is not sufficient** — the agent must first present the checklist above and await `[HUMAN]` validation.
->
-> **[HUMAN] Authority:** The human user is the **final approval authority** for all Stage Closure Gates and roadmap advancement. No agent — including the CEO — may authorize stage advancement unilaterally. The human signals completion by sending `[USER_DONE]` in the chat or marking `[x]` in `ROADMAP.md`.
-
-## 1.6 MVP and Feasibility
-An MVP (Minimum Viable Product) must be planned at the beginning of development, ensuring project feasibility testing. Even with all other mappings completed (architecture, stack, roadmap), the MVP is mandatory to validate initial hypotheses. Post-MVP adjustments will be controlled exclusively by the NEW-INSTRUCTIONS.md file, which will guide refinements based on feedback and feasibility tests.
-
-## 1.7 File Population
-1.6.1 **NEW-INSTRUCTIONS.md:** Must be filled with a clear and structured pattern whenever there are new instructions.
-- Title and update date.
-- Cycle objective.
-- Scope and deliverables.
-- Constraints, dependencies, and context.
-- Structured markers to ensure readability and traceability.
-1.6.2 **QUESTIONS.md:** Each question and answer must have a timestamp and status, ensuring complete history.
-- Use headers per entry: `### [YYYY-MM-DD HH:MM:SS] Question`
-- Record `Question`, `Context`, `Status`, `Author`, `Answer`, and `Decision / Action`.
-- Never delete old entries; always add new entries to maintain an immutable log.
-1.6.3 **CONTEXT.md:** After each reading of `NEW-INSTRUCTIONS.md` or new answer in `QUESTIONS.md`, update the context and decisions summary.
-1.6.4a **PLAYBOOK.md:** After each new answer in `QUESTIONS.md`, after each new entry in `NEW-INSTRUCTIONS.md`, and after the project definition (`PROJECT.md`) is filled in, the agent must **review PLAYBOOK.md** and append new entries (with timestamp) if any preference, recurring decision, or working pattern has been revealed or confirmed. This step is mandatory and happens *before* the Atomic Commit.
-1.6.4 **Recommended markers:**
-- `#` for main title
-- `##` for objective, scope, constraints, context, and deliverables sections
-- `###` for individual question entries
-- Lists with `-` for items and decisions
-- Standardized fields to facilitate automated reading and traceability
-
-## 2. Planning and Traceability
-2.1 **PLAN.md:** Each roadmap stage must be described completely and operationally.
-- Stage description and clear objective.
-- Detailed and measurable acceptance criteria.
-- Applicable business rules.
-- Tests required to validate functionality and business rules.
-- Mandatory security validations for production.
-- Validation steps the developer must execute.
-- Dependencies and preconditions.
-2.2 **TASKS.md:** Registry of all atomic project activities. Each task must have a status (To Do, Doing, Done).
-2.3 **TESTS.md:** Test results performed by the AI agent must be saved in `tests.md`.
-- Record each test with step-by-step, environment, expected result, obtained result, and status.
-- Document corrective actions when a test fails.
-- Use `tests.md` as a concrete guide for the developer to replicate and validate manual or automated tests.
-
-## 3. TDD Development Cycle (Strict Mode)
-No line of production code without a prior test.
-1. **RED:** Create a unit/integration test that fails.
-2. **GREEN:** Minimum code to pass the test.
-3. **REFACTOR:** Apply SOLID and Clean Code without breaking the test.
-4. **SECURITY:** Validate sanitization, injection protection, and JWT compliance.
-
-## 4. Hexagonal Architecture & Isolation
-- **DOMAIN:** Pure logic. Importing frameworks (Spring, Pandas, etc.) is forbidden.
-- **APPLICATION (Ports):** Interfaces that define the input and output contract.
-- **INFRASTRUCTURE (Adapters):** Volatile technical implementations (DB, APIs, UI).
-
-## 4.1 Naming and Directory Structure
-Before creating directories for backend, frontend, or services, validate the structure and names.
-- If the solution is Web, the frontend should be named `<abbreviated-name>-web`.
-- If the solution is a native/hybrid app, apply appropriate naming logic to the project.
-- If there is more than one microservice, each service should be created as `<name>-service`.
-- If it is a monolith, the directory can be created with just the abbreviated project name.
-
-## 5. Code Standards & SOLID
-- **S:** Classes with single responsibility.
-- **O:** Extensibility via interfaces (new models/indicators).
-- **L/I/D:** Strict dependency injection and specific interfaces.
-- **Clean Code:** Semantic names and readability as priority.
-
-## 6. GSD File Workflow
-For each delivery, the order is mandatory and **all documents must be filled without fail** to ensure consistency and complete traceability:
-1. **Check:** Read `NEW-INSTRUCTIONS.md` and validate `PLAN.md`.
-1.a **Roadmap:** Start or update `ROADMAP.md` with each reading of `NEW-INSTRUCTIONS.md`, to ensure the plan reflects the most recent context.
-2. **Test:** Create/update the test file.
-3. **Impl:** Create/update the implementation code.
-4. **Migration:** If there is a schema change, create/update the SQL migration file.
-5. **Docs:** Update `README.md`, `ROADMAP.md`, `STATE.md`, `TASKS.md`, `CONTEXT.md`, and `tests.md`. **Mandatory:** No document may remain incomplete or with failures.
-5.a **PLAYBOOK:** Review `PLAYBOOK.md` and add new entries (with timestamp) if the delivery revealed developer preferences, decisions, or patterns relevant to future projects.
-6. **Atomic Commit:** Simulate/perform the activity commit.
-
-## 7. Security & Persistence (Infra)
-7.1 **API Lockdown:** Java routes are born `deny-all`. Release via JWT.
-7.2 **Zero Leak:** Logging keys, payloads, or transactions in plain text is forbidden.
-7.3 **Sanitization:** Adapters must clean data before sending it to the Domain.
-7.4 **Docker & DB:** Before starting, verify Docker is active. Bring up the database and apply **Migrations** as needed.
-7.5 **Credential Security:** No password, API key, or sensitive credential should be in code or documentation files. The `.env` file must never be committed, nor any information that compromises application security. Everything needed in the environment must be clearly informed in [ENV_SETUP.md or specific section], with a defined location for secure storage (e.g.: external vaults). Register instructions in QUESTIONS.md if there are questions about configuration.
-7.6 **Mandatory Logging:** Every action performed by the solution must have logs for activity and/or error traceability. Configure structured logs (e.g.: INFO, WARN, ERROR levels) without exposing sensitive data. Record logging validations in TESTS.md.
-
-## 8. Documentation as Code
-The project is guided by the following files — note their locations:
-
-| File | Location | Purpose |
+| File | Written | By |
 | :--- | :--- | :--- |
-| `README.md` | Root | Project overview and quick-start |
-| `PLAYBOOK.md` | Root | Developer preferences (project-agnostic) |
-| `NEW-INSTRUCTIONS.md` | **Root** | Current cycle instructions from the user |
-| `QUESTIONS.md` | **Root** | Sole clarification channel; immutable decision log |
-| `ONBOARDING.md` | `DOC/` | New project setup guide (run once per project) |
-| `GSD-RULES.md` | `DOC/` | Inviolable execution rules |
-| `ARCHITECTURE.md` | `DOC/` | Hexagonal architecture, stack, components |
-| `PROJECT.md` | `DOC/` | Vision, objectives, team, and KPIs |
-| `PLAN.md` | `DOC/` | Stage-level acceptance criteria and business rules |
-| `ROADMAP.md` | `DOC/` | High-level stage tracking |
-| `STATE.md` | `DOC/` | Current state, deliveries, and blockers |
-| `TASKS.md` | `DOC/` | Atomic task registry with statuses |
-| `TESTS.md` | `DOC/` | Test results, steps, and validations |
-| `CONTEXT.md` | `DOC/` | Decisions and context summary |
-| `ENV_SETUP.md` | `DOC/` | Environment variables and secure credential guidance |
-| `DESIGN.md` | `DOC/` | Visual identity and design tokens |
-| `VERSIONS.md` | `DOC/` | Release history and milestone log |
+| `STATE.md` | During and at end of phase | Technical agents |
+| `NEW-INSTRUCTIONS.md` | Only if [HUMAN] intervenes mid-phase | [HUMAN] exclusively |
+| `CONTEXT.md` | Phase closure only | Management agents (CEO, CTO, BA) |
+| `PLAN.md` | Phase closure only | BA |
+| `TASKS.md` | Phase closure only | All agents |
+| `TESTS.md` | Phase closure only | QA / Technical agents |
+| `WIKI` | Phase closure only | DOCUMENTATION agent |
+| `VERSIONS.md` | Phase closure only, from Phase 1 onward | Phase-closing agent |
+| `RETROSPECTIVE.md` | Phase closure only | CEO |
+| `QUESTIONS.md` | Only when agent needs to ask [HUMAN] | Any agent |
+| `ROADMAP.md` | Marked by [HUMAN] at closure | [HUMAN] |
+| `PLAYBOOK.md` | When any interaction changes understanding of [HUMAN] work preferences | CEO |
 
-## 9. Installed Skills & Environment Tools
+### 1.2 File Purpose (Inviolable Definitions)
 
-The Antigravity environment has **skills** (specialized instruction packages) and **external tools** that extend the AI agent's capabilities. The agent **must** consult the available skills before starting any development phase and record in `QUESTIONS.md` which ones can be used and in which context.
+- **PLAYBOOK.md** — [HUMAN]'s work preferences and working style. Updated only when understanding changes.
+- **CONTEXT.md** — Architectural and project decisions with justifications. Owned by management agents.
+- **STATE.md** — Agent execution memory: what is done, pending, and blocked. Owned by technical agents.
+- **QUESTIONS.md** — Exclusively for agents to ask [HUMAN]. No decisions, no logs, no architecture notes.
+- **WIKI** — Project knowledge base + end-user manual (`wiki/user-manual/`). Filled at phase closure.
+- **VERSIONS.md** — Release history. Written at phase closure, starting from Phase 1.
 
-## 9.1. LLM Tiering Strategy
-| Tier | Model | Purpose & Use Cases |
-| :--- | :--- | :--- | 
-| Tier 1: Efficiency | {{TIER_1_EFFICIENCY_MODEL}} | Atomic & Repetitive Tasks: Log generation, JSON/YAML formatting in .agent_handoff/, syntax linting, and rapid documentation research. |
-| Tier 2: Development | {{TIER_2_DEVELOPMENT_MODEL}} | Standard Implementation: TDD cycles (Red-Green-Refactor), unit test creation in `TESTS.md`, and SQL/infrastructure optimization. |
-| Tier 3: Expert | {{TIER_3_EXPERT_MODEL}} | Architecture & Decision Making: Resolving critical ambiguities in `QUESTIONS.md`, enforcing Hexagonal Architecture patterns, and strategic Roadmap planning. |
+### 1.3 Reading Rules
 
-
-### 9.1 Antigravity Environment Skills
-Skills are thematic extensions installed in `<appDataDir>\skills\`. Before implementing any component, the agent must check if there is a relevant skill and follow it.
-
-**Mandatory skills by domain (examples):**
-
-| Domain | Recommended Skills | When to Use |
-| :--- | :--- | :--- |
-| **Architecture** | `architect-review`, `senior-architect`, `ddd-context-mapping` | Design review and context mapping |
-| **Backend Java/Spring** | `api-patterns`, `backend-architect`, `dotnet-backend` (reference) | API design, service patterns |
-| **Python / ML** | `scikit-learn`, `ml-pipeline-workflow`, `python-pro` | ML pipelines, modeling, optimization |
-| **Frontend Angular** | `react-patterns` (component reference), `frontend-design` | UI design, componentization |
-| **Database** | `database`, `database-design`, `postgres-best-practices` | Schema, migrations, SQL optimization |
-| **Security** | `security-auditor`, `differential-review`, `gdpr-data-handling` | Audits, secure code review |
-| **TDD / Testing** | `tdd-workflow`, `tdd-workflows-tdd-cycle`, `webapp-testing` | Red-Green-Refactor cycle, E2E tests |
-| **DevOps / CI/CD** | `github-actions-templates`, `docker-expert`, `terraform-skill` | Pipelines, containers, IaC |
-| **Documentation** | `documentation`, `wiki-architect`, `mermaid-expert` | Doc generation, diagrams |
-| **Debugging** | `debugger`, `systematic-debugging`, `error-diagnostics-smart-debug` | Bug and failure diagnosis |
-| **Observability** | `grafana-dashboards`, `prometheus-configuration`, `distributed-tracing` | Monitoring, metrics, tracing |
-| **Git / PR** | `github`, `pr-writer`, `git-pr-workflows-pr-enhance` | Git workflows, PR creation |
-
-### 9.2 Suggested External Tools
-In addition to skills, the following external tools are recommended to complement the GSD workflow:
-
-- **Linting & Formatting:** ESLint, Prettier (frontend), Checkstyle/SpotBugs (Java), Black/Ruff (Python).
-- **Static Application Security Testing (SAST):** SonarQube, Semgrep, Snyk.
-- **Performance Testing:** k6, JMeter, Locust.
-- **Dependency Monitoring:** Dependabot, Renovate, OWASP Dependency-Check.
-- **API Documentation:** Swagger/OpenAPI (Spring), Sphinx (Python).
-- **Diagrams:** Mermaid (integrated via `mermaid-expert` skill), draw.io, PlantUML.
-- **Secrets Management:** HashiCorp Vault, AWS Secrets Manager, Azure Key Vault (see ENV_SETUP.md).
-- **Containerization & Orchestration:** Docker Compose (dev), Kubernetes/Helm (production).
-- **Messaging & Cache:** Apache Kafka, Redis (as per ARCHITECTURE.md).
-
-### 9.3 Usage Rules
-9.3.1 **Mandatory Consultation:** Before starting any ROADMAP phase, the agent must list applicable skills and record them in `CONTEXT.md`.
-9.3.2 **Skill Priority:** If a skill exists for the domain, it takes precedence over generic knowledge.
-9.3.3 **Developer Suggestions:** The agent must suggest relevant external tools in `PLAN.md` (Dependencies section) when identifying needs not covered by skills.
-9.3.4 **Updates:** When new skills are installed or removed, update this section and `CONTEXT.md`.
-9.3.5 **Usage Documentation:** Record in `TESTS.md` validations that used specific skills or tools.
-9.3.6 **CTO Ownership — Antigravity Skill Mapping:** The **[CTO] Agent is the sole responsible agent** for analyzing the installed skills catalog (this section) before each roadmap stage. The CTO must:
-  - Identify which skills apply to the current stage's scope and tech stack.
-  - Communicate the selected skills to the relevant technical agents ([DEV_BACKEND], [DEV_FRONTEND], [DBA], [DS/ML], [DEVOPS]) via `.agent_handoff/`.
-  - Record the skill mapping decision in `CONTEXT.md` before any implementation begins.
-  - Update this section if new skills are installed or deprecated.
+- **Technical agents (Junior/Pleno):** Handoff only — no file reading.
+- **Technical agents (Senior):** Handoff + `ARCHITECTURE.md` only if task requires it.
+- **Management agents:** Full intake once per phase. No re-reading unless [HUMAN] intervenes.
+- **QUESTIONS.md:** Written only when registering a question for [HUMAN]. Never read at kickoff.
+- **RETROSPECTIVE.md / WIKI:** Written at closure only.
 
 ---
-**AGENT SIGNATURE:** Operating in GSD Mode - Execution on demand, quality by design.
+
+## §2. Phase Lifecycle
+
+### 2.1 Phase Start
+1. CEO + CTO + BA: full intake (once).
+2. SECURITY: threat modeling.
+3. CTO: seniority assignment via handoff.
+4. CEO: generates `phase_context` snapshot + dispatches single `PHASE_KICKOFF` handoff.
+
+### 2.2 During Phase
+- Technical agents execute from handoff context.
+- `STATE.md` updated as tasks complete.
+- `NEW-INSTRUCTIONS.md` only if [HUMAN] intervenes.
+- `playbook_update: true` flag in handoff when a decision reveals a work preference.
+- `retrospective_note` field populated in handoffs during the phase — consolidated at closure.
+
+### 2.3 Phase Closure
+1. Parallel review: SECURITY + CODE_REVIEWER + QA ± DBA/DEVOPS.
+2. TECH_LEAD consolidates → CTO/BA approve.
+3. All documentation written: CONTEXT, PLAN, TASKS, TESTS, WIKI, VERSIONS (Phase 1+), RETROSPECTIVE.
+4. CEO updates PLAYBOOK if `playbook_update: true` flags received.
+5. Stage Closure Checklist presented to [HUMAN].
+6. [HUMAN] approves → marks ROADMAP → releases PR → Merge.
+
+### 2.4 Stage Closure Checklist
+
+| # | File | What to Check |
+| :- | :--- | :--- |
+| 1 | `TESTS.md` | All tests recorded with results and timestamp |
+| 2 | `STATE.md` | Updated with delivery and metrics |
+| 3 | `TASKS.md` | All tasks Done; estimated vs. actual time recorded |
+| 4 | `CONTEXT.md` | Architectural decisions documented |
+| 5 | `README.md` | Reflects delivered code reality |
+| 6 | `ROADMAP.md` | Stage marked `[x]` by [HUMAN] |
+| 7 | `PLAN.md` | Closure Gate section filled |
+| 8 | `VERSIONS.md` | Entry added (Phase 1 onward) |
+| 9 | `RETROSPECTIVE.md` | Phase entry consolidated by CEO |
+| 10 | `WIKI` | Updated with phase deliverables |
+
+> **[HUMAN] is the sole approval authority for stage advancement.**
+
+---
+
+## §3. Rollback Protocol
+
+### 3.1 Severity Levels
+
+| Level | Criteria | Rollback |
+| :--- | :--- | :--- |
+| **Critical** | Security vulnerability, data loss, system down | Mandatory — immediate |
+| **High** | Core feature regression, all-users impact | Mandatory — [HUMAN] authorized |
+| **Medium** | Secondary flow bug, performance degradation | Optional — [HUMAN] decides |
+| **Low** | Cosmetic, rare edge case | No rollback — fix in next phase |
+
+> **Critical only:** DEVOPS may initiate preventive rollback while awaiting [HUMAN].
+
+### 3.2 Rollback Flow
+```
+Bug identified + severity defined
+→ Critical/High: next phase FREEZES
+→ SECURITY/QA registers in QUESTIONS.md
+→ [HUMAN] authorizes rollback
+→ DEVOPS executes rollback to last stable version
+→ TECH_LEAD opens priority task in TASKS.md
+→ Records: VERSIONS.md, RETROSPECTIVE.md, CONTEXT.md (if architectural)
+```
+
+---
+
+## §4. Bugfix Branch Protocol
+
+```
+Bug identified
+→ Critical/High: next phase FREEZES
+→ DEVOPS creates: bugfix/phase-X-<description>
+→ TECH_LEAD opens priority task in TASKS.md
+→ CTO/BA focused intake (no full file reading)
+→ DEV fixes in bugfix branch
+→ Full review (SECURITY mandatory for Critical/High)
+→ [HUMAN] authorizes merge → main + next phase branch
+→ Next phase resumes
+```
+
+| Severity | Next Phase | Action |
+| :--- | :--- | :--- |
+| Critical | Freezes immediately | Absolute priority |
+| High | Freezes | Starts within 1 cycle |
+| Medium | Continues | Parallel isolated branch |
+| Low | Continues | Normal backlog |
+
+---
+
+## §5. Credential Leak Protocol
+
+Always **Critical** — no exceptions. No agent resolves alone.
+
+```
+Leak identified
+→ SECURITY registers in QUESTIONS.md immediately
+→ Development FREEZES
+→ [HUMAN] revokes credential at source
+→ DEVOPS removes from git history
+→ SECURITY validates cleanup
+→ New credential via vault
+→ SECURITY audits all phase files
+→ Development resumes after SECURITY clearance
+```
+
+---
+
+## §6. Quality Standards
+
+### 6.1 Test Quality
+
+| Layer | Criteria |
+| :--- | :--- |
+| Domain | Mutation score ≥ 80% |
+| Application | 100% use case coverage (happy + unhappy path) |
+| Infrastructure | Contract tests |
+| Frontend | Behavior tests, not implementation tests |
+
+**By seniority:**
+- Junior: happy path mandatory.
+- Pleno: happy + unhappy path.
+- Senior: mutation testing + edge cases.
+
+### 6.2 Conflict Resolution
+
+- *How code was written* → `[CODE_REVIEWER]`.
+- *Whether behavior is correct* → `[QA]`.
+- Cross-scope → `[TECH_LEAD]` → `[CTO]`.
+
+---
+
+## §7. TDD Development Cycle (Strict Mode)
+
+1. **RED:** Failing test.
+2. **GREEN:** Minimum code to pass.
+3. **REFACTOR:** SOLID + Clean Code.
+4. **SECURITY:** Sanitization, injection protection, JWT.
+
+---
+
+## §8. Hexagonal Architecture & Isolation
+
+- **DOMAIN:** Pure logic. No framework imports.
+- **APPLICATION (Ports):** Input/output contract interfaces.
+- **INFRASTRUCTURE (Adapters):** DB, APIs, UI implementations.
+
+**Naming:**
+- Web → `<name>-web` | Mobile → `<name>-app` | Desktop → `<name>-desktop` | Service → `<name>-service`
+
+---
+
+## §9. Security & Persistence
+
+- API routes born `deny-all`. Released via JWT only.
+- No logging of keys, payloads, or sensitive data.
+- Adapters sanitize data before Domain.
+- Credentials never in code or docs. `.env` never committed.
+- Structured logs mandatory: INFO / WARN / ERROR.
+
+---
+
+## §10. LLM Tiering & Model Routing
+
+Seniority and LLM Tier are **separate concepts**.
+- Seniority → autonomy scope.
+- Tier → which model runs.
+
+| Tier | Purpose |
+| :--- | :--- |
+| Tier 1 — Efficiency | Logs, formatting, linting, repetitive tasks |
+| Tier 2 — Development | Standard TDD, feature implementation |
+| Tier 3 — Expert | Architectural decisions, complex domain, security design |
+
+> When an external orchestrator is available, it **should** route tasks to specific models per tier. The multi-agent objective is token economy.
+
+---
+
+## §11. Installed Skills & Environment Tools
+
+CTO is the sole responsible agent for skill mapping per phase. Recorded in `CONTEXT.md` at closure.
+
+| Domain | Skills | When |
+| :--- | :--- | :--- |
+| Architecture | `architect-review`, `senior-architect` | Design review |
+| Backend Java | `api-patterns`, `backend-architect` | API design |
+| Python/ML | `scikit-learn`, `ml-pipeline-workflow` | ML pipelines |
+| Frontend | `frontend-design`, `react-patterns` | UI componentization |
+| Database | `database-design`, `postgres-best-practices` | Schema, migrations |
+| Security | `security-auditor`, `differential-review` | Audits |
+| TDD | `tdd-workflow`, `webapp-testing` | Test cycles |
+| DevOps | `docker-expert`, `github-actions-templates` | Pipelines |
+| Documentation | `documentation`, `wiki-architect` | Doc generation |
+| Debugging | `systematic-debugging` | Bug diagnosis |
+
+**External tools:** ESLint, Prettier, Checkstyle, SonarQube, Semgrep, k6, Dependabot, Swagger, Mermaid, HashiCorp Vault, Docker Compose, Kafka, Redis.
+
+---
+
+## §12. Documentation as Code
+
+| File | Location | Owner | Written |
+| :--- | :--- | :--- | :--- |
+| `README.md` | Root | DOCUMENTATION | Post-onboarding; updated at closure |
+| `PLAYBOOK.md` | Root | CEO | On preference change |
+| `NEW-INSTRUCTIONS.md` | Root | [HUMAN] exclusively | On new instructions |
+| `QUESTIONS.md` | Root | Any agent | Only to ask [HUMAN] |
+| `RETROSPECTIVE.md` | Root | CEO | Phase closure |
+| `GSD-RULES.md` | `DOC/` | — | Inviolable |
+| `ARCHITECTURE.md` | `DOC/` | CTO | Phase closure |
+| `PROJECT.md` | `DOC/` | CEO / BA | Onboarding |
+| `PLAN.md` | `DOC/` | BA | Phase closure |
+| `ROADMAP.md` | `DOC/` | CEO / [HUMAN] | Phase closure |
+| `STATE.md` | `DOC/` | Technical agents | During + closure |
+| `CONTEXT.md` | `DOC/` | Management agents | Phase closure |
+| `TASKS.md` | `DOC/` | All agents | Phase closure |
+| `TESTS.md` | `DOC/` | QA / Technical | Phase closure |
+| `ENV_SETUP.md` | `DOC/` | DEVOPS / SECURITY | Phase closure |
+| `DESIGN.md` | `DOC/` | UX_RESEARCHER | Phase closure |
+| `VERSIONS.md` | `DOC/` | Phase-closing agent | Phase closure, Phase 1+ |
+| `ONBOARDING.md` | `DOC/` | CEO | Once per new project |
+| `wiki/` | `wiki/` | DOCUMENTATION | Phase closure |
+| `wiki/user-manual/` | `wiki/` | DOCUMENTATION | Phase closure |
+
+---
+
+**AGENT SIGNATURE:** Operating in GSD Mode — Execution on demand, quality by design. v1.5

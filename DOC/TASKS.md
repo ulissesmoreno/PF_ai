@@ -144,7 +144,7 @@
 - **Action:** Go tests passed with workspace-local `GOCACHE`; PostgreSQL container and migration validated.
 
 ### [2026-05-05] - Task PHASE1-BACKEND-001: Create Go Hexagonal MVP foundation
-- **Status:** Doing
+- **Status:** Done
 - **Assigned to:** [DEV_BACKEND:Pleno]
 - **Priority:** High
 - **Deadline:** Phase 1.
@@ -152,7 +152,7 @@
 - **Dependencies:** Phase 1 authorization; Go runtime for test execution.
 - **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
 - **Business value:** Provides the backend foundation for agent/provider/memory/handoff operations.
-- **Notes:** Domain, application ports, file-memory adapter, handoff writer, HTTP API, and tests were created. Go test suite passed with workspace-local `GOCACHE`.
+- **Notes:** Domain, application ports, file-memory adapter, handoff writer, HTTP API, repository contracts, and MVP API acceptance flow were created. Go test suite passed with workspace-local `GOCACHE`.
 
 ### [2026-05-05] - Task PHASE1-FRONTEND-001: Create MVP web workbench shell
 - **Status:** Doing
@@ -187,3 +187,61 @@
 - **Business value:** Allows [HUMAN] to inspect the MVP workbench in browser.
 - **Reason:** Background launch did not keep the Node server active from the current shell.
 - **Action:** Run `cd pf-ai-web && npm start` interactively or provide an approved persistent process runner.
+
+### [2026-05-05] - Task PHASE1-DB-003: Implement PostgreSQL repository contract adapters
+- **Status:** Done
+- **Assigned to:** [DBA:Pleno]
+- **Completed on:** 2026-05-05 18:50
+- **Priority:** High
+- **Deadline:** Phase 1.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Dependencies:** Phase 1 migration and Go runtime.
+- **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
+- **Business value:** Provides durable persistence contracts for agents, providers, sessions, and audit events while preserving Hexagonal Architecture.
+- **Notes:** Contract tests pass. Runtime driver/wiring remains a separate backend integration decision.
+
+### [2026-05-05] - Task PHASE1-FRONTEND-003: Clear local web runtime blocker
+- **Status:** Done
+- **Assigned to:** [DEV_FRONTEND:Pleno] / [DEVOPS:Pleno]
+- **Completed on:** 2026-05-05 18:56
+- **Priority:** Medium
+- **Deadline:** Before Phase 1 closure.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Dependencies:** Node.js local runtime.
+- **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
+- **Business value:** Allows [HUMAN] to inspect the MVP workbench in browser.
+- **Notes:** Use `http://127.0.0.1:5173`; `localhost` failed in the shell while IPv4 loopback succeeded.
+
+### [2026-05-05] - Task PHASE1-BACKEND-002: Validate local backend runtime
+- **Status:** Blocked
+- **Assigned to:** [DEV_BACKEND:Pleno] / [DEVOPS:Pleno]
+- **Reason:** The Go service starts in foreground, but background-launched processes from this shell did not remain reachable for HTTP checks.
+- **Action:** Run backend in an interactive terminal with `PF_AI_AUTH_SECRET` set, or provide an approved persistent service runner.
+
+### [2026-05-05] - Task PHASE1-BACKEND-003: Validate MVP API flow
+- **Status:** Done
+- **Assigned to:** [DEV_BACKEND:Pleno]
+- **Completed on:** 2026-05-05 19:02
+- **Priority:** High
+- **Deadline:** Phase 1.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Dependencies:** Backend HTTP API and handoff adapter.
+- **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
+- **Business value:** Confirms the MVP flow works end-to-end at API level before closure review.
+- **Notes:** Provider, agent, memory read, and handoff creation validated through `httptest`; generated handoff did not leak the local auth secret.
+
+### [2026-05-05] - Task PHASE1-REVIEW-001: Consolidate parallel closure review
+- **Status:** Done
+- **Assigned to:** [TECH_LEAD:Senior] / [SECURITY:Senior] / [QA:Pleno] / [CODE_REVIEWER:Senior]
+- **Completed on:** 2026-05-05 19:03
+- **Priority:** High
+- **Deadline:** Before Phase 1 Stage Closure Gate.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Dependencies:** Backend, frontend, and persistence validation results.
+- **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
+- **Business value:** Confirms Phase 1 implementation quality before [HUMAN] closure review.
+- **Notes:** No blocking implementation defects found. Backend OS-level background runtime remains a process-runner blocker, not an API behavior failure.

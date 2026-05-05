@@ -16,6 +16,14 @@ type ProviderRepository interface {
 	ListProviders(ctx context.Context) ([]domain.ModelProvider, error)
 }
 
+type SessionRepository interface {
+	SaveSession(ctx context.Context, session domain.Session) error
+}
+
+type AuditRepository interface {
+	SaveAuditEvent(ctx context.Context, event domain.AuditEvent) error
+}
+
 type MemoryReader interface {
 	ReadMemory(ctx context.Context, memory domain.MemoryFile) (string, error)
 }

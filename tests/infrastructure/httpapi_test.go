@@ -2,10 +2,15 @@ package infrastructure_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
+	"pf-ai/src/domain"
 	"pf-ai/src/infrastructure/httpapi"
 )
 
@@ -58,5 +63,69 @@ func TestPostProviderRejectsMissingSecretReference(t *testing.T) {
 
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", response.Code)
+	}
+}
+
+func TestMVPFlowCreatesProviderAgentReadsMemoryAndWritesHandoff(t *testing.T) {
+	root := t.TempDir()
+	docDir := filepath.Join(root, "DOC")
+	if err := os.MkdirAll(docDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(docDir, "STATE.md"), []byte("phase 1 state"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	handoffDir := filepath.Join(root, ".agent_handoff")
+	api := (&httpapi.Server{
+		AuthSecret: "local-test-secret",
+		DocRoot:    root,
+		HandoffDir: handoffDir,
+		MemoryFiles: []domain.MemoryFile{
+			{Path: "DOC/STATE.md", Label: "State"},
+		},
+	}).Routes()
+
+	postJSON(t, api, "/api/providers", `{"id":"api-default","name":"API Default","mode":"api","endpoint":"https://api.example.test","model":"gpt","secret_ref":"PF_AI_API_KEY"}`, http.StatusCreated)
+	postJSON(t, api, "/api/agents", `{"id":"ceo","name":"CEO","role":"orchestration","seniority":"Senior","provider_id":"api-default","description":"orchestrates"}`, http.StatusCreated)
+
+	memoryRequest := httptest.NewRequest(http.MethodGet, "/api/memory?path=DOC/STATE.md", nil)
+	memoryRequest.Header.Set("Authorization", "Bearer local-test-secret")
+	memoryResponse := httptest.NewRecorder()
+	api.ServeHTTP(memoryResponse, memoryRequest)
+	if memoryResponse.Code != http.StatusOK {
+		t.Fatalf("expected memory 200, got %d: %s", memoryResponse.Code, memoryResponse.Body.String())
+	}
+	if !strings.Contains(memoryResponse.Body.String(), "phase 1 state") {
+		t.Fatalf("expected memory content, got %s", memoryResponse.Body.String())
+	}
+
+	postJSON(t, api, "/api/handoffs", `{"sender":"CEO","recipient":"DEV_BACKEND","task_ref":"PHASE1-BACKEND-001","intent":"PHASE_KICKOFF","payload":{"summary":"validate flow"}}`, http.StatusCreated)
+
+	files, err := os.ReadDir(handoffDir)
+	if err != nil {
+		t.Fatalf("expected handoff dir: %v", err)
+	}
+	if len(files) != 1 {
+		t.Fatalf("expected one handoff file, got %d", len(files))
+	}
+	body, err := os.ReadFile(filepath.Join(handoffDir, files[0].Name()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(strings.ToLower(string(body)), "local-test-secret") {
+		t.Fatalf("handoff leaked auth secret: %s", string(body))
+	}
+}
+
+func postJSON(t *testing.T, api http.Handler, path string, payload string, expectedStatus int) {
+	t.Helper()
+	request := httptest.NewRequest(http.MethodPost, path, bytes.NewBufferString(payload))
+	request.Header.Set("Authorization", "Bearer local-test-secret")
+	response := httptest.NewRecorder()
+	api.ServeHTTP(response, request)
+	if response.Code != expectedStatus {
+		var parsed map[string]any
+		_ = json.Unmarshal(response.Body.Bytes(), &parsed)
+		t.Fatalf("expected %d for %s, got %d: %v", expectedStatus, path, response.Code, parsed)
 	}
 }
