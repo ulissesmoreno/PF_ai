@@ -88,3 +88,34 @@ Record decisions and context before execution. Maintain transparency between pha
 - **Decision:** Wiki updates happen only at phase end unless explicitly requested. Go remains compatible with Hexagonal Architecture; PF_ai keeps domain/application/infrastructure boundaries.
 - **Impact:** Architectural / Process.
 - **References:** `NEW-INSTRUCTIONS.md`, `QUESTIONS.md` entry `[2026-05-05 15:14:57] Go and Hexagonal Architecture compatibility`, `PLAYBOOK.md`.
+
+### [2026-05-05 15:23] - [CEO]: Phase 1 intake opened
+- **Context:** Phase 0 is Done and [HUMAN] sent `[USER_DONE]` to start the next cycle.
+- **Decision:** Phase 1 opens in planning mode only. Implementation remains blocked until Phase 1 kickoff handoff, SECURITY threat model validation, and explicit [HUMAN] implementation authorization.
+- **Architecture:** Go Hexagonal backend, TypeScript web frontend, PostgreSQL persistence, Markdown read adapters, `.agent_handoff/` write adapter, Docker Compose for dependencies.
+- **Impact:** Architectural / Security / Process.
+- **References:** `DOC/ROADMAP.md`, `DOC/PLAN.md#15-phase-1-plan---mvp-agent-model-memory-and-file-handoffs`, `DOC/ARCHITECTURE.md`.
+
+### Phase 1 - Skill Mapping
+- **Applicable skills:** Backend Go/Hexagonal patterns, frontend design, database design, PostgreSQL best practices, security audit, TDD workflow, webapp testing, Docker expert, documentation.
+- **Recorded by:** [CTO]
+- **Timestamp:** 2026-05-05 15:23
+- **Decision:** Use the listed domains as required expertise for kickoff handoff. No external skill installation is required before planning; implementation agents must prefer installed/local skills when available.
+
+### [2026-05-05 15:23] - [SECURITY]: Phase 1 preliminary threat model
+- **Threats:** Path traversal in Markdown memory reads; secret leakage into logs/handoffs; unauthenticated local API access; prompt/handoff injection from memory files; provider-mode confusion.
+- **Controls:** Canonical path validation; approved file allowlist; redaction and denylisted fields; deny-by-default protected routes; treating Markdown as data; explicit provider mode contracts.
+- **Decision:** Threat model is sufficient for planning. SECURITY validation is mandatory before production code begins.
+- **Impact:** Security / Architectural.
+
+### [2026-05-05 15:29] - [CEO]: Phase 1 implementation authorized
+- **Context:** [HUMAN] answered the direct authorization question in `QUESTIONS.md`.
+- **Decision:** Phase 1 implementation may start. CEO/CTO/BA may approve planning-level work; [HUMAN] gives final opinion at phase end. `[USER_DONE]` is treated as explicit approval of the latest pending step when context is unambiguous.
+- **Impact:** Process / Functional.
+- **References:** `QUESTIONS.md` entry `[2026-05-05 15:29:40] Phase 1 implementation authorization`.
+
+### [2026-05-05 15:30] - [DEVOPS]: Environment verification
+- **Context:** Phase 1 implementation started with backend Go files, tests, frontend workbench, database migration, and Docker Compose baseline.
+- **Decision:** Node.js is available and JavaScript syntax validation passed. Go is not available on PATH, so Go test execution is blocked until Go is installed or a valid Go runtime is made available. Docker daemon access is inconsistent from the sandbox for image inspection.
+- **Impact:** Technical / DevOps.
+- **References:** `DOC/TESTS.md#11-phase-1-executed-results`.

@@ -298,3 +298,112 @@ After executing all tests:
 - **CODE_REVIEWER:** Approved for documentation consistency.
 - **TECH_LEAD:** Consolidated status: Approved for [HUMAN] Stage Closure Gate review.
 - **Remaining blocker:** [HUMAN:Ulisses] must explicitly approve Phase 0 closure and roadmap advancement.
+
+---
+
+## 10. Phase 1 Planned Test Matrix
+
+### [2026-05-05 15:23] TEST-PHASE1-DOMAIN-001 - Agent and Provider Domain Rules
+- **Type:** Unit
+- **Objective:** Validate agent definitions, provider modes, memory paths, and handoff metadata without infrastructure dependencies.
+- **Expected result:** Domain tests fail first, then pass after implementation.
+- **Status:** Planned.
+
+### [2026-05-05 15:23] TEST-PHASE1-HANDOFF-001 - File Handoff Schema Validation
+- **Type:** Unit / Security
+- **Objective:** Validate required handoff fields and reject secret-looking fields.
+- **Expected result:** Invalid handoffs are rejected; valid handoffs serialize as schema-compliant JSON.
+- **Status:** Planned.
+
+### [2026-05-05 15:23] TEST-PHASE1-DB-001 - PostgreSQL Repository Contracts
+- **Type:** Integration
+- **Objective:** Persist and retrieve agents, providers, sessions, and audit metadata.
+- **Expected result:** Repository tests pass against local PostgreSQL test database.
+- **Status:** Planned.
+
+### [2026-05-05 15:23] TEST-PHASE1-FILE-001 - Markdown Memory Adapter Safety
+- **Type:** Integration / Security
+- **Objective:** Reject path traversal and unauthorized file reads.
+- **Expected result:** Adapter reads approved files and blocks unsafe paths.
+- **Status:** Planned.
+
+### [2026-05-05 15:23] TEST-PHASE1-AUTH-001 - Deny-by-default Protected Routes
+- **Type:** Security
+- **Objective:** Confirm protected API routes return 401 without valid auth/session.
+- **Expected result:** 100% protected routes reject unauthenticated requests.
+- **Status:** Planned.
+
+### [2026-05-05 15:23] TEST-PHASE1-E2E-001 - Human-agent MVP Flow
+- **Type:** Acceptance
+- **Objective:** Use UI/API to create one agent, one provider config, read one GSD file, and generate one handoff file.
+- **Expected result:** Flow completes and generated handoff contains no secrets.
+- **Status:** Planned.
+
+---
+
+## 11. Phase 1 Executed Results
+
+### [2026-05-05 15:30] TEST-PHASE1-FRONT-001 - Web JavaScript Syntax
+- **Type:** Frontend / Static
+- **Objective:** Validate JavaScript syntax for the MVP web workbench.
+- **Preconditions:** `pf-ai-web/src/app.js` created.
+- **Step by step:**
+  1. Ran `node --check pf-ai-web\src\app.js`.
+  2. Reviewed command exit status.
+- **Expected result:** Syntax check exits successfully.
+- **Obtained result:** Passed with exit code 0.
+- **Status:** Passed.
+- **Notes:** This does not replace browser/UI validation.
+- **Corrective action:** None.
+
+### [2026-05-05 15:32] TEST-PHASE1-FRONT-002 - Web Server JavaScript Syntax
+- **Type:** Frontend / Static
+- **Objective:** Validate JavaScript syntax for the dependency-free local web server.
+- **Preconditions:** `pf-ai-web/server.mjs` created.
+- **Step by step:**
+  1. Ran `node --check pf-ai-web\server.mjs`.
+  2. Reviewed command exit status.
+- **Expected result:** Syntax check exits successfully.
+- **Obtained result:** Passed with exit code 0.
+- **Status:** Passed.
+- **Notes:** Server runtime/browser validation remains pending.
+- **Corrective action:** None.
+
+### [2026-05-05 15:30] TEST-PHASE1-GO-001 - Go Test Suite Execution
+- **Type:** Unit / Integration
+- **Objective:** Run `go test ./...` for domain and infrastructure tests.
+- **Preconditions:** Go runtime available on PATH.
+- **Step by step:**
+  1. Ran `go test ./...`.
+  2. Reviewed command output.
+- **Expected result:** Go test suite executes and reports pass/fail.
+- **Obtained result:** Failed before execution because `go` is not recognized as a command.
+- **Status:** Blocked.
+- **Notes:** Test files are present, but no Go runtime is available in the current environment.
+- **Corrective action:** Install Go or provide a Go runtime in PATH, then rerun `go test ./...`.
+
+### [2026-05-05 15:30] TEST-PHASE1-SEC-001 - Secret Marker Review
+- **Type:** Security / Static
+- **Objective:** Review secret-related markers in implementation files.
+- **Preconditions:** Phase 1 initial implementation files created.
+- **Step by step:**
+  1. Searched implementation files for `password`, `secret`, `token`, and `api_key`.
+  2. Reviewed each occurrence.
+- **Expected result:** No real secrets are present.
+- **Obtained result:** Only placeholder values in `.env.example`, test sentinel values, schema field names, and redaction/validation logic were found.
+- **Status:** Passed with notes.
+- **Notes:** `.env.example` intentionally uses `change-me` placeholders.
+- **Corrective action:** Keep `.env` uncommitted and replace placeholders only in local secure configuration.
+
+### [2026-05-05 15:32] TEST-PHASE1-DEVOPS-001 - Docker Compose Configuration
+- **Type:** DevOps / Static
+- **Objective:** Validate Docker Compose file syntax and resolved service configuration.
+- **Preconditions:** `docker-compose.yml` and database migration directory created.
+- **Step by step:**
+  1. Ran `docker compose config`.
+  2. Reviewed resolved Compose output.
+- **Expected result:** Compose configuration resolves without syntax errors.
+- **Obtained result:** Passed with warnings about Docker config file access in `C:\Users\uliss\.docker\config.json`.
+- **Status:** Passed with notes.
+- **Notes:** Static Compose validation passed; daemon-dependent commands may still require Docker permissions.
+- **Corrective action:** Fix Docker config/daemon access before running database integration tests.

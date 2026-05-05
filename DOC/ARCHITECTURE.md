@@ -84,6 +84,7 @@ MVP handoffs are structured JSON files under `.agent_handoff/`. MCP is planned f
 | `TESTS.md` | QA + SECURITY + Technical | Test results |
 | `DESIGN.md` | UX_RESEARCHER + DEV_FRONTEND | Visual identity |
 | `wiki/` | DOCUMENTATION | Project knowledge base |
+| `QUESTIONS.md` | CEO | Only direct questions from agents to [HUMAN] |
 
 ## 6. Security Architecture
 - All API routes are born deny-by-default.
@@ -101,3 +102,4 @@ MVP handoffs are structured JSON files under `.agent_handoff/`. MCP is planned f
 
 ## 8. Version History (Immutable)
 - **[2026-05-05 15:06] - [CEO]:** Architecture filled during onboarding. Stack set to Go, TypeScript web, PostgreSQL, Docker, API/local model providers, file handoffs first, MCP later.
+- **[2026-05-05 15:23] - [CEO]:** Document ownership clarified: `QUESTIONS.md` for agent-to-human questions only; `CONTEXT.md` for architectural decisions; `STATE.md` for technical memory; `VERSIONS.md` at phase closure from Phase 1 onward.

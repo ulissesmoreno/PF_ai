@@ -15,8 +15,10 @@ Ulisses como operador principal e, futuramente, usuarios tecnicos que precisam d
 1. Prerequisitos: Go, Node.js, Docker, Docker Compose e PostgreSQL via Compose.
 2. Clone o repositorio e entre na pasta do projeto.
 3. Configure variaveis de ambiente conforme `DOC/ENV_SETUP.md`.
-4. Suba os servicos locais com Docker Compose quando disponiveis.
-5. Execute os comandos de backend/frontend definidos na fase de implementacao.
+4. Copie `.env.example` para `.env` local e substitua placeholders fora do Git.
+5. Suba PostgreSQL com `docker compose up -d postgres`.
+6. Execute backend com `go run ./cmd/pf-ai-service` quando Go estiver instalado.
+7. Execute frontend com `cd pf-ai-web` e `npm start`.
 
 ### Uso
 - Frontend web: interface humano-agentes para painel, agentes, modelos, memoria e handoffs.
@@ -33,6 +35,8 @@ Ulisses como operador principal e, futuramente, usuarios tecnicos que precisam d
 
 ### Testes
 Resultados obrigatorios devem ser registrados em `DOC/TESTS.md`.
+- Backend Go: `go test ./...`
+- Frontend shell: `node --check pf-ai-web/src/app.js` e `node --check pf-ai-web/server.mjs`
 
 ## English
 
@@ -49,8 +53,10 @@ Ulisses as the primary operator, with future support for technical users who nee
 1. Prerequisites: Go, Node.js, Docker, Docker Compose, and PostgreSQL through Compose.
 2. Clone the repository and enter the project directory.
 3. Configure environment variables according to `DOC/ENV_SETUP.md`.
-4. Start local services with Docker Compose when available.
-5. Run backend/frontend commands defined during implementation.
+4. Copy `.env.example` to a local `.env` and replace placeholders outside Git.
+5. Start PostgreSQL with `docker compose up -d postgres`.
+6. Run the backend with `go run ./cmd/pf-ai-service` when Go is installed.
+7. Run the frontend with `cd pf-ai-web` and `npm start`.
 
 ### Usage
 - Web frontend: human-agent interface for dashboard, agents, models, memory, and handoffs.
@@ -67,6 +73,8 @@ Ulisses as the primary operator, with future support for technical users who nee
 
 ### Testing
 Mandatory results must be recorded in `DOC/TESTS.md`.
+- Go backend: `go test ./...`
+- Frontend shell: `node --check pf-ai-web/src/app.js` and `node --check pf-ai-web/server.mjs`
 
 ## GSD Ignition
 

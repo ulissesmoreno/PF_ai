@@ -16,20 +16,20 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
   - Tests: Threat model before MVP implementation.
   - Responsible: [SECURITY].
 
-## Phase 1: MVP - Agent, Model, Memory, and File Handoffs (Status: To Do)
-- [ ] **MVP Planning**
+## Phase 1: MVP - Agent, Model, Memory, and File Handoffs (Status: Doing)
+- [x] **MVP Planning**
   - Criteria: Acceptance criteria, tests, business rules, and dependencies finalized in `DOC/PLAN.md`.
   - Tests: BA/CTO validation and SECURITY threat modeling.
   - Responsible: [BA] / [CTO].
-- [ ] **MVP Backend**
+- [ ] **MVP Backend** (Status: Doing)
   - Criteria: Go API supports agent registry, model/provider registry, GSD memory reads, and file handoff creation.
   - Tests: Unit and integration tests created before production code.
   - Responsible: [DEV_BACKEND].
-- [ ] **MVP Frontend**
+- [ ] **MVP Frontend** (Status: Doing)
   - Criteria: Web UI shows active phase/status, agents, models, key GSD memory files, and handoff actions.
   - Tests: Component and acceptance tests.
   - Responsible: [DEV_FRONTEND].
-- [ ] **MVP Persistence**
+- [ ] **MVP Persistence** (Status: Doing)
   - Criteria: PostgreSQL schema stores agents, providers, sessions, and audit metadata.
   - Tests: Migration and repository contract tests.
   - Responsible: [DBA].
@@ -71,3 +71,5 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
 - **[2026-05-05 15:06] - [CEO]:** Roadmap filled from onboarding answers and MVP confirmation.
 - **[2026-05-05 15:16] - [CEO]:** Phase 0 task items marked complete; phase status set to Closure Pending until [HUMAN] approval.
 - **[2026-05-05 15:20] - [CEO]:** [HUMAN:Ulisses] approved Phase 0 roadmap closure; phase status set to Done.
+- **[2026-05-05 15:23] - [CEO]:** Phase 1 planning opened after `[USER_DONE]`; implementation remains blocked until Phase 1 plan, threat model, and kickoff handoff are complete.
+- **[2026-05-05 15:30] - [CEO]:** Phase 1 implementation authorized by [HUMAN]; planning marked complete; backend, frontend, and persistence implementation started.

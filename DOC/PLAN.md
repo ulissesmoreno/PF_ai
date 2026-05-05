@@ -112,3 +112,92 @@ Complete Phase 0 onboarding and prepare Phase 1 MVP execution for PF_ai. The pro
 
 ### User Approval
 - [x] User confirmed stage closure and authorizes roadmap advancement on 2026-05-05 15:20.
+
+---
+
+## 15. Phase 1 Plan - MVP Agent, Model, Memory, and File Handoffs
+
+## Updated on: 2026-05-05 15:23:09
+
+## 15.1 Stage Objective
+Deliver the PF_ai MVP planning baseline and prepare implementation for a web-first agent/model/memory manager. Phase 1 must prove that [HUMAN:Ulisses] can operate PF_ai through a UI/API that registers agents and model providers, reads GSD memory files, and creates structured file handoffs.
+
+## 15.2 Roadmap Stage
+- **Stage name:** Phase 1 - MVP Agent, Model, Memory, and File Handoffs.
+- **Related roadmap item:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
+
+## 15.3 Detailed Description
+- **What will be implemented after kickoff approval:** Go backend, TypeScript web frontend, PostgreSQL schema, file-memory adapters, `.agent_handoff/` JSON creation, and protected local API routes.
+- **Expected behavior:** [HUMAN:Ulisses] can inspect current phase/status, register agents, register model/provider configurations, view key GSD files, and create a structured handoff file.
+- **Impacted components:** `pf-ai-service`, `pf-ai-web`, PostgreSQL, Docker Compose, `.agent_handoff/`, Markdown memory adapters, authentication/session handling.
+
+## 15.4 Acceptance Criteria
+- Criterion 1: Backend exposes protected API endpoints for agents, model providers, GSD memory reads, and handoff creation.
+- Criterion 2: Domain packages contain no framework, database, HTTP, Docker, or filesystem dependencies.
+- Criterion 3: PostgreSQL schema persists agents, providers, sessions, and audit metadata.
+- Criterion 4: File adapter reads approved GSD memory files without writing outside the project root.
+- Criterion 5: Handoff adapter creates schema-valid JSON files under `.agent_handoff/` without secrets.
+- Criterion 6: Web UI shows phase/status, agents, providers, selected memory files, and handoff actions.
+- Criterion 7: Unauthenticated requests to protected routes return 401.
+- Criterion 8: Tests are written before production code and results are recorded in `DOC/TESTS.md`.
+
+## 15.5 Business Rules
+- Rule 1: MVP handoffs use files; MCP remains later-stage scope.
+- Rule 2: Agents can be configured for API, local, or hybrid provider mode, but local model execution itself belongs to Phase 2 unless explicitly pulled forward.
+- Rule 3: Secrets never appear in `.md`, logs, database seed data, or handoff files.
+- Rule 4: `QUESTIONS.md` is used only when an agent must ask [HUMAN] a direct question.
+- Rule 5: `VERSIONS.md` and `wiki/` are updated at phase closure only.
+
+## 15.6 Recommended Tests
+- Unit: Domain validation for agent definitions, provider modes, memory paths, and handoff metadata.
+- Unit: Handoff schema builder rejects missing required fields and secret-looking fields.
+- Integration: PostgreSQL repositories persist and retrieve agents, providers, sessions, and audit metadata.
+- Integration: File-memory adapter rejects path traversal and unauthorized files.
+- Security: Protected routes return 401 without a valid session/token.
+- Acceptance: UI flow creates one agent, one provider config, reads a GSD file, and generates one handoff file.
+- Regression: Phase 0 documentation validation remains clean.
+
+## 15.7 Security Validations
+- Threat 1: Path traversal through memory-file reads.
+  - Mitigation: Canonicalize paths and restrict reads to approved project-root files.
+- Threat 2: Secret leakage into logs or handoff files.
+  - Mitigation: Redaction tests and denylisted field checks.
+- Threat 3: Unauthenticated local API access.
+  - Mitigation: Deny-by-default protected routes and auth/session tests.
+- Threat 4: Prompt or handoff injection through Markdown memory.
+  - Mitigation: Treat memory text as data; preserve source labels; avoid executing embedded instructions automatically.
+- Threat 5: Provider-mode confusion between local and API models.
+  - Mitigation: Explicit provider mode and adapter contract tests.
+
+## 15.8 Developer Validation Steps
+1. Confirm Docker is active.
+2. Confirm Go and Node.js are installed.
+3. Create tests before production code.
+4. Run backend unit/integration tests.
+5. Run frontend component/acceptance tests.
+6. Validate protected routes return 401 without auth.
+7. Validate generated handoff files contain no secrets.
+8. Record all results in `DOC/TESTS.md`.
+
+## 15.9 Responsible and Dependencies
+- **Responsible:** [BA] and [CTO] for planning/kickoff; [SECURITY] for threat model; [DEV_BACKEND], [DEV_FRONTEND], [DBA], [DEVOPS] for implementation after kickoff.
+- **Dependencies:** Phase 0 closed; Docker available; Go available; Node.js available; PostgreSQL via Compose.
+- **Time Estimate:** To be estimated by CTO during kickoff handoff.
+- **Extra-Code Prerequisites:** Local `.env` must be created outside git before runtime tests.
+
+## 15.10 Risks and Mitigations
+- Risk 1: MVP scope expands into Phase 2 local runtime.
+  - Mitigation: Keep local runtime as configurable provider path only in Phase 1.
+- Risk 2: File-memory adapter can corrupt docs.
+  - Mitigation: MVP reads approved GSD memory files; writes only to `.agent_handoff/` unless explicitly approved.
+- Risk 3: UI becomes decorative instead of operational.
+  - Mitigation: Use dense workbench design from `DOC/DESIGN.md`.
+
+## 15.11 Plan Validation
+- **Business Feasibility:** Approved for MVP planning.
+- **Technical Feasibility:** Approved pending environment verification.
+- **Security Readiness:** Threat model drafted; SECURITY must validate before implementation.
+- **Approval:** Implementation authorized by [HUMAN] after kickoff handoff.
+
+## 15.12 Stage Closure Gate Placeholder
+- Phase 1 closure gate will be filled only after implementation, review, QA, SECURITY audit, and [HUMAN] approval.

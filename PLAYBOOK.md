@@ -124,6 +124,9 @@
 | [2026-05-05 00:00] | **PLAYBOOK.md updated on understanding change.** | Not on schedule — triggered when any interaction reveals or changes a [HUMAN] work preference. |
 | [2026-05-05 15:06] | **Caveman-style chat.** | Responses should be compact; operational detail belongs in Markdown files. |
 | [2026-05-05 15:06] | **CONTEXT.md after onboarding.** | During project setup, update `CONTEXT.md` only after onboarding is complete. |
+| [2026-05-05 15:23] | **QUESTIONS.md only for agent-to-human questions.** | Decisions and internal conclusions go to the owning project document, not to `QUESTIONS.md`. |
+| [2026-05-05 15:29] | **[USER_DONE] approves the last explicit step.** | Treat `[USER_DONE]` as explicit approval of the most recent pending step or question when the context is unambiguous. |
+| [2026-05-05 15:29] | **Management approval through planning.** | CEO, CTO, and BA may approve planning-level work; [HUMAN] gives final phase-end opinion. |
 
 ---
 
@@ -140,6 +143,8 @@
 | [2026-05-05 00:00] | **RETROSPECTIVE.md per phase.** | CEO consolidates from handoff notes. Feeds PLAYBOOK.md when preference revealed. |
 | [2026-05-05 00:00] | **wiki/user-manual/ for end-user docs.** | Non-technical, task-oriented. Owned by DOCUMENTATION agent. |
 | [2026-05-05 15:14] | **Wiki updates at phase end.** | Fill or update `wiki/` only at the end of each phase unless [HUMAN] explicitly requests otherwise. |
+| [2026-05-05 15:23] | **VERSIONS.md from Phase 1 closure onward.** | Update `VERSIONS.md` only at the end of each phase starting with Phase 1. |
+| [2026-05-05 15:23] | **Memory ownership split.** | `PLAYBOOK.md` stores [HUMAN] work preferences, `CONTEXT.md` stores project architectural decisions, and `STATE.md` stores technical agent memory. |
 
 ---
 
@@ -168,6 +173,8 @@
 | [2026-05-05 00:00] | CEO | Major update: multi-agent orchestration preferences, phase-based reading, chat conciseness, seniority model, security as foundation, rollback/bugfix protocols, memory ownership, retrospective, PLAYBOOK trigger rules. |
 | [2026-05-05 15:06] | CEO | Added PF_ai onboarding preferences: Go orchestration, Caveman-style chat, and `CONTEXT.md` update timing. |
 | [2026-05-05 15:14] | CEO | Added wiki update timing preference from `NEW-INSTRUCTIONS.md`. |
+| [2026-05-05 15:23] | CEO | Added memory ownership and versioning timing preferences from `NEW-INSTRUCTIONS.md`. |
+| [2026-05-05 15:29] | CEO | Added `[USER_DONE]` approval semantics and management planning-approval preference. |
 
 ---
 

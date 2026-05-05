@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: pf-ai-postgres
+    environment:
+      POSTGRES_DB: pf_ai
+      POSTGRES_USER: pf_ai
+      POSTGRES_PASSWORD: ${PF_AI_DB_PASSWORD:-pf_ai_local_dev_only}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pf_ai -d pf_ai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pf_ai_postgres_data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  pf_ai_postgres_data:

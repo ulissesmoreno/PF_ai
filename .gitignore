@@ -1,3 +1,6 @@
 # Ignore transient agent handoff files
 .agent_handoff/
 TODO.md
+.env
+.env.*
+!.env.example

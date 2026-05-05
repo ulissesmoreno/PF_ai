@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PF_ai</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="brand">PF_ai</div>
+      <nav>
+        <a class="active" href="#dashboard">Dashboard</a>
+        <a href="#agents">Agents</a>
+        <a href="#providers">Providers</a>
+        <a href="#memory">Memory</a>
+        <a href="#handoffs">Handoffs</a>
+      </nav>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Phase 1</p>
+          <h1>Agent, model, memory, and file handoffs</h1>
+        </div>
+        <span class="status">Implementation authorized</span>
+      </header>
+
+      <section class="grid" id="dashboard">
+        <article class="panel metric">
+          <span>Current phase</span>
+          <strong>Phase 1</strong>
+          <small>MVP workbench</small>
+        </article>
+        <article class="panel metric">
+          <span>Provider mode</span>
+          <strong>Hybrid</strong>
+          <small>API or local configuration path</small>
+        </article>
+        <article class="panel metric">
+          <span>Handoffs</span>
+          <strong>File JSON</strong>
+          <small>MCP later</small>
+        </article>
+      </section>
+
+      <section class="split">
+        <article class="panel" id="agents">
+          <div class="panel-header">
+            <h2>Agents</h2>
+            <button type="button">New</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Seniority</th>
+                <th>Provider</th>
+              </tr>
+            </thead>
+            <tbody id="agentRows"></tbody>
+          </table>
+        </article>
+
+        <article class="panel" id="providers">
+          <div class="panel-header">
+            <h2>Providers</h2>
+            <button type="button">Configure</button>
+          </div>
+          <div id="providerList" class="list"></div>
+        </article>
+      </section>
+
+      <section class="split">
+        <article class="panel" id="memory">
+          <div class="panel-header">
+            <h2>Memory</h2>
+            <button type="button">Read</button>
+          </div>
+          <ul id="memoryList" class="memory-list"></ul>
+        </article>
+
+        <article class="panel" id="handoffs">
+          <div class="panel-header">
+            <h2>Handoff</h2>
+            <button type="button">Create</button>
+          </div>
+          <pre id="handoffPreview"></pre>
+        </article>
+      </section>
+    </main>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

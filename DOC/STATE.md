@@ -56,3 +56,10 @@
 - **Metrics:** 0 onboarding placeholders found in required files; 0 real secrets found in documentation; 1 architecture question answered.
 - **References:** `DOC/ROADMAP.md` Phase 0, `DOC/PLAN.md` Stage Closure Gate, `DOC/TESTS.md` Phase 0 validation results.
 - **Remaining Focus:** Await [HUMAN:Ulisses] approval for Phase 0 Stage Closure Gate before Phase 1 kickoff.
+
+### [2026-05-05 15:32] - [DEV_BACKEND:Pleno]: Phase 1 MVP foundation started
+- **Delivery description:** Created Go Hexagonal backend foundation with domain entities, application ports, file-memory adapter, handoff file writer, protected HTTP API skeleton, domain/infrastructure tests, PostgreSQL migration, Docker Compose, `.env.example`, and static web workbench shell.
+- **Tests Performed:** `TEST-PHASE1-FRONT-001`, `TEST-PHASE1-FRONT-002`, `TEST-PHASE1-GO-001`, `TEST-PHASE1-SEC-001`, `TEST-PHASE1-DEVOPS-001`.
+- **Metrics:** 20 implementation/test files under `cmd`, `src`, `tests`, `db`, and `pf-ai-web`; JavaScript syntax checks passed; Docker Compose config passed with warnings; Go test execution blocked because Go is not on PATH.
+- **References:** `DOC/ROADMAP.md` Phase 1, `DOC/PLAN.md` Phase 1 Plan, `DOC/TESTS.md` Phase 1 executed results.
+- **Remaining Focus:** Install/enable Go runtime, rerun `go test ./...`, validate database integration, and connect web UI to backend endpoints.
