@@ -89,3 +89,13 @@ Register project versions, rollbacks, bugfixes, and significant incidents with f
 - **Security Clearance:** Documentation secret scan passed; implementation threat model pending before Phase 1.
 - **Deploy Notes:** No deployable code yet.
 - **Retrospective Reference:** Pending Phase 0 retrospective.
+
+### 1.3.0-alpha.1 - 2026-05-05 - [CEO]
+- **Type:** Release Candidate
+- **Main Commit:** pending
+- **Description:** Phase 1 MVP closure package. Delivers Go Hexagonal API behavior for agents, providers, memory reads, and file handoffs; PostgreSQL schema and repository contracts; operational web dashboard with provider save, agent save, optional provider, automatic agent ID, role select with `Outro`, localStorage fallback, and default CEO/CTO/BA agents.
+- **Files Changed:** `cmd/pf-ai-service/main.go`, `src/domain/*`, `src/application/*`, `src/infrastructure/*`, `tests/domain/*`, `tests/infrastructure/*`, `db/migrations/001_phase1_mvp_schema.sql`, `pf-ai-web/*`, `README.md`, `DOC/CONTEXT.md`, `DOC/PLAN.md`, `DOC/STATE.md`, `DOC/TASKS.md`, `DOC/TESTS.md`, `DOC/VERSIONS.md`, `DOC/RETROSPECTIVE.md`, `wiki/*`, `PLAYBOOK.md`.
+- **Tests / Validation:** `DOC/TESTS.md#11-phase-1-executed-results`, `TEST-PHASE1-CLOSURE-001`, `REVIEW-PHASE1-002`.
+- **Security Clearance:** Approved for Stage Closure Gate. No real secrets found; protected routes and handoff secret-leak prevention validated.
+- **Deploy Notes:** Frontend: `http://127.0.0.1:5173`. Backend API requires `PF_AI_AUTH_SECRET` and interactive foreground run until persistent runner hardening is completed.
+- **Retrospective Reference:** `DOC/RETROSPECTIVE.md#2026-05-05-2006---phase-1-mvp-agent-model-memory-and-file-handoffs`.

@@ -201,3 +201,46 @@ Deliver the PF_ai MVP planning baseline and prepare implementation for a web-fir
 
 ## 15.12 Stage Closure Gate Placeholder
 - Phase 1 closure gate will be filled only after implementation, review, QA, SECURITY audit, and [HUMAN] approval.
+
+## 15.13 Stage Closure Gate - Phase 1 MVP
+
+### Completed Stage Candidate: Phase 1 - MVP Agent, Model, Memory, and File Handoffs
+### Closure Package Date: 2026-05-05 20:06
+### Responsible: [CEO] / [TECH_LEAD]
+
+### Closure Checklist
+
+| # | File | Status | Note |
+| :- | :--- | :---: | :--- |
+| 1 | `TESTS.md` | `[x]` | Final validation recorded as `TEST-PHASE1-CLOSURE-001` and `REVIEW-PHASE1-002`. |
+| 2 | `STATE.md` | `[x]` | MVP closure-ready state recorded. |
+| 3 | `TASKS.md` | `[x]` | MVP implementation, review, and closure tasks recorded as Done. Backend persistent runner deferred as DevOps/runtime hardening. |
+| 4 | `CONTEXT.md` | `[x]` | Provider ownership, optional agent provider, local-save fallback, and security audit decisions recorded. |
+| 5 | `README.md` | `[x]` | MVP usage and local validation notes updated. |
+| 6 | `ROADMAP.md` | `[x]` | Phase 1 approved by [HUMAN:Ulisses] and marked Done. |
+| 7 | `PLAN.md` | `[x]` | Closure Gate section filled. |
+| 8 | `VERSIONS.md` | `[x]` | Phase 1 release entry added. |
+| 9 | `RETROSPECTIVE.md` | `[x]` | Phase 1 retrospective added. |
+| 10 | `WIKI` | `[x]` | Phase 1 wiki/user-manual entry added. |
+
+### Acceptance Criteria Result
+- **Criterion 1:** Passed. Protected API endpoints exist for agents, providers, memory reads, and handoff creation.
+- **Criterion 2:** Passed. Domain packages remain free of framework, database, HTTP, Docker, and filesystem dependencies.
+- **Criterion 3:** Passed. PostgreSQL migration and repository contracts cover agents, providers, sessions, and audit events.
+- **Criterion 4:** Passed. File-memory adapter allowlists approved GSD files and rejects unsafe paths.
+- **Criterion 5:** Passed. Handoff adapter writes schema-valid JSON under `.agent_handoff/` and blocks secret-looking payloads.
+- **Criterion 6:** Passed. Web UI shows phase/status, agents, providers, memory, and handoff actions, with save controls.
+- **Criterion 7:** Passed. Protected routes return 401 without bearer token.
+- **Criterion 8:** Passed. Tests were recorded in `DOC/TESTS.md`.
+
+### Pending Items / Deferrals
+- Backend OS-level persistent background runner is deferred to DevOps/runtime hardening. Foreground backend startup works and API behavior is validated through HTTP handler tests.
+- Runtime PostgreSQL wiring with a concrete Go driver is deferred; Phase 1 includes schema and `database/sql`-compatible repository contracts.
+- Local model execution remains Phase 2 scope.
+
+### Delivery Summary
+- Phase 1 MVP is ready for [HUMAN] Stage Closure Gate review.
+- Metrics: Go suite passed; frontend syntax passed; frontend served HTTP 200; no blocking SECURITY/CODE_REVIEWER/QA findings.
+
+### User Approval
+- [x] User confirmed Phase 1 Stage Closure Gate and authorizes roadmap advancement on 2026-05-05 20:12.

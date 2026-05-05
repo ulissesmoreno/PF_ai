@@ -43,6 +43,9 @@
 - Deve ter a opção de não apontar provider, para ambiente como Codex ou Claude Code que já tem modelo imbutido.
 - Salvamente não está funcional, e não há botão para salver Provider (assim testar se aparece em Agente). Sem o salvamento não consigo validar visualização de agente salvos.
 - Todo novo projeto deve possuir CEO, CTO e BA, restante são opcionais.
+- Para entregas futuras, não MVP:
+  - Planejamento deve aparecer com Cards (semelhante ao JIRA). Cards são Criados, priorizados e colocados sob responsabilidade de cada agente. Dessa forma o quadro em si já é um Dashboard.
+  - Criar o cadastro do projeto, onde o ONBORDING será preenchido e, em seguida, CEO irá fazer os questionamentos antes de inicio do projeto.
 
 ## Inspirations
 This session consolidates the foundational frameworks, technical skills, and design philosophies that drive the Agentic Enterprise architecture. These resources provide the "how" and "why" for building a high-performance, cost-efficient, and well-governed AI agent ecosystem.

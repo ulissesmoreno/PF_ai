@@ -16,7 +16,7 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
   - Tests: Threat model before MVP implementation.
   - Responsible: [SECURITY].
 
-## Phase 1: MVP - Agent, Model, Memory, and File Handoffs (Status: Doing)
+## Phase 1: MVP - Agent, Model, Memory, and File Handoffs (Status: Done)
 - [x] **MVP Planning**
   - Criteria: Acceptance criteria, tests, business rules, and dependencies finalized in `DOC/PLAN.md`.
   - Tests: BA/CTO validation and SECURITY threat modeling.
@@ -33,7 +33,7 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
   - Criteria: PostgreSQL schema stores agents, providers, sessions, and audit metadata.
   - Tests: Migration and repository contract tests.
   - Responsible: [DBA].
-- [ ] **MVP Validation**
+- [X] **MVP Validation**
   - Criteria: Human can operate at least one agent through file handoff flow and inspect project state.
   - Tests: QA, SECURITY, and CODE_REVIEWER closure review.
   - Responsible: [QA] / [SECURITY] / [CODE_REVIEWER].
@@ -77,3 +77,5 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
 - **[2026-05-05 18:56] - [DEV_FRONTEND]:** Phase 1 MVP Frontend marked Done after static checks and local runtime validation at `http://127.0.0.1:5173`.
 - **[2026-05-05 19:02] - [DEV_BACKEND]:** Phase 1 MVP Backend marked Done after HTTP handler acceptance flow validated provider, agent, memory, and handoff behavior.
 - **[2026-05-05 19:03] - [TECH_LEAD]:** Phase 1 parallel review consolidated; no blocking implementation defect found, but OS-level backend background runtime validation remains unresolved before Stage Closure Gate.
+- **[2026-05-05 20:06] - [CEO]:** Phase 1 closure package prepared after human dashboard test notes were implemented. Phase status remains `Doing` until [HUMAN:Ulisses] approves Stage Closure Gate and marks completion.
+- **[2026-05-05 20:12] - [CEO]:** [HUMAN:Ulisses] approved Phase 1 Stage Closure Gate via `[USER_DONE]`; phase status set to Done.

@@ -245,3 +245,59 @@
 - **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
 - **Business value:** Confirms Phase 1 implementation quality before [HUMAN] closure review.
 - **Notes:** No blocking implementation defects found. Backend OS-level background runtime remains a process-runner blocker, not an API behavior failure.
+
+### [2026-05-05] - Task PHASE1-FRONTEND-004: Apply human dashboard test notes
+- **Status:** Done
+- **Assigned to:** [DEV_FRONTEND:Pleno] / [DEV_BACKEND:Pleno]
+- **Completed on:** 2026-05-05 20:03
+- **Priority:** High
+- **Deadline:** Before Phase 1 closure.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** `NEW-INSTRUCTIONS.md` human test notes.
+- **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
+- **Business value:** Makes the dashboard operational enough for [HUMAN] to validate saved providers, saved agents, no-provider agents, memory reads, and handoff creation.
+- **Notes:** Added role select with `Outro`, automatic ID generation, explicit `Save Agent`, explicit `Save Provider`, provider-owned runtime configuration, optional provider selection, localStorage fallback, and default CEO/CTO/BA agents.
+
+### [2026-05-05] - Task PHASE1-QA-002: Final closure validation
+- **Status:** Done
+- **Assigned to:** [QA:Pleno] / [TECH_LEAD:Senior]
+- **Completed on:** 2026-05-05 20:06
+- **Priority:** High
+- **Deadline:** Before Phase 1 Stage Closure Gate.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** Backend tests, frontend syntax checks, served dashboard check.
+- **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
+- **Business value:** Confirms the MVP is ready for [HUMAN] closure review.
+- **Notes:** Go suite passed, frontend checks passed, and `http://127.0.0.1:5173` returned HTTP 200. Backend persistent background runner remains deferred as a DevOps/process-runner hardening item, not an MVP behavior blocker.
+
+### [2026-05-05] - Task PHASE1-CLOSURE-001: Prepare Phase 1 closure package
+- **Status:** Done
+- **Assigned to:** [CEO] / [BA] / [CTO]
+- **Completed on:** 2026-05-05 20:06
+- **Priority:** High
+- **Deadline:** Before requesting [HUMAN] Stage Closure Gate approval.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** Parallel review and final validation.
+- **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
+- **Business value:** Gives [HUMAN] a traceable closure package before approving Phase 1 and advancing the roadmap.
+- **Notes:** Closure docs updated. `ROADMAP.md` remains under [HUMAN] authority for final Phase 1 completion marking.
+
+### [2026-05-05] - Task PHASE1-CLOSURE-002: Record HUMAN Phase 1 approval
+- **Status:** Done
+- **Assigned to:** [CEO]
+- **Completed on:** 2026-05-05 20:12
+- **Priority:** High
+- **Deadline:** Immediately after [HUMAN] Stage Closure Gate approval.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** [HUMAN] approval via `[USER_DONE]`.
+- **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-done`
+- **Business value:** Closes Phase 1 traceably and prevents ambiguity before any Phase 2 kickoff.
+- **Notes:** `DOC/ROADMAP.md` Phase 1 set to Done; `DOC/PLAN.md` Stage Closure Gate approval checked.

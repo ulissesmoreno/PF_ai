@@ -23,4 +23,12 @@
 
 ---
 
+## Phase 1 MVP Pages
+
+| Page | Description | Last Updated |
+| :--- | :--- | :--- |
+| `wiki/user-manual/phase-1-mvp.md` | End-user guide for the Phase 1 dashboard: providers, agents, memory reads, handoffs, and local fallback. | 2026-05-05 20:06 |
+
+---
+
 *Gerado em: [YYYY-MM-DD HH:MM] — Responsável: [Nome]*

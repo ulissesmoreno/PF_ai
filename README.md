@@ -27,6 +27,14 @@ Ulisses como operador principal e, futuramente, usuarios tecnicos que precisam d
 - Handoffs MVP: arquivos JSON em `.agent_handoff/`.
 - Handoffs finais: MCP planejado em fase posterior.
 - Persistencia MVP: schema PostgreSQL e adapters Go compativeis com `database/sql` para agentes, provedores, sessoes e auditoria.
+- Phase 1 MVP: o dashboard permite salvar providers, salvar agentes, criar agente sem provider, ler memoria GSD allowlisted e criar handoff. Quando a API local nao esta disponivel, saves de provider/agente/handoff usam fallback em `localStorage` para validacao humana no navegador.
+- Todo novo projeto inicia com os agentes obrigatorios CEO, CTO e BA; demais agentes sao opcionais.
+
+### Execucao local do MVP
+1. Frontend: `cd pf-ai-web` e `npm start`; abrir `http://127.0.0.1:5173`.
+2. Backend interativo: definir `PF_AI_AUTH_SECRET` e `PF_AI_HTTP_PORT=8081`, entao executar `go run ./cmd/pf-ai-service`.
+3. Dashboard: informar API base `http://127.0.0.1:8081`, token local, e usar `Connect`.
+4. Sem backend interativo: a UI continua testavel via fallback local para cadastro de providers, agentes e handoffs.
 
 ### Desenvolvimento
 - Arquitetura: `DOC/ARCHITECTURE.md`
@@ -71,6 +79,14 @@ Current local note: if the Go cache under `AppData` is blocked, set `GOCACHE` to
 - MVP handoffs: JSON files in `.agent_handoff/`.
 - Final handoffs: MCP planned for a later stage.
 - MVP persistence: PostgreSQL schema and `database/sql`-compatible Go adapters for agents, providers, sessions, and audit events.
+- Phase 1 MVP: the dashboard can save providers, save agents, create no-provider agents, read allowlisted GSD memory, and create handoffs. When the local API is unavailable, provider/agent/handoff saves use `localStorage` fallback for human browser validation.
+- Every new project starts with mandatory CEO, CTO, and BA agents; all other agents are optional.
+
+### Local MVP Runtime
+1. Frontend: `cd pf-ai-web` and `npm start`; open `http://127.0.0.1:5173`.
+2. Interactive backend: set `PF_AI_AUTH_SECRET` and `PF_AI_HTTP_PORT=8081`, then run `go run ./cmd/pf-ai-service`.
+3. Dashboard: use API base `http://127.0.0.1:8081`, local token, and `Connect`.
+4. Without interactive backend: the UI remains testable through local fallback for provider, agent, and handoff saves.
 
 ### Development
 - Architecture: `DOC/ARCHITECTURE.md`

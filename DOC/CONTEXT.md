@@ -119,3 +119,22 @@ Record decisions and context before execution. Maintain transparency between pha
 - **Decision:** Node.js is available and JavaScript syntax validation passed. Go is not available on PATH, so Go test execution is blocked until Go is installed or a valid Go runtime is made available. Docker daemon access is inconsistent from the sandbox for image inspection.
 - **Impact:** Technical / DevOps.
 - **References:** `DOC/TESTS.md#11-phase-1-executed-results`.
+
+### [2026-05-05 20:06] - [CEO] / [CTO] / [BA]: Phase 1 closure-ready MVP scope
+- **Context:** [HUMAN] tested the dashboard and added notes in `NEW-INSTRUCTIONS.md`. Phase 1 implementation was adjusted until provider save, agent save, optional provider, automatic agent ID, role list with `Outro`, local-save fallback, and default CEO/CTO/BA agents were present.
+- **Decision:** Phase 1 MVP is closure-ready for [HUMAN] review. The MVP includes a Go Hexagonal API, PostgreSQL migration and repository contracts, Markdown memory read adapter, `.agent_handoff/` writer, and an operational web workbench with API-backed paths plus localStorage fallback for human browser testing when the backend process runner is unavailable.
+- **Why:** The proposed MVP is to prove agent/model/provider/memory/handoff management, not Phase 2 local model execution or full persistent service orchestration.
+- **Impact:** Business / Architectural / Security.
+- **References:** `NEW-INSTRUCTIONS.md`, `DOC/PLAN.md#15-phase-1-plan---mvp-agent-model-memory-and-file-handoffs`, `DOC/TESTS.md#11-phase-1-executed-results`, `pf-ai-web/src/app.js`, `src/infrastructure/httpapi/server.go`.
+
+### [2026-05-05 20:06] - [CTO]: Provider ownership and agent-provider decoupling
+- **Decision:** Local/online/hybrid runtime configuration belongs to provider registration. Agent registration selects a provider when needed, or selects no provider for embedded-model environments such as Codex and Claude Code.
+- **Why:** This matches the UI model identified by [HUMAN] during testing and prevents agent records from duplicating provider credentials/runtime data.
+- **Impact:** Architectural / Security / UX.
+- **References:** `NEW-INSTRUCTIONS.md`, `src/domain/agent.go`, `src/domain/provider.go`, `pf-ai-web/index.html`.
+
+### [2026-05-05 20:06] - [SECURITY]: Phase 1 closure audit
+- **Decision:** SECURITY approves Phase 1 for closure review. No real secrets were found in scanned implementation/documentation hits. Handoff creation denies secret-looking payloads and API tests verify generated handoffs do not contain the local auth sentinel.
+- **Known limitation:** Backend OS-level background runtime validation remains an environment/process-runner issue. MVP API behavior is covered through HTTP handler tests; manual API-backed browser validation still requires starting the backend interactively.
+- **Impact:** Security / DevOps.
+- **References:** `DOC/TESTS.md#12-phase-1-parallel-review-snapshot`, `TEST-PHASE1-CLOSURE-001`.

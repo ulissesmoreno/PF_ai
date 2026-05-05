@@ -51,3 +51,29 @@
 
 #### PLAYBOOK.md Updated
 - [x] Yes - entries added for Go orchestration, Caveman-style chat, `CONTEXT.md` timing, and wiki update timing.
+
+---
+
+### [2026-05-05 20:06] - Phase 1: MVP Agent, Model, Memory, and File Handoffs
+- **Consolidated by:** [CEO]
+- **Sources:** `DOC/STATE.md`, `DOC/TESTS.md`, `DOC/TASKS.md`, `NEW-INSTRUCTIONS.md`, human browser-test feedback, closure review.
+
+#### What Worked
+- Human dashboard testing exposed the exact MVP gaps: save buttons, provider ownership, no-provider agents, automatic IDs, role list, and mandatory CEO/CTO/BA defaults.
+- Go Hexagonal boundaries stayed stable while backend, database contracts, file adapters, and HTTP handlers evolved.
+- LocalStorage fallback allowed the frontend MVP to stay testable even when the backend persistent process runner was unreliable.
+- SECURITY/CODE_REVIEWER/QA review found no blocking implementation defect after final validation.
+
+#### What Didn't Work
+- Background backend process launch from the current shell did not remain reachable, so API-backed browser E2E still needs an interactive backend terminal.
+- Runtime PostgreSQL wiring needs a concrete Go driver policy in a later implementation step.
+- The first dashboard version looked operational before all save paths were actually usable.
+
+#### Actions for Next Phase
+- Treat human browser testing as an early validation loop before closure review.
+- Add a dedicated DevOps/runtime hardening task for persistent backend service startup.
+- Wire runtime PostgreSQL persistence only after selecting the approved Go PostgreSQL driver.
+- Keep provider runtime details owned by providers; keep agents decoupled and optionally providerless.
+
+#### PLAYBOOK.md Updated
+- [x] Yes - entry added for suggested commit comment after each delivery.
