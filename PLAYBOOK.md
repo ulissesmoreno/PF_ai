@@ -128,6 +128,8 @@
 | [2026-05-05 15:29] | **[USER_DONE] approves the last explicit step.** | Treat `[USER_DONE]` as explicit approval of the most recent pending step or question when the context is unambiguous. |
 | [2026-05-05 15:29] | **Management approval through planning.** | CEO, CTO, and BA may approve planning-level work; [HUMAN] gives final phase-end opinion. |
 | [2026-05-05 20:06] | **Commit comment after each delivery.** | After every delivery, provide a suggested Conventional Commit message/comment. |
+| [2026-05-05 20:15] | **Planning as dashboard cards after MVP.** | Future non-MVP planning should use card-based planning similar to JIRA: cards created, prioritized, and assigned to agents so the board itself is the dashboard. |
+| [2026-05-05 20:15] | **Project registration before onboarding.** | Future flow should include project registration, then onboarding fill-in, then CEO questions before project start. |
 
 ---
 
@@ -177,6 +179,7 @@
 | [2026-05-05 15:23] | CEO | Added memory ownership and versioning timing preferences from `NEW-INSTRUCTIONS.md`. |
 | [2026-05-05 15:29] | CEO | Added `[USER_DONE]` approval semantics and management planning-approval preference. |
 | [2026-05-05 20:06] | CEO | Added delivery preference: provide a suggested commit comment after each delivery. |
+| [2026-05-05 20:15] | CEO | Added future workflow preferences for card-based planning dashboard and project registration before onboarding. |
 
 ---
 

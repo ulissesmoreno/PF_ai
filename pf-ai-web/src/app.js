@@ -141,6 +141,7 @@ function renderProviders(providers) {
         <strong>${escapeHTML(provider.name)}</strong>
         <span>${escapeHTML(provider.mode)}</span>
         <small>${escapeHTML(provider.model)}</small>
+        <button type="button" data-provider-health="${escapeHTML(provider.id)}">Check Status</button>
       </div>`,
     )
     .join("")
@@ -151,6 +152,17 @@ function renderProviders(providers) {
     ...providers.map((provider) => `<option value="${escapeHTML(provider.id)}">${escapeHTML(provider.name)} (${escapeHTML(provider.mode)})</option>`),
   ];
   document.querySelector("#agentProvider").innerHTML = options.join("");
+}
+
+function redactProviderStatus(status) {
+  const safe = {
+    provider_id: status.provider_id,
+    mode: status.mode,
+    route: status.route,
+    status: status.status,
+    fallback_reason: status.fallback_reason,
+  };
+  return JSON.stringify(safe, null, 2);
 }
 
 document.querySelector("#memoryList").innerHTML = memory
@@ -241,6 +253,22 @@ document.querySelector("#providerForm").addEventListener("submit", async (event)
     event.currentTarget.reset();
     await refresh();
     setStatus("Provider saved locally", true);
+  }
+});
+
+document.querySelector("#providerList").addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-provider-health]");
+  if (!button) {
+    return;
+  }
+  try {
+    const providerID = button.dataset.providerHealth;
+    const result = await requestJSON(`/api/provider-health?id=${encodeURIComponent(providerID)}`);
+    document.querySelector("#providerStatus").textContent = redactProviderStatus(result);
+    setStatus("Provider status checked", true);
+  } catch (error) {
+    document.querySelector("#providerStatus").textContent = error.message;
+    setStatus("Provider status unavailable", false);
   }
 });
 

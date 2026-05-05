@@ -571,3 +571,61 @@ After executing all tests:
 - **DBA:** Passed. Migration and repository contracts cover agents, providers, sessions, and audit events.
 - **DEVOPS:** Passed with defer. Frontend serves at `http://127.0.0.1:5173`; backend foreground startup works, but persistent background runner is deferred.
 - **TECH_LEAD:** No blocking defect remains for the proposed Phase 1 MVP.
+
+---
+
+## 14. Phase 2 Executed Results
+
+### [2026-05-05 20:21] TEST-PHASE2-DOMAIN-001 - Provider Routing Rules
+- **Type:** Unit / Security
+- **Objective:** Validate provider mode requirements, local endpoint safety, and hybrid route fallback.
+- **Preconditions:** Phase 2 provider routing tests added before implementation.
+- **Step by step:**
+  1. Added tests for hybrid providers requiring secret ref and local runtime.
+  2. Added tests for unsafe local endpoint scheme and non-loopback rejection.
+  3. Added tests for hybrid fallback to API and unavailable local route.
+  4. Ran `go test ./...`.
+- **Expected result:** Provider routing decisions are deterministic and local runtime endpoints are constrained.
+- **Obtained result:** Passed.
+- **Status:** Passed.
+- **Notes:** API providers may use external HTTP(S) endpoints; local/hybrid endpoints are restricted to loopback hosts.
+- **Corrective action:** None.
+
+### [2026-05-05 20:21] TEST-PHASE2-HTTP-001 - Protected Provider Health Endpoint
+- **Type:** Integration / Security
+- **Objective:** Validate protected provider health route and route decision response.
+- **Preconditions:** `/api/provider-health?id=<provider>` implemented.
+- **Step by step:**
+  1. Verified route returns 401 without bearer token.
+  2. Verified hybrid provider returns `route: api` with fallback reason when local health is false and API health is true.
+  3. Verified local provider health calls an HTTP runtime endpoint and returns `route: local` when healthy.
+  4. Verified response does not leak the local auth sentinel.
+- **Expected result:** Provider health route is protected, auditable, and secret-safe.
+- **Obtained result:** Passed.
+- **Status:** Passed.
+- **Notes:** Health checks use a short HTTP timeout.
+- **Corrective action:** None.
+
+### [2026-05-05 20:21] TEST-PHASE2-FRONT-001 - Provider Status Dashboard Controls
+- **Type:** Frontend / Static / Acceptance
+- **Objective:** Validate dashboard updates for Phase 2 runtime status checks.
+- **Preconditions:** `pf-ai-web` updated with provider status check controls.
+- **Step by step:**
+  1. Ran `node --check pf-ai-web\src\app.js`.
+  2. Ran `node --check pf-ai-web\server.mjs`.
+  3. Requested `http://127.0.0.1:5173`.
+- **Expected result:** Frontend syntax passes and local dashboard responds.
+- **Obtained result:** Passed; frontend returned HTTP 200.
+- **Status:** Passed.
+- **Notes:** Provider status display redacts to safe route/status fields.
+- **Corrective action:** None.
+
+### [2026-05-05 20:21] REVIEW-PHASE2-001 - Closure Review Snapshot
+- **Type:** Security / Code Review / QA / DevOps
+- **Objective:** Confirm Phase 2 runtime/routing baseline is ready for Stage Closure Gate review.
+- **Result:** Approved for closure review.
+- **SECURITY:** Passed. Local runtime endpoints constrained to loopback; route health endpoint protected; no raw secret response fields.
+- **CODE_REVIEWER:** Passed. Domain routing rules remain pure; HTTP adapter owns endpoint checks.
+- **QA:** Passed. Go suite, Node syntax checks, and served frontend validation passed.
+- **DEVOPS:** Passed with note. `scripts/run-backend-local.ps1` provides a repeatable foreground backend startup path requiring `PF_AI_AUTH_SECRET` from the shell.
+- **TECH_LEAD:** No blocking defect remains for the Phase 2 baseline scope.

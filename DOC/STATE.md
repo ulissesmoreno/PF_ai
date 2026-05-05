@@ -196,3 +196,17 @@
 - **Metrics:** Phase 1 status: Done; next stage remains blocked until explicit Phase 2 kickoff cycle.
 - **References:** `DOC/ROADMAP.md`, `DOC/PLAN.md`.
 - **Remaining Focus:** Await explicit [HUMAN] authorization for Phase 2 kickoff.
+
+### [2026-05-05 20:15] - [CEO]: Phase 2 kickoff opened
+- **Delivery description:** Phase 2 opened after `[USER_DONE]`. CEO/CTO/BA intake completed, SECURITY threat model drafted, seniority assignment set, and a single kickoff handoff created for technical agents.
+- **Tests Performed:** No code tests; planning/kickoff artifact validation only.
+- **Metrics:** 1 Phase 2 plan section added; 1 kickoff handoff created; 4 Phase 2 task entries opened.
+- **References:** `DOC/PLAN.md#16-phase-2-plan---local-runtime-and-hybrid-provider-routing`, `.agent_handoff/2026-05-05_2015_phase2_kickoff.json`, `DOC/TASKS.md`.
+- **Remaining Focus:** Begin TDD implementation for provider routing ports, local runtime health validation, and provider status UI.
+
+### [2026-05-05 20:21] - [DEV_BACKEND:Pleno] / [DEV_FRONTEND:Pleno] / [DEVOPS:Pleno]: Phase 2 runtime routing baseline completed
+- **Delivery description:** Added provider routing decisions, protected provider health endpoint, loopback-only local runtime endpoint validation, HTTP health check with timeout, provider status dashboard control, and local backend startup script.
+- **Tests Performed:** `TEST-PHASE2-DOMAIN-001`; `TEST-PHASE2-HTTP-001`; `TEST-PHASE2-FRONT-001`; `REVIEW-PHASE2-001`.
+- **Metrics:** `go test ./...` passed; frontend syntax checks passed; frontend returned HTTP 200; 0 blocking review findings.
+- **References:** `src/domain/provider.go`, `src/infrastructure/httpapi/server.go`, `tests/domain/agent_provider_test.go`, `tests/infrastructure/httpapi_test.go`, `pf-ai-web/src/app.js`, `scripts/run-backend-local.ps1`.
+- **Remaining Focus:** Present Phase 2 Stage Closure Gate package to [HUMAN].

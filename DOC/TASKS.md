@@ -301,3 +301,74 @@
 - **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-done`
 - **Business value:** Closes Phase 1 traceably and prevents ambiguity before any Phase 2 kickoff.
 - **Notes:** `DOC/ROADMAP.md` Phase 1 set to Done; `DOC/PLAN.md` Stage Closure Gate approval checked.
+
+---
+
+## Phase 2 Task Entries
+
+### [2026-05-05] - Task PHASE2-PLAN-001: Prepare Phase 2 intake and kickoff
+- **Status:** Done
+- **Assigned to:** [CEO] / [BA] / [CTO] / [SECURITY]
+- **Completed on:** 2026-05-05 20:15
+- **Priority:** High
+- **Deadline:** Before Phase 2 technical execution.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** Phase 1 Done and `[USER_DONE]` for next cycle.
+- **Phase reference:** `DOC/ROADMAP.md#phase-2-local-runtime-and-hybrid-provider-routing-status-doing`
+- **Business value:** Converts Phase 2 roadmap into execution-ready routing/runtime scope.
+- **Notes:** Intake, threat model, seniority assignment, and handoff created.
+
+### [2026-05-05] - Task PHASE2-BACKEND-001: Implement provider routing ports and protected runtime endpoints
+- **Status:** Done
+- **Assigned to:** [DEV_BACKEND:Pleno]
+- **Priority:** High
+- **Deadline:** Phase 2.
+- **Estimated time:** Same work cycle
+- **Completed on:** 2026-05-05 20:21
+- **Actual time:** Same work cycle
+- **Dependencies:** Phase 2 kickoff handoff.
+- **Phase reference:** `DOC/ROADMAP.md#phase-2-local-runtime-and-hybrid-provider-routing-status-doing`
+- **Business value:** Allows PF_ai to verify and route API/local/hybrid providers through backend contracts.
+- **Notes:** Provider route decision, protected health endpoint, local endpoint safety, and health tests implemented.
+
+### [2026-05-05] - Task PHASE2-DEVOPS-001: Harden local runtime startup and health validation
+- **Status:** Done
+- **Assigned to:** [DEVOPS:Pleno]
+- **Priority:** High
+- **Deadline:** Phase 2.
+- **Estimated time:** Same work cycle
+- **Completed on:** 2026-05-05 20:21
+- **Actual time:** Same work cycle
+- **Dependencies:** Docker availability; approved local endpoint contract.
+- **Phase reference:** `DOC/ROADMAP.md#phase-2-local-runtime-and-hybrid-provider-routing-status-doing`
+- **Business value:** Clears the Phase 1 backend persistent runner deferral and prepares local model runtime validation.
+- **Notes:** Added `scripts/run-backend-local.ps1`; script requires `PF_AI_AUTH_SECRET` from the shell and does not write secrets to files.
+
+### [2026-05-05] - Task PHASE2-FRONTEND-001: Add provider runtime status controls
+- **Status:** Done
+- **Assigned to:** [DEV_FRONTEND:Pleno]
+- **Priority:** Medium
+- **Deadline:** Phase 2.
+- **Estimated time:** Same work cycle
+- **Completed on:** 2026-05-05 20:21
+- **Actual time:** Same work cycle
+- **Dependencies:** Backend runtime status API.
+- **Phase reference:** `DOC/ROADMAP.md#phase-2-local-runtime-and-hybrid-provider-routing-status-doing`
+- **Business value:** Lets [HUMAN] inspect provider health and route mode from the dashboard.
+- **Notes:** Dashboard shows Phase 2 provider status action and redacted route/status output.
+
+### [2026-05-05] - Task PHASE2-QA-001: Validate Phase 2 runtime/routing baseline
+- **Status:** Done
+- **Assigned to:** [QA:Pleno] / [TECH_LEAD:Senior]
+- **Completed on:** 2026-05-05 20:21
+- **Priority:** High
+- **Deadline:** Before Phase 2 Stage Closure Gate.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** Backend routing tests, frontend status controls, startup script.
+- **Phase reference:** `DOC/ROADMAP.md#phase-2-local-runtime-and-hybrid-provider-routing-status-doing`
+- **Business value:** Confirms the Phase 2 runtime/routing baseline can be reviewed by [HUMAN].
+- **Notes:** Go suite passed; Node syntax checks passed; frontend served HTTP 200; closure review snapshot approved.

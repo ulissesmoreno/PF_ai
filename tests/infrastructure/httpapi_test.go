@@ -65,6 +65,18 @@ func TestProtectedRoutesIncludeCORSHeaders(t *testing.T) {
 	}
 }
 
+func TestProviderHealthRouteRequiresToken(t *testing.T) {
+	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
+
+	request := httptest.NewRequest(http.MethodGet, "/api/provider-health?id=hybrid", nil)
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", response.Code)
+	}
+}
+
 func TestPostAgentCreatesAgent(t *testing.T) {
 	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
 
@@ -104,6 +116,62 @@ func TestPostProviderRejectsMissingSecretReference(t *testing.T) {
 
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", response.Code)
+	}
+}
+
+func TestProviderHealthReturnsHybridFallbackDecision(t *testing.T) {
+	provider, err := domain.NewModelProvider("hybrid", "Hybrid", domain.ProviderModeHybrid, "http://127.0.0.1:11434", "llama", "PF_AI_API_KEY", "ollama")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := (&httpapi.Server{
+		AuthSecret: "local-test-secret",
+		Providers:  []domain.ModelProvider{provider},
+		ProviderHealth: map[string]domain.ProviderHealth{
+			"hybrid": {LocalHealthy: false, APIHealthy: true},
+		},
+	}).Routes()
+
+	request := httptest.NewRequest(http.MethodGet, "/api/provider-health?id=hybrid", nil)
+	request.Header.Set("Authorization", "Bearer local-test-secret")
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", response.Code, response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), `"route":"api"`) {
+		t.Fatalf("expected api fallback route, got %s", response.Body.String())
+	}
+	if strings.Contains(response.Body.String(), "local-test-secret") {
+		t.Fatalf("provider health leaked auth secret: %s", response.Body.String())
+	}
+}
+
+func TestProviderHealthChecksLocalRuntimeEndpoint(t *testing.T) {
+	runtime := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer runtime.Close()
+	provider, err := domain.NewModelProvider("local", "Local", domain.ProviderModeLocal, runtime.URL, "llama", "", "ollama")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := (&httpapi.Server{
+		AuthSecret: "local-test-secret",
+		Providers:  []domain.ModelProvider{provider},
+	}).Routes()
+
+	request := httptest.NewRequest(http.MethodGet, "/api/provider-health?id=local", nil)
+	request.Header.Set("Authorization", "Bearer local-test-secret")
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", response.Code, response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), `"route":"local"`) {
+		t.Fatalf("expected local route, got %s", response.Body.String())
 	}
 }
 

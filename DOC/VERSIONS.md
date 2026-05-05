@@ -99,3 +99,13 @@ Register project versions, rollbacks, bugfixes, and significant incidents with f
 - **Security Clearance:** Approved for Stage Closure Gate. No real secrets found; protected routes and handoff secret-leak prevention validated.
 - **Deploy Notes:** Frontend: `http://127.0.0.1:5173`. Backend API requires `PF_AI_AUTH_SECRET` and interactive foreground run until persistent runner hardening is completed.
 - **Retrospective Reference:** `DOC/RETROSPECTIVE.md#2026-05-05-2006---phase-1-mvp-agent-model-memory-and-file-handoffs`.
+
+### 1.4.0-alpha.1 - 2026-05-05 - [CEO]
+- **Type:** Release Candidate
+- **Main Commit:** pending
+- **Description:** Phase 2 runtime/routing baseline. Adds provider route decisions, protected provider health endpoint, loopback-only local/hybrid runtime endpoint validation, hybrid API fallback reason, provider status dashboard controls, and a local backend startup script.
+- **Files Changed:** `src/domain/provider.go`, `src/infrastructure/httpapi/server.go`, `tests/domain/agent_provider_test.go`, `tests/infrastructure/httpapi_test.go`, `pf-ai-web/index.html`, `pf-ai-web/src/app.js`, `scripts/run-backend-local.ps1`, `README.md`, `DOC/ENV_SETUP.md`, `DOC/PLAN.md`, `DOC/CONTEXT.md`, `DOC/STATE.md`, `DOC/TASKS.md`, `DOC/TESTS.md`, `DOC/VERSIONS.md`, `DOC/RETROSPECTIVE.md`, `wiki/*`, `PLAYBOOK.md`.
+- **Tests / Validation:** `DOC/TESTS.md#14-phase-2-executed-results`.
+- **Security Clearance:** Approved for Stage Closure Gate. Provider health route protected; local runtime endpoints constrained to loopback; no auth sentinel leaked in provider health response.
+- **Deploy Notes:** Backend local startup uses `scripts\run-backend-local.ps1` with `PF_AI_AUTH_SECRET` set in shell. Concrete local model image remains configurable.
+- **Retrospective Reference:** `DOC/RETROSPECTIVE.md#2026-05-05-2021---phase-2-local-runtime-and-hybrid-provider-routing`.

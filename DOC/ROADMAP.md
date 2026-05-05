@@ -38,7 +38,7 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
   - Tests: QA, SECURITY, and CODE_REVIEWER closure review.
   - Responsible: [QA] / [SECURITY] / [CODE_REVIEWER].
 
-## Phase 2: Local Runtime and Hybrid Provider Routing (Status: To Do)
+## Phase 2: Local Runtime and Hybrid Provider Routing (Status: Doing)
 - [ ] **Local Model Runtime**
   - Criteria: Docker service can run the selected local model endpoint.
   - Tests: Health check, timeout handling, and resource validation.
@@ -79,3 +79,5 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
 - **[2026-05-05 19:03] - [TECH_LEAD]:** Phase 1 parallel review consolidated; no blocking implementation defect found, but OS-level backend background runtime validation remains unresolved before Stage Closure Gate.
 - **[2026-05-05 20:06] - [CEO]:** Phase 1 closure package prepared after human dashboard test notes were implemented. Phase status remains `Doing` until [HUMAN:Ulisses] approves Stage Closure Gate and marks completion.
 - **[2026-05-05 20:12] - [CEO]:** [HUMAN:Ulisses] approved Phase 1 Stage Closure Gate via `[USER_DONE]`; phase status set to Done.
+- **[2026-05-05 20:15] - [CEO]:** Phase 2 opened after `[USER_DONE]`; CEO/CTO/BA intake completed, SECURITY threat model drafted, and kickoff handoff prepared.
+- **[2026-05-05 20:21] - [TECH_LEAD]:** Phase 2 runtime/routing baseline implemented and closure package prepared. Phase status remains `Doing` until [HUMAN:Ulisses] approves Stage Closure Gate and marks completion.

@@ -77,3 +77,27 @@
 
 #### PLAYBOOK.md Updated
 - [x] Yes - entry added for suggested commit comment after each delivery.
+
+---
+
+### [2026-05-05 20:21] - Phase 2: Local Runtime and Hybrid Provider Routing
+- **Consolidated by:** [CEO]
+- **Sources:** Phase 2 kickoff handoff, `DOC/STATE.md`, `DOC/TESTS.md`, `DOC/TASKS.md`, and implementation review.
+
+#### What Worked
+- Phase 1 provider ownership made Phase 2 routing straightforward: runtime checks belong to providers, not agents.
+- Route decisions stayed testable in pure domain code while HTTP health checks remained in the adapter.
+- Loopback-only validation reduced local runtime SSRF risk without blocking API providers.
+- The dashboard gained a compact provider status action without exposing secrets.
+
+#### What Didn't Work
+- A concrete local model image was not selected, so Phase 2 validates the endpoint contract rather than a specific model container.
+- Persistent background service startup remains environment-sensitive; the safer deliverable is a foreground startup script that requires secrets from the shell.
+
+#### Actions for Next Phase
+- Keep model image selection explicit before adding heavier local execution flows.
+- Use the provider health endpoint as the base signal for Phase 3 orchestration and MCP handoff routing.
+- Preserve redacted route/status outputs in UI and logs.
+
+#### PLAYBOOK.md Updated
+- [x] Yes - entries added for future card-based planning dashboard and project registration before onboarding.

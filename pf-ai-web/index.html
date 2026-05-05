@@ -21,8 +21,8 @@
     <main class="workspace">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Phase 1</p>
-          <h1>Agent, model, memory, and file handoffs</h1>
+          <p class="eyebrow">Phase 2</p>
+          <h1>Local runtime and hybrid provider routing</h1>
         </div>
         <form class="auth-bar" id="authForm">
           <label for="apiBase">API</label>
@@ -37,8 +37,8 @@
       <section class="grid" id="dashboard">
         <article class="panel metric">
           <span>Current phase</span>
-          <strong>Phase 1</strong>
-          <small>MVP workbench</small>
+          <strong>Phase 2</strong>
+          <small>Runtime workbench</small>
         </article>
         <article class="panel metric">
           <span>Provider mode</span>
@@ -47,8 +47,8 @@
         </article>
         <article class="panel metric">
           <span>Handoffs</span>
-          <strong>File JSON</strong>
-          <small>MCP later</small>
+          <strong>Health + route</strong>
+          <small>Protected provider check</small>
         </article>
       </section>
 
@@ -119,6 +119,7 @@
             <button type="submit">Save Provider</button>
           </form>
           <div id="providerList" class="list"></div>
+          <pre id="providerStatus" class="output">Select a provider status check.</pre>
         </article>
       </section>
 
@@ -141,7 +142,7 @@
             <div class="form-grid">
               <input name="sender" value="CEO" required />
               <input name="recipient" value="DEV_BACKEND" required />
-              <input name="task_ref" value="PHASE1-MVP-UI" required />
+              <input name="task_ref" value="PHASE2-RUNTIME-ROUTING" required />
               <select name="intent" required>
                 <option>PHASE_KICKOFF</option>
                 <option>CLARIFICATION_REQUEST</option>
@@ -149,7 +150,7 @@
                 <option>STAGE_APPROVAL</option>
               </select>
             </div>
-            <textarea name="payload" rows="5">{ "summary": "MVP UI handoff" }</textarea>
+            <textarea name="payload" rows="5">{ "summary": "Phase 2 runtime routing handoff" }</textarea>
           </form>
           <pre id="handoffPreview"></pre>
         </article>

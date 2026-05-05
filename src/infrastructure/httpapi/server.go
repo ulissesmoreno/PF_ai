@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"pf-ai/src/domain"
 	"pf-ai/src/infrastructure/filememory"
@@ -16,6 +17,7 @@ type Server struct {
 	HandoffDir  string
 	Agents      []domain.AgentDefinition
 	Providers   []domain.ModelProvider
+	ProviderHealth map[string]domain.ProviderHealth
 	MemoryFiles []domain.MemoryFile
 }
 
@@ -24,6 +26,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("/health", s.health)
 	mux.Handle("/api/agents", s.protected(http.HandlerFunc(s.agents)))
 	mux.Handle("/api/providers", s.protected(http.HandlerFunc(s.providers)))
+	mux.Handle("/api/provider-health", s.protected(http.HandlerFunc(s.providerHealth)))
 	mux.Handle("/api/memory", s.protected(http.HandlerFunc(s.memory)))
 	mux.Handle("/api/handoffs", s.protected(http.HandlerFunc(s.handoffs)))
 	return cors(mux)
@@ -75,6 +78,53 @@ func (s *Server) providers(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 	}
+}
+
+func (s *Server) providerHealth(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		id := r.URL.Query().Get("id")
+		for _, provider := range s.Providers {
+			if provider.ID == id {
+				health := s.healthForProvider(r.Context(), provider)
+				writeJSON(w, http.StatusOK, domain.DecideProviderRoute(provider, health))
+				return
+			}
+		}
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "provider not found"})
+	default:
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+	}
+}
+
+func (s *Server) healthForProvider(ctx context.Context, provider domain.ModelProvider) domain.ProviderHealth {
+	if s.ProviderHealth != nil {
+		if health, ok := s.ProviderHealth[provider.ID]; ok {
+			return health
+		}
+	}
+	localHealthy := false
+	if provider.LocalRuntime != "" && provider.Endpoint != "" {
+		localHealthy = checkEndpoint(ctx, provider.Endpoint)
+	}
+	return domain.ProviderHealth{
+		LocalHealthy: localHealthy,
+		APIHealthy:   provider.SecretRef != "",
+	}
+}
+
+func checkEndpoint(ctx context.Context, endpoint string) bool {
+	client := &http.Client{Timeout: 2 * time.Second}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return false
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return false
+	}
+	defer response.Body.Close()
+	return response.StatusCode >= 200 && response.StatusCode < 300
 }
 
 func (s *Server) memory(w http.ResponseWriter, r *http.Request) {

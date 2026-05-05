@@ -36,6 +36,12 @@ Ulisses como operador principal e, futuramente, usuarios tecnicos que precisam d
 3. Dashboard: informar API base `http://127.0.0.1:8081`, token local, e usar `Connect`.
 4. Sem backend interativo: a UI continua testavel via fallback local para cadastro de providers, agentes e handoffs.
 
+### Runtime local e roteamento hibrido
+- Endpoint protegido: `GET /api/provider-health?id=<provider_id>`.
+- Providers `local` e `hybrid` aceitam endpoint local apenas em loopback (`localhost`, `127.0.0.1`, `::1`).
+- Provider `hybrid` tenta rota local quando saudavel e faz fallback para API com motivo auditavel quando local estiver indisponivel.
+- Startup local recomendado: definir `PF_AI_AUTH_SECRET` no shell e executar `scripts\run-backend-local.ps1`.
+
 ### Desenvolvimento
 - Arquitetura: `DOC/ARCHITECTURE.md`
 - Regras GSD: `DOC/GSD-RULES.md`
@@ -87,6 +93,12 @@ Current local note: if the Go cache under `AppData` is blocked, set `GOCACHE` to
 2. Interactive backend: set `PF_AI_AUTH_SECRET` and `PF_AI_HTTP_PORT=8081`, then run `go run ./cmd/pf-ai-service`.
 3. Dashboard: use API base `http://127.0.0.1:8081`, local token, and `Connect`.
 4. Without interactive backend: the UI remains testable through local fallback for provider, agent, and handoff saves.
+
+### Local Runtime And Hybrid Routing
+- Protected endpoint: `GET /api/provider-health?id=<provider_id>`.
+- `local` and `hybrid` providers accept local endpoints only on loopback (`localhost`, `127.0.0.1`, `::1`).
+- A `hybrid` provider uses the local route when healthy and falls back to API with an auditable reason when local is unavailable.
+- Recommended local startup: set `PF_AI_AUTH_SECRET` in the shell and run `scripts\run-backend-local.ps1`.
 
 ### Development
 - Architecture: `DOC/ARCHITECTURE.md`

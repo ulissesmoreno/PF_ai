@@ -138,3 +138,17 @@ Record decisions and context before execution. Maintain transparency between pha
 - **Known limitation:** Backend OS-level background runtime validation remains an environment/process-runner issue. MVP API behavior is covered through HTTP handler tests; manual API-backed browser validation still requires starting the backend interactively.
 - **Impact:** Security / DevOps.
 - **References:** `DOC/TESTS.md#12-phase-1-parallel-review-snapshot`, `TEST-PHASE1-CLOSURE-001`.
+
+### [2026-05-05 20:21] - [CEO] / [CTO] / [BA]: Phase 2 runtime routing baseline
+- **Context:** Phase 2 opened after [HUMAN] approved Phase 1 and sent `[USER_DONE]` for the next cycle.
+- **Decision:** Phase 2 delivers a runtime/routing baseline: provider health endpoint, deterministic route decision, hybrid fallback reason, loopback-only local runtime endpoint validation, dashboard provider status action, and repeatable foreground backend startup script.
+- **Why:** This satisfies the roadmap intent for local runtime and hybrid provider routing without requiring a large local model image selection during this cycle.
+- **Impact:** Architectural / Security / DevOps / UX.
+- **References:** `DOC/PLAN.md#16-phase-2-plan---local-runtime-and-hybrid-provider-routing`, `.agent_handoff/2026-05-05_2015_phase2_kickoff.json`, `src/domain/provider.go`, `src/infrastructure/httpapi/server.go`, `pf-ai-web/src/app.js`.
+
+### [2026-05-05 20:21] - [SECURITY]: Phase 2 closure audit
+- **Decision:** SECURITY approves Phase 2 baseline for Stage Closure Gate review.
+- **Controls validated:** Protected health route; no auth sentinel leakage in response; local/hybrid endpoints restricted to loopback hosts; local runtime field is treated as configuration, not executed shell text.
+- **Known limitation:** Real local model image selection remains configurable and should be chosen explicitly when [HUMAN] wants concrete model execution beyond endpoint health.
+- **Impact:** Security / Runtime.
+- **References:** `DOC/TESTS.md#14-phase-2-executed-results`.

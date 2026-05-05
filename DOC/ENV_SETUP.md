@@ -77,8 +77,16 @@ Configure these variables locally. Do not commit real values.
 - Local model unavailable: verify container status, memory limits, and endpoint URL.
 - Provider API failure: verify environment variable presence without logging secret values.
 
+## 8.1 Phase 2 Local Runtime Contract
+- Local runtime provider endpoints must use `http` or `https`.
+- Local and hybrid provider endpoints must point to loopback hosts only: `localhost`, `127.0.0.1`, or `::1`.
+- The backend validates local runtime health with a short HTTP GET to the configured endpoint.
+- Start the backend locally with `scripts\run-backend-local.ps1` after setting `PF_AI_AUTH_SECRET` in the current shell.
+- Do not store `PF_AI_AUTH_SECRET` or provider API keys in the script, docs, handoffs, or UI fixtures.
+
 ## 9. Obsidian - Project Maintenance Wiki
 The project uses `wiki/` and `raw/` directories for local documentation. See `DOC/WIKI.md`.
 
 ## 10. Version History (Immutable)
 - **[2026-05-05 15:06] - [CEO]:** Environment setup filled during onboarding for Go, TypeScript web, PostgreSQL, Docker, API providers, and local model runtime.
+- **[2026-05-05 20:21] - [DEVOPS]:** Added Phase 2 local runtime endpoint contract and local backend startup script guidance.

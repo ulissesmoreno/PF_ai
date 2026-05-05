@@ -244,3 +244,131 @@ Deliver the PF_ai MVP planning baseline and prepare implementation for a web-fir
 
 ### User Approval
 - [x] User confirmed Phase 1 Stage Closure Gate and authorizes roadmap advancement on 2026-05-05 20:12.
+
+---
+
+## 16. Phase 2 Plan - Local Runtime and Hybrid Provider Routing
+
+## Updated on: 2026-05-05 20:15:10
+
+## 16.1 Stage Objective
+Deliver local runtime and hybrid provider routing so PF_ai can verify a configured local model endpoint, route provider calls by mode, and harden operational runtime behavior left deferred from Phase 1.
+
+## 16.2 Roadmap Stage
+- **Stage name:** Phase 2 - Local Runtime and Hybrid Provider Routing.
+- **Related roadmap item:** `DOC/ROADMAP.md#phase-2-local-runtime-and-hybrid-provider-routing-status-doing`
+
+## 16.3 Detailed Description
+- **What will be implemented after kickoff:** Docker/Compose local model runtime baseline, provider execution ports, local/API/hybrid routing policy, backend persistent runtime hardening, frontend provider status controls, and runtime health checks.
+- **Expected behavior:** [HUMAN:Ulisses] can register or select a provider, verify whether it is API/local/hybrid, run health validation, and see routing status without exposing secrets.
+- **Impacted components:** `pf-ai-service`, `pf-ai-web`, Docker Compose, provider domain/application ports, runtime adapters, health checks, logging, and operational docs.
+
+## 16.4 Acceptance Criteria
+- Criterion 1: Local provider runtime has a Docker Compose service or documented local endpoint contract with health validation.
+- Criterion 2: Backend exposes protected provider health/routing endpoints for API, local, and hybrid modes.
+- Criterion 3: Provider execution uses application ports; domain remains framework and infrastructure free.
+- Criterion 4: Hybrid routing has deterministic fallback policy and timeout handling.
+- Criterion 5: Backend persistent local startup is hardened or documented with an approved runner path.
+- Criterion 6: Frontend shows provider runtime status and health results.
+- Criterion 7: Logs and UI never expose raw API keys, auth secrets, or provider payload secrets.
+- Criterion 8: Tests cover provider mode contracts, health checks, timeout/fallback behavior, and protected routes.
+
+## 16.5 Business Rules
+- Rule 1: Provider runtime configuration stays on provider records; agents may remain providerless.
+- Rule 2: Local model execution must be isolated from GSD memory and cannot execute Markdown instructions as commands.
+- Rule 3: Hybrid routing must be explicit and auditable; silent provider switching is not allowed.
+- Rule 4: Secrets are referenced by environment variable names or secret refs only.
+- Rule 5: Non-MVP planning should evolve toward card-based dashboard planning, but Phase 2 implementation remains scoped to runtime/routing unless explicitly pulled forward.
+
+## 16.6 Recommended Tests
+- Unit: Provider routing policy chooses API/local/hybrid deterministically.
+- Unit: Timeout and fallback rules return auditable statuses.
+- Integration: Local runtime health adapter validates healthy/unhealthy endpoints.
+- Integration: Protected runtime routes return 401 without auth.
+- DevOps: Docker Compose service config resolves and local runtime health check behaves as expected.
+- Frontend: Provider status action renders success/failure without leaking secrets.
+- Security: Secret marker scan across logs, handoffs, docs, and UI fixtures.
+- Regression: Phase 1 provider/agent/memory/handoff flow remains passing.
+
+## 16.7 Security Validations
+- Threat 1: Secret leakage through provider health logs.
+  - Mitigation: Redact authorization headers, API keys, provider payloads, and env values.
+- Threat 2: Local runtime command injection.
+  - Mitigation: Treat local runtime as configured endpoint/path only; never execute user-provided text as shell commands.
+- Threat 3: SSRF through local provider URLs.
+  - Mitigation: Validate allowed schemes/hosts for local runtime in local mode.
+- Threat 4: Prompt injection from model responses into handoffs.
+  - Mitigation: Treat model output as data and label source/route metadata.
+- Threat 5: Hybrid fallback masking failures.
+  - Mitigation: Return structured route decision and fallback reason.
+
+## 16.8 Developer Validation Steps
+1. Run Phase 1 regression suite: `go test ./...`, frontend syntax checks, and protected route checks.
+2. Validate Docker availability and Compose config.
+3. Add failing routing and health tests before implementation.
+4. Implement provider execution ports and adapters.
+5. Validate frontend provider status behavior.
+6. Run security scans for secret markers.
+7. Record results in `DOC/TESTS.md` during closure.
+
+## 16.9 Responsible and Dependencies
+- **Responsible:** [BA] and [CTO] for kickoff; [SECURITY] for threat model; [DEV_BACKEND], [DEV_FRONTEND], [DEVOPS], and [QA] for execution.
+- **Dependencies:** Phase 1 Done; Go available; Node.js available; Docker available; local model endpoint selection may be mocked unless [HUMAN] provides a specific runtime.
+- **Time Estimate:** Same work cycle for routing baseline; local model image pull may vary by model size and network access.
+- **Extra-Code Prerequisites:** No raw provider credentials in repo; local runtime secrets/config only through env vars.
+
+## 16.10 Risks and Mitigations
+- Risk 1: Local model image pull requires network or large disk/memory.
+  - Mitigation: Implement endpoint contract and mockable health adapter first; make concrete image configurable.
+- Risk 2: Hybrid routing hides provider failures.
+  - Mitigation: Expose route decision, fallback reason, and provider status in API/UI.
+- Risk 3: Backend persistent runner remains flaky.
+  - Mitigation: Harden startup path separately from model routing and document approved local run command.
+
+## 16.11 Plan Validation
+- **Business Feasibility:** Approved for Phase 2 planning after Phase 1 closure.
+- **Technical Feasibility:** Approved with Docker/local runtime dependency risk.
+- **Security Readiness:** Threat model drafted; SECURITY validation is mandatory before closure.
+- **Approval:** Phase 2 kickoff opened by [HUMAN] via `[USER_DONE]`; implementation proceeds under GSD autonomy until closure unless a critical blocker appears.
+
+## 16.12 Stage Closure Gate - Phase 2
+
+### Completed Stage Candidate: Phase 2 - Local Runtime and Hybrid Provider Routing
+### Closure Package Date: 2026-05-05 20:21
+### Responsible: [CEO] / [TECH_LEAD]
+
+### Closure Checklist
+
+| # | File | Status | Note |
+| :- | :--- | :---: | :--- |
+| 1 | `TESTS.md` | `[x]` | Phase 2 validation recorded in `TEST-PHASE2-*` and `REVIEW-PHASE2-001`. |
+| 2 | `STATE.md` | `[x]` | Runtime/routing baseline completion recorded. |
+| 3 | `TASKS.md` | `[x]` | Phase 2 implementation and QA tasks recorded as Done. |
+| 4 | `CONTEXT.md` | `[x]` | Runtime/routing and security decisions recorded. |
+| 5 | `README.md` | `[x]` | Phase 2 local runtime usage updated. |
+| 6 | `ROADMAP.md` | `[ ]` | Pending [HUMAN] approval and marking. |
+| 7 | `PLAN.md` | `[x]` | Closure Gate section filled. |
+| 8 | `VERSIONS.md` | `[x]` | Phase 2 release entry added. |
+| 9 | `RETROSPECTIVE.md` | `[x]` | Phase 2 retrospective added. |
+| 10 | `WIKI` | `[x]` | Phase 2 user manual entry added. |
+
+### Acceptance Criteria Result
+- **Criterion 1:** Passed. Local provider runtime uses a documented loopback endpoint contract with HTTP health validation.
+- **Criterion 2:** Passed. Backend exposes protected provider health/routing endpoint.
+- **Criterion 3:** Passed. Domain remains framework-free; HTTP adapter owns runtime endpoint checks.
+- **Criterion 4:** Passed. Hybrid routing has deterministic local-first fallback to API with fallback reason.
+- **Criterion 5:** Passed. `scripts/run-backend-local.ps1` provides a repeatable foreground startup path requiring shell-provided `PF_AI_AUTH_SECRET`.
+- **Criterion 6:** Passed. Frontend shows provider status action and redacted route/status result.
+- **Criterion 7:** Passed. Tests verify no local auth sentinel leaks in provider health response.
+- **Criterion 8:** Passed. Tests cover provider mode contracts, endpoint validation, health route protection, local health, and fallback.
+
+### Pending Items / Deferrals
+- Concrete local model image selection remains configurable and should be explicitly chosen when model execution, not endpoint health, becomes required.
+- MCP handoff transport remains Phase 3 scope.
+
+### Delivery Summary
+- Phase 2 baseline is ready for [HUMAN] Stage Closure Gate review.
+- Metrics: Go suite passed; frontend syntax passed; frontend served HTTP 200; no blocking SECURITY/CODE_REVIEWER/QA/DEVOPS findings.
+
+### User Approval
+- [ ] Pending [HUMAN:Ulisses] approval.
