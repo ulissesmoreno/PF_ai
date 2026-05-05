@@ -131,7 +131,7 @@
 - **Notes:** Handoff created at `.agent_handoff/2026-05-05_1523_phase1_kickoff.json`. Implementation remains blocked until [HUMAN] authorizes code.
 
 ### [2026-05-05] - Task PHASE1-ENV-001: Verify local development prerequisites
-- **Status:** Blocked
+- **Status:** Doing
 - **Assigned to:** [DEVOPS]
 - **Priority:** High
 - **Deadline:** Before Phase 1 implementation.
@@ -140,8 +140,8 @@
 - **Dependencies:** Docker, Go, Node.js availability.
 - **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
 - **Business value:** Confirms the project can run backend, frontend, and database locally.
-- **Reason:** Go is not installed or not available on PATH; Docker image inspection failed due daemon/config access permissions.
-- **Action:** Results recorded in `DOC/TESTS.md`; install/enable Go before executing backend tests.
+- **Reason:** Go runtime is now available through `C:\Program Files\Go\bin\go.exe`; Docker image inspection still has config/daemon access warnings.
+- **Action:** Go test blocker cleared with workspace-local `GOCACHE`; Docker-dependent validation remains pending.
 
 ### [2026-05-05] - Task PHASE1-BACKEND-001: Create Go Hexagonal MVP foundation
 - **Status:** Doing
@@ -152,7 +152,7 @@
 - **Dependencies:** Phase 1 authorization; Go runtime for test execution.
 - **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
 - **Business value:** Provides the backend foundation for agent/provider/memory/handoff operations.
-- **Notes:** Domain, application ports, file-memory adapter, handoff writer, HTTP API, and tests were created. Test execution blocked by missing Go runtime.
+- **Notes:** Domain, application ports, file-memory adapter, handoff writer, HTTP API, and tests were created. Go test suite passed with workspace-local `GOCACHE`.
 
 ### [2026-05-05] - Task PHASE1-FRONTEND-001: Create MVP web workbench shell
 - **Status:** Doing

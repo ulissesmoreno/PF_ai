@@ -382,6 +382,22 @@ After executing all tests:
 - **Notes:** Test files are present, but no Go runtime is available in the current environment.
 - **Corrective action:** Install Go or provide a Go runtime in PATH, then rerun `go test ./...`.
 
+### [2026-05-05 16:07] TEST-PHASE1-GO-002 - Go Test Suite Execution with Workspace Cache
+- **Type:** Unit / Integration
+- **Objective:** Run the Phase 1 Go test suite after Go installation.
+- **Preconditions:** Go installed at `C:\Program Files\Go\bin\go.exe`.
+- **Step by step:**
+  1. Verified Go version with `C:\Program Files\Go\bin\go.exe version`.
+  2. Ran `go test ./...`.
+  3. Initial run failed because Go tried to use a cache path under `AppData` without permission.
+  4. Set `GOCACHE` to `.gocache` inside the workspace.
+  5. Re-ran `go test ./...`.
+- **Expected result:** Go test suite executes and passes.
+- **Obtained result:** Passed. Packages without tests reported `[no test files]`; `pf-ai/tests/domain` and `pf-ai/tests/infrastructure` passed.
+- **Status:** Passed.
+- **Notes:** `.gocache/` is ignored in Git.
+- **Corrective action:** Keep using a workspace-local `GOCACHE` when sandbox permissions block the default Go cache.
+
 ### [2026-05-05 15:30] TEST-PHASE1-SEC-001 - Secret Marker Review
 - **Type:** Security / Static
 - **Objective:** Review secret-related markers in implementation files.
