@@ -70,3 +70,17 @@
 - **Metrics:** Go version `go1.26.2 windows/amd64`; `pf-ai/tests/domain` passed; `pf-ai/tests/infrastructure` passed.
 - **References:** `DOC/TESTS.md` Phase 1 executed results.
 - **Remaining Focus:** Validate database integration and connect web UI to backend endpoints.
+
+### [2026-05-05 16:26] - [DBA:Pleno]: PostgreSQL migration validated
+- **Delivery description:** Started `pf-ai-postgres`, validated healthy container state, and confirmed Phase 1 migration tables exist.
+- **Tests Performed:** `TEST-PHASE1-DB-002`.
+- **Metrics:** 4 tables created: `agents`, `audit_events`, `model_providers`, `sessions`.
+- **References:** `db/migrations/001_phase1_mvp_schema.sql`, `DOC/TESTS.md` Phase 1 executed results.
+- **Remaining Focus:** Implement repository-level persistence adapters or choose a Go PostgreSQL driver policy.
+
+### [2026-05-05 16:26] - [DEV_FRONTEND:Pleno]: Web runtime launch pending
+- **Delivery description:** Web shell remains syntactically valid and now attempts API reads with local fallback. Background server launch did not remain active in this environment.
+- **Tests Performed:** `TEST-PHASE1-FRONT-003`.
+- **Metrics:** Runtime launch blocked; static JS checks still passed.
+- **References:** `pf-ai-web/server.mjs`, `pf-ai-web/src/app.js`, `DOC/TESTS.md` Phase 1 executed results.
+- **Remaining Focus:** Start `pf-ai-web` through an interactive terminal or approved persistent runner.

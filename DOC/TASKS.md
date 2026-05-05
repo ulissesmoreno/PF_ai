@@ -131,7 +131,7 @@
 - **Notes:** Handoff created at `.agent_handoff/2026-05-05_1523_phase1_kickoff.json`. Implementation remains blocked until [HUMAN] authorizes code.
 
 ### [2026-05-05] - Task PHASE1-ENV-001: Verify local development prerequisites
-- **Status:** Doing
+- **Status:** Done
 - **Assigned to:** [DEVOPS]
 - **Priority:** High
 - **Deadline:** Before Phase 1 implementation.
@@ -140,8 +140,8 @@
 - **Dependencies:** Docker, Go, Node.js availability.
 - **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
 - **Business value:** Confirms the project can run backend, frontend, and database locally.
-- **Reason:** Go runtime is now available through `C:\Program Files\Go\bin\go.exe`; Docker image inspection still has config/daemon access warnings.
-- **Action:** Go test blocker cleared with workspace-local `GOCACHE`; Docker-dependent validation remains pending.
+- **Reason:** Go runtime is available through `C:\Program Files\Go\bin\go.exe`; Docker daemon access works with elevated permission.
+- **Action:** Go tests passed with workspace-local `GOCACHE`; PostgreSQL container and migration validated.
 
 ### [2026-05-05] - Task PHASE1-BACKEND-001: Create Go Hexagonal MVP foundation
 - **Status:** Doing
@@ -166,7 +166,7 @@
 - **Notes:** Static web shell created; JavaScript syntax validation passed.
 
 ### [2026-05-05] - Task PHASE1-DB-001: Create MVP PostgreSQL migration
-- **Status:** Doing
+- **Status:** Done
 - **Assigned to:** [DBA:Pleno]
 - **Priority:** High
 - **Deadline:** Phase 1.
@@ -174,4 +174,16 @@
 - **Dependencies:** PostgreSQL via Docker Compose.
 - **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
 - **Business value:** Establishes durable state for agents, providers, sessions, and audit events.
-- **Notes:** Initial migration created; execution pending database validation.
+- **Notes:** Initial migration created and validated against `pf-ai-postgres`. Repository-level persistence remains a separate implementation task.
+
+### [2026-05-05] - Task PHASE1-FRONTEND-002: Validate local web runtime
+- **Status:** Blocked
+- **Assigned to:** [DEV_FRONTEND:Pleno] / [DEVOPS:Pleno]
+- **Priority:** Medium
+- **Deadline:** Before Phase 1 closure.
+- **Estimated time:** Same work cycle
+- **Dependencies:** Durable local process runner or interactive terminal.
+- **Phase reference:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
+- **Business value:** Allows [HUMAN] to inspect the MVP workbench in browser.
+- **Reason:** Background launch did not keep the Node server active from the current shell.
+- **Action:** Run `cd pf-ai-web && npm start` interactively or provide an approved persistent process runner.

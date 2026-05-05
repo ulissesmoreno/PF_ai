@@ -58,6 +58,8 @@ Ulisses as the primary operator, with future support for technical users who nee
 6. Run the backend with `go run ./cmd/pf-ai-service` when Go is installed.
 7. Run the frontend with `cd pf-ai-web` and `npm start`.
 
+Current local note: if the Go cache under `AppData` is blocked, set `GOCACHE` to `.gocache` inside the workspace before running tests.
+
 ### Usage
 - Web frontend: human-agent interface for dashboard, agents, models, memory, and handoffs.
 - Go backend: local orchestration API, GSD file reading, and provider integration.

@@ -398,6 +398,19 @@ After executing all tests:
 - **Notes:** `.gocache/` is ignored in Git.
 - **Corrective action:** Keep using a workspace-local `GOCACHE` when sandbox permissions block the default Go cache.
 
+### [2026-05-05 16:26] TEST-PHASE1-GO-003 - Go Test Suite After MVP Endpoint Expansion
+- **Type:** Unit / Integration
+- **Objective:** Re-run the Go test suite after adding agent/provider POST endpoints, memory endpoint, and handoff endpoint.
+- **Preconditions:** Go installed at `C:\Program Files\Go\bin\go.exe`; `GOCACHE` set to workspace `.gocache`.
+- **Step by step:**
+  1. Ran `go test ./...` with workspace-local `GOCACHE`.
+  2. Reviewed package results.
+- **Expected result:** Go test suite executes and passes.
+- **Obtained result:** Passed. `pf-ai/tests/domain` and `pf-ai/tests/infrastructure` passed.
+- **Status:** Passed.
+- **Notes:** HTTP API tests now cover protected-route 401, health route, agent creation, and provider validation.
+- **Corrective action:** None.
+
 ### [2026-05-05 15:30] TEST-PHASE1-SEC-001 - Secret Marker Review
 - **Type:** Security / Static
 - **Objective:** Review secret-related markers in implementation files.
@@ -423,3 +436,31 @@ After executing all tests:
 - **Status:** Passed with notes.
 - **Notes:** Static Compose validation passed; daemon-dependent commands may still require Docker permissions.
 - **Corrective action:** Fix Docker config/daemon access before running database integration tests.
+
+### [2026-05-05 16:26] TEST-PHASE1-DB-002 - PostgreSQL Migration Validation
+- **Type:** Database / Integration
+- **Objective:** Validate the Phase 1 PostgreSQL container and migration-created tables.
+- **Preconditions:** Docker daemon available with elevated permission; `docker compose up -d postgres` executed.
+- **Step by step:**
+  1. Started PostgreSQL with `docker compose up -d postgres`.
+  2. Checked container health with `docker inspect --format '{{.State.Health.Status}}' pf-ai-postgres`.
+  3. Listed tables with `docker exec pf-ai-postgres psql -U pf_ai -d pf_ai -c "\dt"`.
+- **Expected result:** Container is healthy and Phase 1 tables exist.
+- **Obtained result:** Container health is `healthy`; tables `agents`, `audit_events`, `model_providers`, and `sessions` exist.
+- **Status:** Passed.
+- **Notes:** Docker commands require elevated daemon access in this environment.
+- **Corrective action:** None for database schema. Repository-level persistence tests remain pending.
+
+### [2026-05-05 16:26] TEST-PHASE1-FRONT-003 - Local Web Server Launch
+- **Type:** Frontend / Runtime
+- **Objective:** Start `pf-ai-web/server.mjs` and verify `http://localhost:5173`.
+- **Preconditions:** Node.js available.
+- **Step by step:**
+  1. Attempted hidden/background process launch.
+  2. Attempted request to `http://localhost:5173`.
+  3. Checked for active Node process.
+- **Expected result:** Web server remains running and returns HTTP 200.
+- **Obtained result:** Server runs in foreground but did not remain active through the background launcher; HTTP request could not connect.
+- **Status:** Blocked.
+- **Notes:** Static syntax checks pass; runtime launch needs a durable process method outside the current shell constraints.
+- **Corrective action:** Run `cd pf-ai-web && npm start` in an interactive terminal, or use an approved persistent process runner.
