@@ -458,3 +458,73 @@
 - **Phase reference:** `DOC/ROADMAP.md#phase-3-mcp-handoffs-and-advanced-orchestration-status-done`
 - **Business value:** Closes the planned roadmap and makes PF_ai ready for the next roadmap or production hardening decision.
 - **Notes:** `DOC/ROADMAP.md` Phase 3 set to Done; `DOC/PLAN.md` Stage Closure Gate approval checked.
+
+---
+
+## Refactor R1 Task Entries
+
+### [2026-05-06] - Task R1-PLAN-001: Plan project registration deliverable
+- **Status:** Done
+- **Assigned to:** [CEO] / [BA] / [CTO]
+- **Completed on:** 2026-05-06 08:00
+- **Priority:** High
+- **Deadline:** Before any R1 implementation.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** `NEW-INSTRUCTIONS.md` refactor deliverable entry and `[USER_DONE]`.
+- **Phase reference:** `DOC/PLAN.md#18-refactor-plan---r1-project-registration`
+- **Business value:** Defines the first refactor deliverable around project-centric operation before spending development effort.
+- **Notes:** Planning only. Development remains blocked until [HUMAN] approves `DOC/PLAN.md` section 18.
+
+### [2026-05-06] - Task R1-BACKEND-001: Implement project domain and API
+- **Status:** Done
+- **Assigned to:** [DEV_BACKEND:Pleno]
+- **Priority:** High
+- **Deadline:** After [HUMAN] approves R1 plan.
+- **Estimated time:** Same work cycle
+- **Completed on:** 2026-05-06 08:10
+- **Actual time:** Same work cycle
+- **Dependencies:** R1 plan approval.
+- **Phase reference:** `DOC/PLAN.md#18-refactor-plan---r1-project-registration`
+- **Business value:** Provides a project root entity for all PF_ai workspace data.
+- **Notes:** Project domain/API now generate IDs automatically, store summary fields, and reject secret-like project fields/onboarding.
+
+### [2026-05-06] - Task R1-FRONTEND-001: Implement project page and sidebar project navigation
+- **Status:** Done
+- **Assigned to:** [DEV_FRONTEND:Pleno]
+- **Priority:** High
+- **Deadline:** After [HUMAN] approves R1 plan.
+- **Estimated time:** Same work cycle
+- **Completed on:** 2026-05-06 08:10
+- **Actual time:** Same work cycle
+- **Dependencies:** R1 plan approval and project API/local model.
+- **Phase reference:** `DOC/PLAN.md#18-refactor-plan---r1-project-registration`
+- **Business value:** Gives [HUMAN] a clean first screen for project onboarding and project selection.
+- **Notes:** Sidebar now lists projects; feature navigation moved into workspace; dedicated project registration page is the first screen.
+
+### [2026-05-06] - Task R1-SCOPING-001: Scope workspace data to selected project
+- **Status:** Done
+- **Assigned to:** [DEV_FRONTEND:Pleno] / [DEV_BACKEND:Pleno]
+- **Priority:** High
+- **Deadline:** After project creation/selection works.
+- **Estimated time:** Same work cycle
+- **Completed on:** 2026-05-06 08:10
+- **Actual time:** Same work cycle
+- **Dependencies:** R1 backend/frontend project foundation.
+- **Phase reference:** `DOC/PLAN.md#18-refactor-plan---r1-project-registration`
+- **Business value:** Prevents agent/provider/card/handoff data from different projects mixing in the UI.
+- **Notes:** Frontend/local model scopes agents, providers, cards, comments, and handoffs by active project. Backend scoped persistence remains a follow-up refactor.
+
+### [2026-05-06] - Task R1-QA-001: Validate R1 project registration flow
+- **Status:** Done
+- **Assigned to:** [QA:Pleno] / [SECURITY:Senior]
+- **Priority:** High
+- **Deadline:** Before R1 closure.
+- **Estimated time:** Same work cycle
+- **Completed on:** 2026-05-06 08:10
+- **Actual time:** Same work cycle
+- **Dependencies:** R1 implementation complete.
+- **Phase reference:** `DOC/PLAN.md#18-refactor-plan---r1-project-registration`
+- **Business value:** Confirms the first refactor deliverable is usable and safe.
+- **Notes:** Go suite, Node syntax checks, and served frontend marker scan passed.

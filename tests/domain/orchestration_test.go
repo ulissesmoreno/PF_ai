@@ -14,9 +14,27 @@ func TestPlanningCardRequiresOwnerAndStatus(t *testing.T) {
 }
 
 func TestProjectRegistrationRejectsSecretLikeOnboarding(t *testing.T) {
-	_, err := domain.NewProjectRegistration("pf-ai", "PF_ai", map[string]any{"api_key": "raw"})
+	_, err := domain.NewProjectRegistration("pf-ai", "PF_ai", "agent workspace", "builders", "Go", map[string]any{"api_key": "raw"})
 	if err == nil {
 		t.Fatal("expected secret-like onboarding rejection")
+	}
+}
+
+func TestProjectRegistrationGeneratesHiddenIDFromName(t *testing.T) {
+	project, err := domain.NewProjectRegistration("", "Projeto Alpha", "workspace", "operators", "Go", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if project.ID != "projeto-alpha" {
+		t.Fatalf("expected generated project id, got %s", project.ID)
+	}
+}
+
+func TestProjectRegistrationRejectsSecretLikeSummaryFields(t *testing.T) {
+	_, err := domain.NewProjectRegistration("", "Projeto", "uses token abc", "operators", "Go", nil)
+	if err == nil {
+		t.Fatal("expected secret-like summary rejection")
 	}
 }
 

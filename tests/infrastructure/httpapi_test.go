@@ -192,7 +192,7 @@ func TestPlanningCardsRouteCreatesCard(t *testing.T) {
 func TestProjectRegistrationRejectsSecretLikePayload(t *testing.T) {
 	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
 
-	body := bytes.NewBufferString(`{"id":"pf-ai","name":"PF_ai","onboarding":{"token":"raw"}}`)
+	body := bytes.NewBufferString(`{"name":"PF_ai","description":"orchestration","audience":"builders","technical_stack":"Go","onboarding":{"token":"raw"}}`)
 	request := httptest.NewRequest(http.MethodPost, "/api/projects", body)
 	request.Header.Set("Authorization", "Bearer local-test-secret")
 	response := httptest.NewRecorder()
@@ -200,6 +200,27 @@ func TestProjectRegistrationRejectsSecretLikePayload(t *testing.T) {
 
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", response.Code)
+	}
+}
+
+func TestProjectRegistrationRouteGeneratesIDAndStoresSummary(t *testing.T) {
+	api := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
+
+	postJSON(t, api, "/api/projects", `{"name":"Projeto Alpha","description":"workspace","audience":"operators","technical_stack":"Go"}`, http.StatusCreated)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/projects", nil)
+	request.Header.Set("Authorization", "Bearer local-test-secret")
+	response := httptest.NewRecorder()
+	api.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", response.Code, response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), `"id":"projeto-alpha"`) {
+		t.Fatalf("expected generated id in project list, got %s", response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), `"technical_stack":"Go"`) {
+		t.Fatalf("expected technical stack in project list, got %s", response.Body.String())
 	}
 }
 

@@ -67,6 +67,13 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
 - MVP uses file-based handoffs; MCP is final-stage scope.
 - Chat responses should remain compact in the Caveman style; details belong in files.
 
+## Refactor Roadmap: Project-Centric Workspace (Status: R1 Closure Pending)
+- [x] **R1 - Project Registration First Deliverable**
+  - Criteria: A dedicated project registration page supports project name, description, audience, and technical stack; ID is automatic and hidden; project list appears in the sidebar; selected project scopes other screens.
+  - Tests: Project creation validation, local/API persistence behavior, project selection scoping, question-generation signal for new projects, and regression on existing agents/providers/board/handoffs.
+  - Responsible: [BA] / [CTO] for planning; [DEV_FRONTEND] / [DEV_BACKEND] after [HUMAN] approval.
+  - Status: Implemented; awaiting [HUMAN] closure review.
+
 ## Version History (Immutable)
 - **[2026-05-05 15:06] - [CEO]:** Roadmap filled from onboarding answers and MVP confirmation.
 - **[2026-05-05 15:16] - [CEO]:** Phase 0 task items marked complete; phase status set to Closure Pending until [HUMAN] approval.
@@ -85,3 +92,5 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
 - **[2026-05-06 07:28] - [CEO]:** Phase 3 opened after `[USER_DONE]`; intake completed with user-value focus on planning cards, project registration/onboarding, and MCP-compatible handoffs.
 - **[2026-05-06 07:33] - [TECH_LEAD]:** Phase 3 orchestration board implemented and closure package prepared. Phase status remains `Doing` until [HUMAN:Ulisses] approves Stage Closure Gate and marks completion.
 - **[2026-05-06 07:39] - [CEO]:** [HUMAN:Ulisses] approved Phase 3 Stage Closure Gate via `[USER_DONE]`; phase status set to Done.
+- **[2026-05-06 08:00] - [CEO]:** Refactor roadmap opened in planning mode only. First deliverable is project registration; development blocked until [HUMAN] approves the plan.
+- **[2026-05-06 08:10] - [TECH_LEAD]:** R1 project registration implemented after [HUMAN] approval; closure is pending [HUMAN] review.

@@ -687,3 +687,74 @@ After executing all tests:
 - **CODE_REVIEWER:** Passed. Domain orchestration models remain infrastructure-free; HTTP owns transport.
 - **QA:** Passed. Go suite, Node syntax checks, and served dashboard validation passed.
 - **TECH_LEAD:** No blocking defect remains for final roadmap closure review.
+
+---
+
+## 16. Post-Roadmap UX Refinement Results
+
+### [2026-05-06 07:46] TEST-UX-BOARD-001 - Page Separation and Board Comments
+- **Type:** Frontend / Regression / Acceptance
+- **Objective:** Validate new [HUMAN] instructions for separated pages, central board, card comments, and handoffs as comments.
+- **Preconditions:** `NEW-INSTRUCTIONS.md` updated by [HUMAN].
+- **Step by step:**
+  1. Added page-based navigation with `data-page-link`.
+  2. Added selectable cards and local comments.
+  3. Added handoff-to-comment behavior.
+  4. Ran `node --check pf-ai-web\src\app.js`.
+  5. Ran `node --check pf-ai-web\server.mjs`.
+  6. Ran `go test ./...`.
+  7. Scanned served HTML for board navigation and comment controls.
+- **Expected result:** Syntax/tests pass and UI contains board/comment controls.
+- **Obtained result:** Passed. Go suite passed; Node syntax checks passed; literal served HTML scan found `data-page-link="board"`, `commentForm`, and `Board Comments`.
+- **Status:** Passed.
+- **Notes:** Initial regex-based scan command failed due escaping; repeated with literal `.Contains()` search and passed.
+- **Corrective action:** None.
+
+---
+
+## 17. Refactor R1 Executed Results
+
+### [2026-05-06 08:10] TEST-R1-DOMAIN-001 - Project Registration Domain
+- **Type:** Unit / Security
+- **Objective:** Validate automatic project ID generation, required summary fields, and secret-like value rejection.
+- **Preconditions:** R1 tests added before implementation.
+- **Step by step:**
+  1. Added test for hidden ID generation from project name.
+  2. Added test for secret-like summary field rejection.
+  3. Kept onboarding secret-like payload rejection.
+  4. Ran `go test ./...`.
+- **Expected result:** Project registration does not require visible ID and rejects unsafe inputs.
+- **Obtained result:** Passed.
+- **Status:** Passed.
+- **Notes:** Initial RED failed because `NewProjectRegistration` still required manual ID and old signature.
+- **Corrective action:** Implemented summary fields and automatic ID generation.
+
+### [2026-05-06 08:10] TEST-R1-HTTP-001 - Protected Project API
+- **Type:** Integration / Security
+- **Objective:** Validate protected project creation/listing with generated ID and summary persistence.
+- **Preconditions:** `/api/projects` protected route exists.
+- **Step by step:**
+  1. Added API test creating a project without manual ID.
+  2. Verified generated ID appears in project list.
+  3. Verified technical stack is persisted in API response.
+  4. Ran `go test ./...`.
+- **Expected result:** Project API stores R1 project summary and preserves protected route behavior.
+- **Obtained result:** Passed.
+- **Status:** Passed.
+- **Notes:** Backend stores projects in current in-memory server state for R1.
+- **Corrective action:** None.
+
+### [2026-05-06 08:10] TEST-R1-FRONT-001 - Project-Centric Workspace UI
+- **Type:** Frontend / Acceptance
+- **Objective:** Validate project registration UI, project-only sidebar, and project context markers.
+- **Preconditions:** Frontend updated for R1 project-centric navigation.
+- **Step by step:**
+  1. Ran `node --check pf-ai-web\src\app.js`.
+  2. Ran `node --check pf-ai-web\server.mjs`.
+  3. Requested `http://127.0.0.1:5173`.
+  4. Scanned served HTML for `Register Project`, `projectNav`, `feature-nav`, and automatic ID copy.
+- **Expected result:** Syntax passes and served UI exposes R1 project registration flow.
+- **Obtained result:** Passed. HTTP 200 and all markers found.
+- **Status:** Passed.
+- **Notes:** Frontend scopes local agents, providers, board cards, comments, and handoffs by selected project.
+- **Corrective action:** None.

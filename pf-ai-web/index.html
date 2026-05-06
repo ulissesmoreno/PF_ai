@@ -9,14 +9,8 @@
   <body>
     <aside class="sidebar">
       <div class="brand">PF_ai</div>
-      <nav>
-        <a class="active" href="#dashboard">Dashboard</a>
-        <a href="#agents">Agents</a>
-        <a href="#providers">Providers</a>
-        <a href="#planning">Planning</a>
-        <a href="#memory">Memory</a>
-        <a href="#handoffs">Handoffs</a>
-      </nav>
+      <div class="sidebar-title">Projects</div>
+      <nav id="projectNav" aria-label="Projects"></nav>
     </aside>
 
     <main class="workspace">
@@ -24,6 +18,7 @@
         <div>
           <p class="eyebrow">Phase 3</p>
           <h1>MCP handoffs and orchestration board</h1>
+          <small id="activeProjectLabel">No project selected</small>
         </div>
         <form class="auth-bar" id="authForm">
           <label for="apiBase">API</label>
@@ -35,7 +30,17 @@
         </form>
       </header>
 
-      <section class="grid" id="dashboard">
+      <nav class="feature-nav" aria-label="Workspace sections">
+        <a class="active" href="#projects" data-page-link="projects">Project</a>
+        <a href="#dashboard" data-page-link="dashboard">Dashboard</a>
+        <a href="#board" data-page-link="board">Board</a>
+        <a href="#agents" data-page-link="agents">Agents</a>
+        <a href="#providers" data-page-link="providers">Providers</a>
+        <a href="#memory" data-page-link="memory">Memory</a>
+        <a href="#handoffs" data-page-link="handoffs">Handoffs</a>
+      </nav>
+
+      <section class="grid page" id="dashboard" data-page="dashboard">
         <article class="panel metric">
           <span>Current phase</span>
           <strong>Phase 3</strong>
@@ -53,65 +58,68 @@
         </article>
       </section>
 
-      <section class="split" id="planning">
+      <section class="split page active-page" id="projects" data-page="projects">
         <article class="panel">
           <div class="panel-header">
-            <h2>Project</h2>
+            <h2>Register Project</h2>
           </div>
           <form class="stack-form" id="projectForm">
             <div class="form-grid">
-              <input name="id" placeholder="project id" required />
               <input name="name" placeholder="project name" required />
+              <input name="audience" placeholder="audience" required />
+              <input name="technical_stack" placeholder="technical stack" required />
             </div>
-            <textarea name="onboarding" rows="5">{ "objective": "orchestrate agents", "scope": "project kickoff" }</textarea>
+            <textarea name="description" rows="4" placeholder="description" required></textarea>
             <button type="submit">Register Project</button>
           </form>
-          <pre id="projectPreview" class="output">Project onboarding creates CEO questions before kickoff.</pre>
+          <pre id="projectPreview" class="output">Project ID is generated automatically. New projects create a CEO question signal.</pre>
         </article>
 
         <article class="panel">
           <div class="panel-header">
-            <h2>New Card</h2>
+            <h2>Selected Project</h2>
           </div>
-          <form class="stack-form" id="cardForm">
-            <div class="form-grid">
-              <input name="id" placeholder="card id" required />
-              <input name="title" placeholder="title" required />
-              <select name="owner" required>
-                <option>CEO</option>
-                <option>CTO</option>
-                <option>BA</option>
-                <option>DEV_BACKEND</option>
-                <option>DEV_FRONTEND</option>
-                <option>SECURITY</option>
-                <option>QA</option>
-              </select>
-              <select name="priority" required>
-                <option value="high">high</option>
-                <option value="medium">medium</option>
-                <option value="low">low</option>
-              </select>
-              <select name="status" required>
-                <option value="todo">todo</option>
-                <option value="in_progress">in progress</option>
-                <option value="done">done</option>
-              </select>
-              <input name="phase" value="Phase 3" required />
-              <input name="task_ref" placeholder="task ref" required />
-            </div>
-            <button type="submit">Create Card</button>
-          </form>
+          <div id="projectDetail" class="list"></div>
+          <div id="questionSignal" class="list"></div>
         </article>
       </section>
 
-      <section class="panel">
+      <section class="panel page" id="board" data-page="board">
         <div class="panel-header">
           <h2>Planning Board</h2>
         </div>
+        <form class="stack-form" id="cardForm">
+          <div class="form-grid">
+            <input name="id" placeholder="card id" required />
+            <input name="title" placeholder="title" required />
+            <select name="owner" required>
+              <option>CEO</option>
+              <option>CTO</option>
+              <option>BA</option>
+              <option>DEV_BACKEND</option>
+              <option>DEV_FRONTEND</option>
+              <option>SECURITY</option>
+              <option>QA</option>
+            </select>
+            <select name="priority" required>
+              <option value="high">high</option>
+              <option value="medium">medium</option>
+              <option value="low">low</option>
+            </select>
+            <select name="status" required>
+              <option value="todo">todo</option>
+              <option value="in_progress">in progress</option>
+              <option value="done">done</option>
+            </select>
+            <input name="phase" value="R1" required />
+            <input name="task_ref" placeholder="task ref" required />
+          </div>
+          <button type="submit">Create Card</button>
+        </form>
         <div class="board" id="planningBoard"></div>
       </section>
 
-      <section class="split">
+      <section class="split page" data-page="agents">
         <article class="panel" id="agents">
           <div class="panel-header">
             <h2>Agents</h2>
@@ -156,8 +164,16 @@
             <tbody id="agentRows"></tbody>
           </table>
         </article>
-
         <article class="panel" id="providers">
+          <div class="panel-header">
+            <h2>Provider Summary</h2>
+          </div>
+          <div id="providerListSummary" class="list"></div>
+        </article>
+      </section>
+
+      <section class="split page" data-page="providers">
+        <article class="panel">
           <div class="panel-header">
             <h2>Providers</h2>
           </div>
@@ -182,7 +198,7 @@
         </article>
       </section>
 
-      <section class="split">
+      <section class="split page" data-page="memory">
         <article class="panel" id="memory">
           <div class="panel-header">
             <h2>Memory</h2>
@@ -190,6 +206,29 @@
           </div>
           <ul id="memoryList" class="memory-list"></ul>
           <pre id="memoryContent" class="output">Select a memory file and read.</pre>
+        </article>
+        <article class="panel" id="handoffs">
+          <div class="panel-header">
+            <h2>Handoff Summary</h2>
+          </div>
+          <pre class="output">Handoffs are also recorded as board card comments.</pre>
+        </article>
+      </section>
+
+      <section class="split page" data-page="handoffs">
+        <article class="panel">
+          <div class="panel-header">
+            <h2>Board Comments</h2>
+          </div>
+          <form class="stack-form" id="commentForm">
+            <div class="form-grid">
+              <input name="card_id" placeholder="card id" required />
+              <input name="author" value="HUMAN" required />
+            </div>
+            <textarea name="body" rows="4" placeholder="comment" required></textarea>
+            <button type="submit">Add Comment</button>
+          </form>
+          <pre id="commentPreview" class="output">Open a card on the board to read comments.</pre>
         </article>
 
         <article class="panel" id="handoffs">

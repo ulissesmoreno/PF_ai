@@ -165,3 +165,16 @@ Record decisions and context before execution. Maintain transparency between pha
 - **Controls validated:** Secret-like onboarding payload fields rejected; MCP envelope export reuses handoff validation; frontend escapes card/project text; protected APIs remain bearer-token gated.
 - **Impact:** Security / Product.
 - **References:** `DOC/TESTS.md#15-phase-3-executed-results`.
+
+### [2026-05-06 08:10] - [CEO] / [CTO] / [BA]: R1 project-centric workspace root
+- **Context:** [HUMAN] requested a full project refactor beginning with project registration and approved the R1 plan via `[USER_DONE]`.
+- **Decision:** Project becomes the root workspace entity for the UI. The sidebar lists projects only, while feature navigation lives inside the selected project workspace. R1 stores project summaries through the API and scopes local frontend records by active project.
+- **Why:** This makes PF_ai usable as a multi-project orchestration tool and prevents the dashboard from mixing unrelated project data.
+- **Impact:** Business / UX / Architectural.
+- **References:** `DOC/PLAN.md#18-refactor-plan---r1-project-registration`, `pf-ai-web/index.html`, `pf-ai-web/src/app.js`, `src/domain/orchestration.go`.
+
+### [2026-05-06 08:10] - [SECURITY]: R1 project field validation
+- **Decision:** Project registration rejects secret-like keys in onboarding payloads and secret-like text in project summary fields. Browser-created project question signals remain local UI state and do not write into `QUESTIONS.md`.
+- **Why:** Project descriptions and stack notes are likely to receive human-entered text; refusing obvious credential markers reduces accidental secret capture during onboarding.
+- **Impact:** Security / Documentation.
+- **References:** `DOC/TESTS.md#17-refactor-r1-executed-results`, `src/domain/orchestration.go`, `tests/domain/orchestration_test.go`.

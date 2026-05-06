@@ -231,3 +231,17 @@
 - **Metrics:** Phase 3 status: Done; roadmap planned phases 0-3: Done.
 - **References:** `DOC/ROADMAP.md`, `DOC/PLAN.md`.
 - **Remaining Focus:** Await explicit [HUMAN] direction for next roadmap or production hardening cycle.
+
+### [2026-05-06 07:46] - [DEV_FRONTEND:Pleno]: Post-roadmap board UX refinement
+- **Delivery description:** Applied new [HUMAN] UX instructions: separated workspace into pages, promoted Board as the central workspace, made cards selectable, added card comments, and recorded handoffs as card comments.
+- **Tests Performed:** `node --check pf-ai-web\src\app.js`; `node --check pf-ai-web\server.mjs`; `go test ./...`; served HTML literal scan for board navigation and comments.
+- **Metrics:** Go suite passed; frontend syntax passed; required UI markers found.
+- **References:** `NEW-INSTRUCTIONS.md`, `PLAYBOOK.md`, `pf-ai-web/index.html`, `pf-ai-web/src/app.js`, `pf-ai-web/src/styles.css`.
+- **Remaining Focus:** Await [HUMAN] browser validation or next objective.
+
+### [2026-05-06 08:10] - [DEV_BACKEND:Pleno] / [DEV_FRONTEND:Pleno]: R1 project registration completed
+- **Delivery description:** Implemented the first refactor deliverable: project registration with automatic hidden ID, summary fields, project-only sidebar, active project context, local scoped workspace records, and CEO question signal for new projects.
+- **Tests Performed:** `go test ./...`; `node --check pf-ai-web\src\app.js`; `node --check pf-ai-web\server.mjs`; served frontend marker scan at `http://127.0.0.1:5173`.
+- **Metrics:** Go suite passed; frontend syntax passed; served UI returned HTTP 200 and contained R1 project registration markers.
+- **References:** `DOC/PLAN.md#18-refactor-plan---r1-project-registration`, `src/domain/orchestration.go`, `src/infrastructure/httpapi/server.go`, `pf-ai-web/index.html`, `pf-ai-web/src/app.js`, `pf-ai-web/src/styles.css`.
+- **Remaining Focus:** [HUMAN] closure review for R1; backend scoped persistence for non-project resources remains next refactor candidate.

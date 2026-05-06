@@ -130,6 +130,9 @@
 | [2026-05-05 20:06] | **Commit comment after each delivery.** | After every delivery, provide a suggested Conventional Commit message/comment. |
 | [2026-05-05 20:15] | **Planning as dashboard cards after MVP.** | Future non-MVP planning should use card-based planning similar to JIRA: cards created, prioritized, and assigned to agents so the board itself is the dashboard. |
 | [2026-05-05 20:15] | **Project registration before onboarding.** | Future flow should include project registration, then onboarding fill-in, then CEO questions before project start. |
+| [2026-05-06 07:46] | **Separate workspace by pages.** | Agents, projects, providers, board, memory, and handoffs should be separated into pages instead of one crowded dashboard. |
+| [2026-05-06 07:46] | **Single board with comments.** | The board must be the central workspace; [HUMAN] can open cards, read details, and add comments. Handoffs should appear as card comments. |
+| [2026-05-06 08:00] | **Planning before refactor development.** | For the full-project refactor, present the deliverable plan in project `.md` files and wait for explicit approval before coding. |
 
 ---
 
@@ -180,6 +183,8 @@
 | [2026-05-05 15:29] | CEO | Added `[USER_DONE]` approval semantics and management planning-approval preference. |
 | [2026-05-05 20:06] | CEO | Added delivery preference: provide a suggested commit comment after each delivery. |
 | [2026-05-05 20:15] | CEO | Added future workflow preferences for card-based planning dashboard and project registration before onboarding. |
+| [2026-05-06 07:46] | CEO | Added UX preferences from `NEW-INSTRUCTIONS.md`: page separation and board cards with comments/handoffs. |
+| [2026-05-06 08:00] | CEO | Added refactor workflow preference: plan deliverable in files before development. |
 
 ---
 

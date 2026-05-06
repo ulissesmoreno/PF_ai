@@ -452,3 +452,144 @@ Deliver the final orchestration layer in a way that is visible and valuable to [
 
 ### User Approval
 - [x] User confirmed Phase 3 Stage Closure Gate and authorizes roadmap completion on 2026-05-06 07:39.
+
+---
+
+## 18. Refactor Plan - R1 Project Registration
+
+## Updated on: 2026-05-06 08:00
+
+## 18.1 Stage Objective
+Plan the first deliverable of the full PF_ai refactor before any development. The deliverable is project-centric operation: a dedicated project registration flow that becomes the entry point for all later screens and scopes the workspace by selected project.
+
+## 18.2 Roadmap Stage
+- **Stage name:** R1 - Project Registration.
+- **Related roadmap item:** `DOC/ROADMAP.md#refactor-roadmap-project-centric-workspace-status-planning`
+- **Development status:** Blocked until [HUMAN] approves this plan.
+
+## 18.3 Detailed Description
+- **What will be implemented after approval:** A project registration page; automatic hidden project ID; project summary persistence; project list in the sidebar; selected-project context; and project-scoped filtering for existing screens.
+- **Expected behavior:** [HUMAN:Ulisses] can create a project, see it in the sidebar, select it, and operate the rest of PF_ai inside that project context.
+- **Impacted components:** `pf-ai-web`, Go domain/API for project registration, local fallback storage, future PostgreSQL persistence path, `QUESTIONS.md` signaling flow for new-project questions.
+
+## 18.4 User-Facing Scope
+- Create a dedicated page for project registration.
+- Fields:
+  - Project name.
+  - Description.
+  - Audience.
+  - Technical stack.
+- Project ID:
+  - Generated automatically.
+  - Not required to be visible in UI.
+- Sidebar:
+  - Shows projects as the primary navigation.
+  - After selecting a project, other screens show only data related to it.
+- New project flow:
+  - CEO registers a new project context.
+  - If required information is missing, `QUESTIONS.md` receives a project-specific question signal.
+
+## 18.5 Out Of Scope For R1
+- Full multi-tenant database migration.
+- Authentication/authorization per project.
+- Migrating all historical unscoped data automatically.
+- Full onboarding wizard beyond the requested summary fields.
+- Production deployment.
+
+## 18.6 Acceptance Criteria
+- Criterion 1: Project registration page exists and is separate from Agents, Providers, Board, Memory, and Handoffs.
+- Criterion 2: Project creation accepts name, description, audience, and technical stack.
+- Criterion 3: Project ID is generated automatically and stored.
+- Criterion 4: Sidebar lists projects, not mixed feature links as the primary navigation.
+- Criterion 5: Selecting a project sets active project context.
+- Criterion 6: Existing screens can read active project context and filter/scope their local data model.
+- Criterion 7: Missing required onboarding fields trigger a project-specific question entry or question signal.
+- Criterion 8: No raw secrets are accepted in project fields.
+- Criterion 9: Existing regression suite remains passing.
+
+## 18.7 Business Rules
+- Rule 1: Project is the root workspace entity.
+- Rule 2: Agents, providers, cards, comments, memory references, and handoffs must belong to a selected project after R1 implementation.
+- Rule 3: New project creation must not require visible/manual ID entry.
+- Rule 4: `QUESTIONS.md` is used only for agent-to-human questions; project decisions remain in project records or context docs.
+- Rule 5: Development starts only after [HUMAN] approves this planning section.
+
+## 18.8 Recommended Tests
+- Unit: Project registration rejects missing name.
+- Unit: Project registration rejects secret-like fields.
+- Unit: Project ID generation is deterministic enough for repeatable tests and unique enough for local operation.
+- Integration: Protected project API creates and lists projects.
+- Frontend: Project form creates a project and updates sidebar.
+- Frontend: Selecting a project scopes visible board/agent/provider data.
+- Regression: Existing Go suite and frontend syntax checks pass.
+
+## 18.9 Security Validations
+- Threat 1: Secret leakage in project description or stack fields.
+  - Mitigation: Reject secret-like keys/fields and avoid logging raw project payloads.
+- Threat 2: Cross-project data bleed.
+  - Mitigation: Require project_id on scoped records after selection.
+- Threat 3: Project name injection into UI.
+  - Mitigation: Escape all rendered project fields.
+- Threat 4: `QUESTIONS.md` pollution.
+  - Mitigation: Only write direct CEO-to-HUMAN questions, with project name/id signal.
+
+## 18.10 Proposed Technical Shape
+- Domain:
+  - Add/extend `ProjectRegistration` into a first-class `Project`.
+  - Add `ProjectID` to future scoped records.
+- Backend:
+  - Protected `GET /api/projects`.
+  - Protected `POST /api/projects`.
+  - Optional `POST /api/projects/{id}/questions-signal` if question writing is not pulled into R1.
+- Frontend:
+  - Sidebar becomes project list.
+  - Feature pages remain available inside selected project context.
+  - LocalStorage fallback stores projects under `pf_ai_projects`.
+- Documentation:
+  - R1 results recorded in `STATE.md` during execution and closure docs only after implementation.
+
+## 18.11 Task Cards Planned
+- `R1-PLAN-001`: Approve project registration plan.
+- `R1-BACKEND-001`: Implement project domain/API.
+- `R1-FRONTEND-001`: Implement project page and sidebar project navigation.
+- `R1-SCOPING-001`: Scope existing UI data to active project.
+- `R1-QA-001`: Validate registration, selection, scoping, and regressions.
+- `R1-SECURITY-001`: Audit project fields and cross-project data isolation.
+
+## 18.12 Open Questions For Approval
+- Should R1 write a real entry into `QUESTIONS.md` automatically, or only show a visible "questions needed" signal for CEO to confirm?
+- Should project data persist only in frontend localStorage for R1, or also through backend in-memory API immediately?
+- Should existing unscoped records be shown under a default legacy project, or hidden until a project is selected?
+
+## 18.13 Approval Gate
+- [x] Approved by [HUMAN:Ulisses] via `[USER_DONE]` on 2026-05-06 08:10.
+- R1 implementation authorized and executed.
+
+## 18.14 Delivery Result - R1 Project Registration
+
+### Delivery Date
+- 2026-05-06 08:10
+
+### Implemented Scope
+- Dedicated project registration page with name, description, audience, and technical stack.
+- Automatic project ID generation in domain/API and local frontend fallback.
+- Sidebar changed to project list as the primary navigation.
+- Feature navigation moved inside the workspace after project context.
+- Active project context persisted in localStorage.
+- Agents, providers, cards, comments, and local handoffs scoped by selected project in the frontend model.
+- New project creation emits a CEO question signal in the UI/local state without writing decisions into `QUESTIONS.md`.
+
+### Acceptance Criteria Result
+- Criterion 1: Passed.
+- Criterion 2: Passed.
+- Criterion 3: Passed.
+- Criterion 4: Passed.
+- Criterion 5: Passed.
+- Criterion 6: Passed for frontend/local model and API project registration.
+- Criterion 7: Passed through visible CEO question signal.
+- Criterion 8: Passed through backend project validation and secret-like summary/onboarding rejection.
+- Criterion 9: Passed.
+
+### Deferrals
+- Backend project_id scoping for agents/providers/cards/handoffs remains a follow-up persistence/API refactor.
+- Real append into `QUESTIONS.md` from the browser remains out of scope; UI emits a CEO question signal for traceability.

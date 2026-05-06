@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"pf-ai/src/domain"
@@ -12,15 +13,15 @@ import (
 )
 
 type Server struct {
-	AuthSecret  string
-	DocRoot     string
-	HandoffDir  string
-	Agents      []domain.AgentDefinition
-	Providers   []domain.ModelProvider
+	AuthSecret     string
+	DocRoot        string
+	HandoffDir     string
+	Agents         []domain.AgentDefinition
+	Providers      []domain.ModelProvider
 	ProviderHealth map[string]domain.ProviderHealth
-	PlanningCards []domain.PlanningCard
-	Projects      []domain.ProjectRegistration
-	MemoryFiles []domain.MemoryFile
+	PlanningCards  []domain.PlanningCard
+	Projects       []domain.ProjectRegistration
+	MemoryFiles    []domain.MemoryFile
 }
 
 func (s *Server) Routes() http.Handler {
@@ -164,11 +165,12 @@ func (s *Server) projects(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
 			return
 		}
-		project, err := domain.NewProjectRegistration(request.ID, request.Name, request.Onboarding)
+		project, err := domain.NewProjectRegistration(request.ID, request.Name, request.Description, request.Audience, request.TechnicalStack, request.Onboarding)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
+		project.ID = s.uniqueProjectID(project.ID)
 		s.Projects = append(s.Projects, project)
 		writeJSON(w, http.StatusCreated, project)
 	default:
@@ -290,9 +292,31 @@ type planningCardRequest struct {
 }
 
 type projectRequest struct {
-	ID         string         `json:"id"`
-	Name       string         `json:"name"`
-	Onboarding map[string]any `json:"onboarding"`
+	ID             string         `json:"id"`
+	Name           string         `json:"name"`
+	Description    string         `json:"description"`
+	Audience       string         `json:"audience"`
+	TechnicalStack string         `json:"technical_stack"`
+	Onboarding     map[string]any `json:"onboarding"`
+}
+
+func (s *Server) uniqueProjectID(base string) string {
+	candidate := base
+	suffix := 2
+	for {
+		used := false
+		for _, project := range s.Projects {
+			if project.ID == candidate {
+				used = true
+				break
+			}
+		}
+		if !used {
+			return candidate
+		}
+		candidate = base + "-" + strconv.Itoa(suffix)
+		suffix++
+	}
 }
 
 func memoryPaths(files []domain.MemoryFile) []string {

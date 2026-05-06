@@ -46,6 +46,25 @@
 - Para entregas futuras, não MVP:
   - Planejamento deve aparecer com Cards (semelhante ao JIRA). Cards são Criados, priorizados e colocados sob responsabilidade de cada agente. Dessa forma o quadro em si já é um Dashboard.
   - Criar o cadastro do projeto, onde o ONBORDING será preenchido e, em seguida, CEO irá fazer os questionamentos antes de inicio do projeto.
+- Separar Agentes, projetos, etc por páginas (tá muito bagunçado agora). Se isso já estiver no planejamento pode fazer no momento adequado.
+- Criar um board único com cards (tem que permitir eu acessar, ler e adicionar comentários). os Handoff apareceram como comentários.
+
+## ENTREGÁVEIS
+ 1 - Cadastro de projeto
+  - Página única, onde será feito o onboarding de um nobo projeto. Que depois de cadastrado deve aparecer no painel lateral. Por hoje pode persistir apenas informações resumidas do projeto e o restante em arquivo.
+    - Nome do projeto
+    - descrição
+    - público
+    - stack técnica
+  - CEO registra e, se houver dúvida registrar em questions
+  - Ao selecionar um projeto todos as outras telas devem conter apenas dados relacionados a ele.
+  - Menu lateral passa a ter apenas os projetos.
+  - O que espero:
+    - Cadastro funcional de projetos.
+    - EM caso de novo preencher questions (sinalizar o novo do projeto)
+    - ID não precisa ser visivel, mas deve ser automático.
+  - Se quiser validar os campos e ideias posso passar.
+
 
 ## Inspirations
 This session consolidates the foundational frameworks, technical skills, and design philosophies that drive the Agentic Enterprise architecture. These resources provide the "how" and "why" for building a high-performance, cost-efficient, and well-governed AI agent ecosystem.

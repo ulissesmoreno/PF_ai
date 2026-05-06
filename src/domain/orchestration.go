@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 )
 
@@ -68,16 +69,27 @@ func (p CardPriority) Valid() bool {
 }
 
 type ProjectRegistration struct {
-	ID         string         `json:"id"`
-	Name       string         `json:"name"`
-	Onboarding map[string]any `json:"onboarding"`
+	ID             string         `json:"id"`
+	Name           string         `json:"name"`
+	Description    string         `json:"description"`
+	Audience       string         `json:"audience"`
+	TechnicalStack string         `json:"technical_stack"`
+	Onboarding     map[string]any `json:"onboarding,omitempty"`
 }
 
-func NewProjectRegistration(id, name string, onboarding map[string]any) (ProjectRegistration, error) {
+func NewProjectRegistration(id, name, description, audience, technicalStack string, onboarding map[string]any) (ProjectRegistration, error) {
+	name = strings.TrimSpace(name)
+	id = strings.TrimSpace(id)
+	if id == "" {
+		id = ProjectIDFromName(name)
+	}
 	project := ProjectRegistration{
-		ID:         strings.TrimSpace(id),
-		Name:       strings.TrimSpace(name),
-		Onboarding: onboarding,
+		ID:             id,
+		Name:           name,
+		Description:    strings.TrimSpace(description),
+		Audience:       strings.TrimSpace(audience),
+		TechnicalStack: strings.TrimSpace(technicalStack),
+		Onboarding:     onboarding,
 	}
 	if project.ID == "" {
 		return ProjectRegistration{}, errors.New("project id is required")
@@ -85,10 +97,38 @@ func NewProjectRegistration(id, name string, onboarding map[string]any) (Project
 	if project.Name == "" {
 		return ProjectRegistration{}, errors.New("project name is required")
 	}
+	if project.Description == "" {
+		return ProjectRegistration{}, errors.New("project description is required")
+	}
+	if project.Audience == "" {
+		return ProjectRegistration{}, errors.New("project audience is required")
+	}
+	if project.TechnicalStack == "" {
+		return ProjectRegistration{}, errors.New("project technical stack is required")
+	}
+	if containsSecretLikeText(project.Name, project.Description, project.Audience, project.TechnicalStack) {
+		return ProjectRegistration{}, errors.New("project summary contains secret-like value")
+	}
 	if containsSecretLikeField(project.Onboarding) {
 		return ProjectRegistration{}, errors.New("project onboarding contains secret-like field")
 	}
 	return project, nil
+}
+
+func ProjectIDFromName(name string) string {
+	normalized := strings.ToLower(strings.TrimSpace(name))
+	normalized = regexp.MustCompile(`[^a-z0-9]+`).ReplaceAllString(normalized, "-")
+	return strings.Trim(normalized, "-")
+}
+
+func containsSecretLikeText(values ...string) bool {
+	for _, value := range values {
+		normalized := strings.ToLower(value)
+		if strings.Contains(normalized, "secret") || strings.Contains(normalized, "password") || strings.Contains(normalized, "token") || strings.Contains(normalized, "api_key") || strings.Contains(normalized, "apikey") {
+			return true
+		}
+	}
+	return false
 }
 
 type MCPEnvelope struct {
