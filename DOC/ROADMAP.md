@@ -49,14 +49,14 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
   - Criteria: Logs, monitoring hooks, secrets handling, and fallback behavior validated.
   - Tests: Security and reliability tests.
 
-## Phase 3: MCP Handoffs and Advanced Orchestration (Status: Doing)
-- [ ] **MCP Handoff Transport**
+## Phase 3: MCP Handoffs and Advanced Orchestration (Status: Done)
+- [x] **MCP Handoff Transport**
   - Criteria: File handoff schema maps cleanly to MCP-based communication.
   - Tests: Transport compatibility and regression tests.
-- [ ] **Advanced Agent Manager**
+- [x] **Advanced Agent Manager**
   - Criteria: Agent routing, memory selection, model tiering, and skill mapping are managed through the UI/API.
   - Tests: End-to-end orchestration scenarios.
-- [ ] **Release Readiness**
+- [x] **Release Readiness**
   - Criteria: Documentation, tests, observability, and release notes complete.
   - Tests: Stage Closure Gate.
 
@@ -84,3 +84,4 @@ This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for mar
 - **[2026-05-06 07:13] - [CEO]:** [HUMAN:Ulisses] approved Phase 2 Stage Closure Gate via `[USER_DONE]`; phase status set to Done.
 - **[2026-05-06 07:28] - [CEO]:** Phase 3 opened after `[USER_DONE]`; intake completed with user-value focus on planning cards, project registration/onboarding, and MCP-compatible handoffs.
 - **[2026-05-06 07:33] - [TECH_LEAD]:** Phase 3 orchestration board implemented and closure package prepared. Phase status remains `Doing` until [HUMAN:Ulisses] approves Stage Closure Gate and marks completion.
+- **[2026-05-06 07:39] - [CEO]:** [HUMAN:Ulisses] approved Phase 3 Stage Closure Gate via `[USER_DONE]`; phase status set to Done.
