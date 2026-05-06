@@ -229,10 +229,46 @@ th {
 }
 
 .list,
-.memory-list {
+.memory-list,
+.board {
   display: grid;
   gap: 10px;
   margin-top: 16px;
+}
+
+.board {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+.board-column {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.board-column h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-alt);
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.card strong {
+  overflow-wrap: anywhere;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .list-item,
@@ -299,7 +335,8 @@ pre {
 
   .grid,
   .split,
-  .form-grid {
+  .form-grid,
+  .board {
     grid-template-columns: 1fr;
   }
 

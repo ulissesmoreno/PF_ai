@@ -42,6 +42,11 @@ Ulisses como operador principal e, futuramente, usuarios tecnicos que precisam d
 - Provider `hybrid` tenta rota local quando saudavel e faz fallback para API com motivo auditavel quando local estiver indisponivel.
 - Startup local recomendado: definir `PF_AI_AUTH_SECRET` no shell e executar `scripts\run-backend-local.ps1`.
 
+### Orquestracao avancada
+- Planning Board: cards por status, prioridade, agente responsavel, fase e task reference.
+- Project Registration: cadastro do projeto com payload de onboarding; campos com aparencia de segredo sao rejeitados.
+- MCP Envelope: handoffs podem ser exportados em envelope `mcp-compatible` para migracao de transporte.
+
 ### Desenvolvimento
 - Arquitetura: `DOC/ARCHITECTURE.md`
 - Regras GSD: `DOC/GSD-RULES.md`
@@ -99,6 +104,11 @@ Current local note: if the Go cache under `AppData` is blocked, set `GOCACHE` to
 - `local` and `hybrid` providers accept local endpoints only on loopback (`localhost`, `127.0.0.1`, `::1`).
 - A `hybrid` provider uses the local route when healthy and falls back to API with an auditable reason when local is unavailable.
 - Recommended local startup: set `PF_AI_AUTH_SECRET` in the shell and run `scripts\run-backend-local.ps1`.
+
+### Advanced Orchestration
+- Planning Board: cards by status, priority, responsible agent, phase, and task reference.
+- Project Registration: project registration with onboarding payload; secret-looking fields are rejected.
+- MCP Envelope: handoffs can be exported as an `mcp-compatible` envelope for transport migration.
 
 ### Development
 - Architecture: `DOC/ARCHITECTURE.md`

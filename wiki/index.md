@@ -29,6 +29,7 @@
 | :--- | :--- | :--- |
 | `wiki/user-manual/phase-1-mvp.md` | End-user guide for the Phase 1 dashboard: providers, agents, memory reads, handoffs, and local fallback. | 2026-05-05 20:06 |
 | `wiki/user-manual/phase-2-runtime-routing.md` | End-user guide for provider health checks, local runtime endpoint contract, and hybrid fallback status. | 2026-05-05 20:21 |
+| `wiki/user-manual/phase-3-orchestration-board.md` | End-user guide for project registration, planning cards, and MCP envelope export. | 2026-05-06 07:33 |
 
 ---
 

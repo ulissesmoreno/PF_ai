@@ -152,3 +152,16 @@ Record decisions and context before execution. Maintain transparency between pha
 - **Known limitation:** Real local model image selection remains configurable and should be chosen explicitly when [HUMAN] wants concrete model execution beyond endpoint health.
 - **Impact:** Security / Runtime.
 - **References:** `DOC/TESTS.md#14-phase-2-executed-results`.
+
+### [2026-05-06 07:33] - [CEO] / [CTO] / [BA]: Phase 3 user-visible orchestration
+- **Context:** [HUMAN] questioned whether Phase 2 was only technical. Phase 3 therefore prioritizes visible value over transport-only work.
+- **Decision:** Phase 3 delivers project registration, onboarding payload validation, planning cards as the dashboard, and MCP-compatible handoff envelope export.
+- **Why:** This converts PF_ai from a technical runtime manager into a usable orchestration workbench where planning, ownership, and handoff readiness are visible.
+- **Impact:** Business / UX / Architectural.
+- **References:** `DOC/PLAN.md#17-phase-3-plan---mcp-handoffs-and-advanced-orchestration`, `src/domain/orchestration.go`, `pf-ai-web/index.html`.
+
+### [2026-05-06 07:33] - [SECURITY]: Phase 3 closure audit
+- **Decision:** SECURITY approves Phase 3 for Stage Closure Gate review.
+- **Controls validated:** Secret-like onboarding payload fields rejected; MCP envelope export reuses handoff validation; frontend escapes card/project text; protected APIs remain bearer-token gated.
+- **Impact:** Security / Product.
+- **References:** `DOC/TESTS.md#15-phase-3-executed-results`.

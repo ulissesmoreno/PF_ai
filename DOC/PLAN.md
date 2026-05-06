@@ -372,3 +372,83 @@ Deliver local runtime and hybrid provider routing so PF_ai can verify a configur
 
 ### User Approval
 - [x] User confirmed Phase 2 Stage Closure Gate and authorizes roadmap advancement on 2026-05-06 07:13.
+
+---
+
+## 17. Phase 3 Plan - MCP Handoffs and Advanced Orchestration
+
+## Updated on: 2026-05-06 07:28:36
+
+## 17.1 Stage Objective
+Deliver the final orchestration layer in a way that is visible and valuable to [HUMAN:Ulisses]: project registration, onboarding-driven kickoff, card-based planning dashboard, agent assignment, memory selection, model tier visibility, and MCP-compatible handoff envelopes.
+
+## 17.2 Roadmap Stage
+- **Stage name:** Phase 3 - MCP Handoffs and Advanced Orchestration.
+- **Related roadmap item:** `DOC/ROADMAP.md#phase-3-mcp-handoffs-and-advanced-orchestration-status-doing`
+
+## 17.3 Acceptance Criteria
+- Criterion 1: Handoff schema can be exported as an MCP-compatible envelope without secrets.
+- Criterion 2: Backend exposes protected endpoints for project registration and planning cards.
+- Criterion 3: Card board supports status, priority, responsible agent, phase, and task reference.
+- Criterion 4: Dashboard shows planning cards as the operational dashboard.
+- Criterion 5: Project registration captures onboarding inputs and prepares CEO questions before project start.
+- Criterion 6: Advanced agent manager shows routing/provider/tier metadata without exposing raw credentials.
+- Criterion 7: Regression tests for Phase 1 and Phase 2 remain passing.
+
+## 17.4 Security Validations
+- Threat 1: MCP envelope leaks secrets.
+  - Mitigation: Reuse handoff secret-field rejection and validate MCP export output.
+- Threat 2: Planning card payload injection.
+  - Mitigation: Treat all card text as data and escape in UI.
+- Threat 3: Project registration stores credentials.
+  - Mitigation: Store secret references only; reject secret-like fields in onboarding payload.
+- Threat 4: Agent routing metadata reveals raw provider credentials.
+  - Mitigation: Show provider IDs, modes, health, and secret refs only.
+
+## 17.5 Responsible and Dependencies
+- **Responsible:** [BA] / [CTO] for kickoff; [SECURITY] for threat model; [DEV_BACKEND], [DEV_FRONTEND], [QA], and [DOCUMENTATION] for execution.
+- **Dependencies:** Phase 2 Done; existing provider/agent/handoff APIs; frontend dashboard.
+- **Business value focus:** This phase must feel like an orchestration product, not only a technical transport upgrade.
+
+## 17.6 Plan Validation
+- **Business Feasibility:** Approved. Card board and project registration directly address [HUMAN] value feedback.
+- **Technical Feasibility:** Approved. Existing handoff/domain/API/frontend foundation can be extended.
+- **Security Readiness:** Threat model drafted; closure audit mandatory.
+- **Approval:** Phase 3 kickoff opened by [HUMAN] via `[USER_DONE]`; execution proceeds under GSD autonomy until closure.
+
+## 17.7 Stage Closure Gate - Phase 3
+
+### Completed Stage Candidate: Phase 3 - MCP Handoffs and Advanced Orchestration
+### Closure Package Date: 2026-05-06 07:33
+### Responsible: [CEO] / [TECH_LEAD]
+
+### Closure Checklist
+
+| # | File | Status | Note |
+| :- | :--- | :---: | :--- |
+| 1 | `TESTS.md` | `[x]` | Phase 3 validation recorded in `TEST-PHASE3-*` and `REVIEW-PHASE3-001`. |
+| 2 | `STATE.md` | `[x]` | Orchestration board completion recorded. |
+| 3 | `TASKS.md` | `[x]` | Phase 3 implementation and QA tasks recorded as Done. |
+| 4 | `CONTEXT.md` | `[x]` | User-visible orchestration and security decisions recorded. |
+| 5 | `README.md` | `[x]` | Phase 3 usage updated. |
+| 6 | `ROADMAP.md` | `[ ]` | Pending [HUMAN] approval and marking. |
+| 7 | `PLAN.md` | `[x]` | Closure Gate section filled. |
+| 8 | `VERSIONS.md` | `[x]` | Phase 3 release entry added. |
+| 9 | `RETROSPECTIVE.md` | `[x]` | Phase 3 retrospective added. |
+| 10 | `WIKI` | `[x]` | Phase 3 user manual entry added. |
+
+### Acceptance Criteria Result
+- **Criterion 1:** Passed. Handoff schema exports MCP-compatible envelope without secrets.
+- **Criterion 2:** Passed. Protected endpoints exist for project registration and planning cards.
+- **Criterion 3:** Passed. Card board supports status, priority, responsible agent, phase, and task reference.
+- **Criterion 4:** Passed. Dashboard shows planning cards as the operational dashboard.
+- **Criterion 5:** Passed. Project registration captures onboarding payload and rejects secret-like fields.
+- **Criterion 6:** Passed. Agent/provider routing metadata remains visible without raw credentials.
+- **Criterion 7:** Passed. Phase 1 and Phase 2 regression suite remains passing.
+
+### Delivery Summary
+- Phase 3 is ready for [HUMAN] Stage Closure Gate review.
+- Metrics: Go suite passed; frontend syntax passed; served dashboard contains planning board, project registration, and MCP envelope export.
+
+### User Approval
+- [ ] Pending [HUMAN:Ulisses] approval.

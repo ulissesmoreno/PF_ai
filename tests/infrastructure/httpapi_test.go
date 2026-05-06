@@ -175,6 +175,51 @@ func TestProviderHealthChecksLocalRuntimeEndpoint(t *testing.T) {
 	}
 }
 
+func TestPlanningCardsRouteCreatesCard(t *testing.T) {
+	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
+
+	body := bytes.NewBufferString(`{"id":"card-1","title":"Phase 3 board","owner":"CEO","status":"todo","priority":"high","phase":"Phase 3","task_ref":"PHASE3-CARD-001"}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/planning-cards", body)
+	request.Header.Set("Authorization", "Bearer local-test-secret")
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+
+	if response.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", response.Code, response.Body.String())
+	}
+}
+
+func TestProjectRegistrationRejectsSecretLikePayload(t *testing.T) {
+	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
+
+	body := bytes.NewBufferString(`{"id":"pf-ai","name":"PF_ai","onboarding":{"token":"raw"}}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/projects", body)
+	request.Header.Set("Authorization", "Bearer local-test-secret")
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", response.Code)
+	}
+}
+
+func TestMCPEnvelopeRouteExportsHandoff(t *testing.T) {
+	server := (&httpapi.Server{AuthSecret: "local-test-secret"}).Routes()
+
+	body := bytes.NewBufferString(`{"sender":"CEO","recipient":"DEV_BACKEND","task_ref":"PHASE3","intent":"PHASE_KICKOFF","payload":{"summary":"build"}}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/mcp-envelope", body)
+	request.Header.Set("Authorization", "Bearer local-test-secret")
+	response := httptest.NewRecorder()
+	server.ServeHTTP(response, request)
+
+	if response.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", response.Code, response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), `"protocol":"mcp-compatible"`) {
+		t.Fatalf("expected mcp protocol, got %s", response.Body.String())
+	}
+}
+
 func TestMVPFlowCreatesProviderAgentReadsMemoryAndWritesHandoff(t *testing.T) {
 	root := t.TempDir()
 	docDir := filepath.Join(root, "DOC")

@@ -109,3 +109,13 @@ Register project versions, rollbacks, bugfixes, and significant incidents with f
 - **Security Clearance:** Approved for Stage Closure Gate. Provider health route protected; local runtime endpoints constrained to loopback; no auth sentinel leaked in provider health response.
 - **Deploy Notes:** Backend local startup uses `scripts\run-backend-local.ps1` with `PF_AI_AUTH_SECRET` set in shell. Concrete local model image remains configurable.
 - **Retrospective Reference:** `DOC/RETROSPECTIVE.md#2026-05-05-2021---phase-2-local-runtime-and-hybrid-provider-routing`.
+
+### 1.5.0-alpha.1 - 2026-05-06 - [CEO]
+- **Type:** Release Candidate
+- **Main Commit:** pending
+- **Description:** Phase 3 advanced orchestration. Adds planning card domain/API, project registration with onboarding validation, MCP-compatible handoff envelope export, and a visible planning board dashboard.
+- **Files Changed:** `src/domain/orchestration.go`, `src/domain/handoff.go`, `src/infrastructure/httpapi/server.go`, `tests/domain/orchestration_test.go`, `tests/infrastructure/httpapi_test.go`, `pf-ai-web/index.html`, `pf-ai-web/src/app.js`, `pf-ai-web/src/styles.css`, `README.md`, `DOC/PLAN.md`, `DOC/CONTEXT.md`, `DOC/STATE.md`, `DOC/TASKS.md`, `DOC/TESTS.md`, `DOC/VERSIONS.md`, `DOC/RETROSPECTIVE.md`, `wiki/*`.
+- **Tests / Validation:** `DOC/TESTS.md#15-phase-3-executed-results`.
+- **Security Clearance:** Approved for Stage Closure Gate. Secret-like onboarding fields rejected; MCP envelope uses validated handoff payload; UI escapes rendered data.
+- **Deploy Notes:** Frontend dashboard exposes Planning Board, Project Registration, and MCP Envelope export. Backend APIs remain protected by bearer token.
+- **Retrospective Reference:** `DOC/RETROSPECTIVE.md#2026-05-06-0733---phase-3-mcp-handoffs-and-advanced-orchestration`.

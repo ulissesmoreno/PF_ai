@@ -15,3 +15,4 @@ Formato / Format: `[YYYY-MM-DD HH:MM] — Responsável/Responsible — Ação/Ac
 - **[2026-05-05 15:20] - [CEO]:** Phase 0 closed after [HUMAN:Ulisses] roadmap approval. Phase 1 remains pending next explicit kickoff.
 - **[2026-05-05 20:06] - [DOCUMENTATION]:** Phase 1 MVP wiki updated with user manual for dashboard operation, provider/agent saves, memory reads, handoff creation, and local fallback.
 - **[2026-05-05 20:21] - [DOCUMENTATION]:** Phase 2 wiki updated with provider runtime status, loopback local endpoint contract, and hybrid fallback behavior.
+- **[2026-05-06 07:33] - [DOCUMENTATION]:** Phase 3 wiki updated with project registration, planning board cards, and MCP envelope export.

@@ -101,3 +101,27 @@
 
 #### PLAYBOOK.md Updated
 - [x] Yes - entries added for future card-based planning dashboard and project registration before onboarding.
+
+---
+
+### [2026-05-06 07:33] - Phase 3: MCP Handoffs and Advanced Orchestration
+- **Consolidated by:** [CEO]
+- **Sources:** Phase 3 kickoff handoff, value feedback from [HUMAN], `DOC/STATE.md`, `DOC/TESTS.md`, and closure review.
+
+#### What Worked
+- The value question after Phase 2 redirected Phase 3 toward visible operational value.
+- Planning cards turned roadmap execution into a dashboard surface instead of hidden documentation only.
+- Project registration/onboarding and MCP envelope export align future project kickoff with the agentic enterprise direction.
+- Existing handoff validation made MCP-compatible export safer to add.
+
+#### What Didn't Work
+- MCP support is compatibility/export-level, not a live MCP server transport.
+- Planning cards currently use in-memory/API and localStorage fallback; durable board persistence should be a future hardening item.
+
+#### Actions for Next Phase
+- Before production, decide whether MCP transport should be implemented as a server, connector, or external orchestrator integration.
+- Persist planning cards and project registrations through PostgreSQL adapters.
+- Keep future technical phases framed by explicit user-visible value.
+
+#### PLAYBOOK.md Updated
+- [ ] No - no new [HUMAN] preference beyond already recorded card planning and project registration preferences.

@@ -18,6 +18,12 @@ const state = {
   selectedMemory: "DOC/STATE.md",
 };
 
+const defaultCards = [
+  { id: "phase3-mcp", title: "MCP handoff envelope", owner: "DEV_BACKEND", status: "todo", priority: "high", phase: "Phase 3", task_ref: "PHASE3-BACKEND-001" },
+  { id: "phase3-board", title: "Planning board dashboard", owner: "DEV_FRONTEND", status: "todo", priority: "high", phase: "Phase 3", task_ref: "PHASE3-FRONTEND-001" },
+  { id: "phase3-release", title: "Release readiness review", owner: "QA", status: "todo", priority: "medium", phase: "Phase 3", task_ref: "PHASE3-QA-001" },
+];
+
 function localItems(key, fallback = []) {
   try {
     return JSON.parse(globalThis.localStorage?.getItem(key) ?? "null") ?? fallback;
@@ -154,6 +160,30 @@ function renderProviders(providers) {
   document.querySelector("#agentProvider").innerHTML = options.join("");
 }
 
+function renderBoard(cards) {
+  const labels = {
+    todo: "To Do",
+    in_progress: "In Progress",
+    done: "Done",
+  };
+  document.querySelector("#planningBoard").innerHTML = ["todo", "in_progress", "done"]
+    .map((status) => {
+      const items = cards.filter((card) => card.status === status);
+      return `<section class="board-column">
+        <h3>${labels[status]}</h3>
+        ${items.length ? items.map((card) => `<article class="card">
+          <strong>${escapeHTML(card.title)}</strong>
+          <div class="card-meta">
+            <span class="badge">${escapeHTML(card.priority)}</span>
+            <span class="badge">${escapeHTML(card.owner)}</span>
+          </div>
+          <small>${escapeHTML(card.phase)} / ${escapeHTML(card.task_ref)}</small>
+        </article>`).join("") : `<div class="list-item"><strong>No cards.</strong></div>`}
+      </section>`;
+    })
+    .join("");
+}
+
 function redactProviderStatus(status) {
   const safe = {
     provider_id: status.provider_id,
@@ -181,13 +211,15 @@ function renderHandoffPreview(path = "") {
 }
 
 async function refresh() {
-  const [agents, providers] = await Promise.all([
+  const [agents, providers, cards] = await Promise.all([
     loadJSON("/api/agents", defaultAgents, "pf_ai_agents"),
     loadJSON("/api/providers", [], "pf_ai_providers"),
+    loadJSON("/api/planning-cards", defaultCards, "pf_ai_cards"),
   ]);
 
   renderAgents(agents);
   renderProviders(providers);
+  renderBoard(cards.length ? cards : defaultCards);
 }
 
 document.querySelector("#apiBase").value = state.apiBase;
@@ -256,6 +288,48 @@ document.querySelector("#providerForm").addEventListener("submit", async (event)
   }
 });
 
+document.querySelector("#projectForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const values = formData(event.currentTarget);
+  try {
+    const payload = {
+      id: values.id,
+      name: values.name,
+      onboarding: JSON.parse(values.onboarding),
+    };
+    const result = await requestJSON("/api/projects", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    document.querySelector("#projectPreview").textContent = JSON.stringify(result, null, 2);
+    setStatus("Project registered", true);
+  } catch (error) {
+    document.querySelector("#projectPreview").textContent = error.message;
+    setStatus("Project registration failed", false);
+  }
+});
+
+document.querySelector("#cardForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = formData(event.currentTarget);
+  try {
+    await requestJSON("/api/planning-cards", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    event.currentTarget.reset();
+    await refresh();
+    setStatus("Card created", true);
+  } catch (error) {
+    const cards = localItems("pf_ai_cards", defaultCards);
+    const nextCards = [...cards.filter((card) => card.id !== payload.id), payload];
+    setLocalItems("pf_ai_cards", nextCards);
+    event.currentTarget.reset();
+    await refresh();
+    setStatus("Card saved locally", true);
+  }
+});
+
 document.querySelector("#providerList").addEventListener("click", async (event) => {
   const button = event.target.closest("[data-provider-health]");
   if (!button) {
@@ -317,6 +391,27 @@ document.querySelector("#handoffForm").addEventListener("submit", async (event) 
     setLocalItems("pf_ai_handoffs", [...handoffs, { path: localPath, request: values }]);
     renderHandoffPreview(localPath);
     setStatus("Handoff staged locally", true);
+  }
+});
+
+document.querySelector("#exportMcp").addEventListener("click", async () => {
+  const values = formData(document.querySelector("#handoffForm"));
+  try {
+    const result = await requestJSON("/api/mcp-envelope", {
+      method: "POST",
+      body: JSON.stringify({
+        sender: values.sender,
+        recipient: values.recipient,
+        task_ref: values.task_ref,
+        intent: values.intent,
+        payload: JSON.parse(values.payload),
+      }),
+    });
+    document.querySelector("#handoffPreview").textContent = JSON.stringify(result, null, 2);
+    setStatus("MCP envelope exported", true);
+  } catch (error) {
+    document.querySelector("#handoffPreview").textContent = error.message;
+    setStatus("MCP export failed", false);
   }
 });
 

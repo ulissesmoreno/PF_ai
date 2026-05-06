@@ -13,6 +13,7 @@
         <a class="active" href="#dashboard">Dashboard</a>
         <a href="#agents">Agents</a>
         <a href="#providers">Providers</a>
+        <a href="#planning">Planning</a>
         <a href="#memory">Memory</a>
         <a href="#handoffs">Handoffs</a>
       </nav>
@@ -21,8 +22,8 @@
     <main class="workspace">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Phase 2</p>
-          <h1>Local runtime and hybrid provider routing</h1>
+          <p class="eyebrow">Phase 3</p>
+          <h1>MCP handoffs and orchestration board</h1>
         </div>
         <form class="auth-bar" id="authForm">
           <label for="apiBase">API</label>
@@ -37,8 +38,8 @@
       <section class="grid" id="dashboard">
         <article class="panel metric">
           <span>Current phase</span>
-          <strong>Phase 2</strong>
-          <small>Runtime workbench</small>
+          <strong>Phase 3</strong>
+          <small>Orchestration board</small>
         </article>
         <article class="panel metric">
           <span>Provider mode</span>
@@ -47,9 +48,67 @@
         </article>
         <article class="panel metric">
           <span>Handoffs</span>
-          <strong>Health + route</strong>
-          <small>Protected provider check</small>
+          <strong>MCP-ready</strong>
+          <small>Envelope export</small>
         </article>
+      </section>
+
+      <section class="split" id="planning">
+        <article class="panel">
+          <div class="panel-header">
+            <h2>Project</h2>
+          </div>
+          <form class="stack-form" id="projectForm">
+            <div class="form-grid">
+              <input name="id" placeholder="project id" required />
+              <input name="name" placeholder="project name" required />
+            </div>
+            <textarea name="onboarding" rows="5">{ "objective": "orchestrate agents", "scope": "project kickoff" }</textarea>
+            <button type="submit">Register Project</button>
+          </form>
+          <pre id="projectPreview" class="output">Project onboarding creates CEO questions before kickoff.</pre>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h2>New Card</h2>
+          </div>
+          <form class="stack-form" id="cardForm">
+            <div class="form-grid">
+              <input name="id" placeholder="card id" required />
+              <input name="title" placeholder="title" required />
+              <select name="owner" required>
+                <option>CEO</option>
+                <option>CTO</option>
+                <option>BA</option>
+                <option>DEV_BACKEND</option>
+                <option>DEV_FRONTEND</option>
+                <option>SECURITY</option>
+                <option>QA</option>
+              </select>
+              <select name="priority" required>
+                <option value="high">high</option>
+                <option value="medium">medium</option>
+                <option value="low">low</option>
+              </select>
+              <select name="status" required>
+                <option value="todo">todo</option>
+                <option value="in_progress">in progress</option>
+                <option value="done">done</option>
+              </select>
+              <input name="phase" value="Phase 3" required />
+              <input name="task_ref" placeholder="task ref" required />
+            </div>
+            <button type="submit">Create Card</button>
+          </form>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Planning Board</h2>
+        </div>
+        <div class="board" id="planningBoard"></div>
       </section>
 
       <section class="split">
@@ -142,7 +201,7 @@
             <div class="form-grid">
               <input name="sender" value="CEO" required />
               <input name="recipient" value="DEV_BACKEND" required />
-              <input name="task_ref" value="PHASE2-RUNTIME-ROUTING" required />
+              <input name="task_ref" value="PHASE3-MCP-ORCHESTRATION" required />
               <select name="intent" required>
                 <option>PHASE_KICKOFF</option>
                 <option>CLARIFICATION_REQUEST</option>
@@ -150,8 +209,9 @@
                 <option>STAGE_APPROVAL</option>
               </select>
             </div>
-            <textarea name="payload" rows="5">{ "summary": "Phase 2 runtime routing handoff" }</textarea>
+            <textarea name="payload" rows="5">{ "summary": "Phase 3 MCP orchestration handoff" }</textarea>
           </form>
+          <button type="button" id="exportMcp">Export MCP Envelope</button>
           <pre id="handoffPreview"></pre>
         </article>
       </section>

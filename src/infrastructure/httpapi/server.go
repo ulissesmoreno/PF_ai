@@ -18,6 +18,8 @@ type Server struct {
 	Agents      []domain.AgentDefinition
 	Providers   []domain.ModelProvider
 	ProviderHealth map[string]domain.ProviderHealth
+	PlanningCards []domain.PlanningCard
+	Projects      []domain.ProjectRegistration
 	MemoryFiles []domain.MemoryFile
 }
 
@@ -27,6 +29,9 @@ func (s *Server) Routes() http.Handler {
 	mux.Handle("/api/agents", s.protected(http.HandlerFunc(s.agents)))
 	mux.Handle("/api/providers", s.protected(http.HandlerFunc(s.providers)))
 	mux.Handle("/api/provider-health", s.protected(http.HandlerFunc(s.providerHealth)))
+	mux.Handle("/api/planning-cards", s.protected(http.HandlerFunc(s.planningCards)))
+	mux.Handle("/api/projects", s.protected(http.HandlerFunc(s.projects)))
+	mux.Handle("/api/mcp-envelope", s.protected(http.HandlerFunc(s.mcpEnvelope)))
 	mux.Handle("/api/memory", s.protected(http.HandlerFunc(s.memory)))
 	mux.Handle("/api/handoffs", s.protected(http.HandlerFunc(s.handoffs)))
 	return cors(mux)
@@ -127,6 +132,69 @@ func checkEndpoint(ctx context.Context, endpoint string) bool {
 	return response.StatusCode >= 200 && response.StatusCode < 300
 }
 
+func (s *Server) planningCards(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, s.PlanningCards)
+	case http.MethodPost:
+		var request planningCardRequest
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+			return
+		}
+		card, err := domain.NewPlanningCard(request.ID, request.Title, request.Owner, domain.CardStatus(request.Status), domain.CardPriority(request.Priority), request.Phase, request.TaskRef)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		s.PlanningCards = append(s.PlanningCards, card)
+		writeJSON(w, http.StatusCreated, card)
+	default:
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+	}
+}
+
+func (s *Server) projects(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, s.Projects)
+	case http.MethodPost:
+		var request projectRequest
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+			return
+		}
+		project, err := domain.NewProjectRegistration(request.ID, request.Name, request.Onboarding)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		s.Projects = append(s.Projects, project)
+		writeJSON(w, http.StatusCreated, project)
+	default:
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+	}
+}
+
+func (s *Server) mcpEnvelope(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		var request handoffRequest
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+			return
+		}
+		item, err := domain.NewHandoff(request.Sender, request.Recipient, request.TaskRef, domain.HandoffIntent(request.Intent), request.Payload, nil)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusCreated, domain.NewMCPEnvelope(item))
+	default:
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+	}
+}
+
 func (s *Server) memory(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -209,6 +277,22 @@ type handoffRequest struct {
 	TaskRef   string         `json:"task_ref"`
 	Intent    string         `json:"intent"`
 	Payload   map[string]any `json:"payload"`
+}
+
+type planningCardRequest struct {
+	ID       string `json:"id"`
+	Title    string `json:"title"`
+	Owner    string `json:"owner"`
+	Status   string `json:"status"`
+	Priority string `json:"priority"`
+	Phase    string `json:"phase"`
+	TaskRef  string `json:"task_ref"`
+}
+
+type projectRequest struct {
+	ID         string         `json:"id"`
+	Name       string         `json:"name"`
+	Onboarding map[string]any `json:"onboarding"`
 }
 
 func memoryPaths(files []domain.MemoryFile) []string {

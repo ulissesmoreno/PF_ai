@@ -386,3 +386,61 @@
 - **Phase reference:** `DOC/ROADMAP.md#phase-2-local-runtime-and-hybrid-provider-routing-status-done`
 - **Business value:** Closes Phase 2 traceably and prevents ambiguity before Phase 3 kickoff.
 - **Notes:** `DOC/ROADMAP.md` Phase 2 set to Done; `DOC/PLAN.md` Stage Closure Gate approval checked.
+
+---
+
+## Phase 3 Task Entries
+
+### [2026-05-06] - Task PHASE3-PLAN-001: Prepare Phase 3 intake and kickoff
+- **Status:** Done
+- **Assigned to:** [CEO] / [BA] / [CTO] / [SECURITY]
+- **Completed on:** 2026-05-06 07:28
+- **Priority:** High
+- **Deadline:** Before Phase 3 technical execution.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** Phase 2 Done and `[USER_DONE]` for next cycle.
+- **Phase reference:** `DOC/ROADMAP.md#phase-3-mcp-handoffs-and-advanced-orchestration-status-doing`
+- **Business value:** Converts the final roadmap stage into user-visible orchestration features.
+- **Notes:** Focus set to card dashboard, project registration/onboarding, and MCP-compatible handoffs.
+
+### [2026-05-06] - Task PHASE3-BACKEND-001: Add orchestration domain and protected APIs
+- **Status:** Done
+- **Assigned to:** [DEV_BACKEND:Pleno]
+- **Priority:** High
+- **Deadline:** Phase 3.
+- **Estimated time:** Same work cycle
+- **Completed on:** 2026-05-06 07:33
+- **Actual time:** Same work cycle
+- **Dependencies:** Phase 3 kickoff handoff.
+- **Phase reference:** `DOC/ROADMAP.md#phase-3-mcp-handoffs-and-advanced-orchestration-status-doing`
+- **Business value:** Enables project registration, planning cards, and MCP-compatible handoff envelopes.
+- **Notes:** Planning card, project registration, and MCP envelope domain/API support implemented with tests.
+
+### [2026-05-06] - Task PHASE3-FRONTEND-001: Add project registration and planning card dashboard
+- **Status:** Done
+- **Assigned to:** [DEV_FRONTEND:Pleno]
+- **Priority:** High
+- **Deadline:** Phase 3.
+- **Estimated time:** Same work cycle
+- **Completed on:** 2026-05-06 07:33
+- **Actual time:** Same work cycle
+- **Dependencies:** Phase 3 backend APIs.
+- **Phase reference:** `DOC/ROADMAP.md#phase-3-mcp-handoffs-and-advanced-orchestration-status-doing`
+- **Business value:** Makes planning itself the dashboard, per [HUMAN] preference.
+- **Notes:** Dashboard now includes project registration, card creation, planning board columns, and MCP envelope export.
+
+### [2026-05-06] - Task PHASE3-QA-001: Validate final orchestration release
+- **Status:** Done
+- **Assigned to:** [QA:Pleno] / [TECH_LEAD:Senior]
+- **Completed on:** 2026-05-06 07:33
+- **Priority:** High
+- **Deadline:** Before Phase 3 Stage Closure Gate.
+- **Estimated time:** Same work cycle
+- **Actual time:** Same work cycle
+- **Variance:** 0
+- **Dependencies:** Backend orchestration APIs and frontend board controls.
+- **Phase reference:** `DOC/ROADMAP.md#phase-3-mcp-handoffs-and-advanced-orchestration-status-doing`
+- **Business value:** Confirms Phase 3 delivers a visible orchestration product surface, not only technical transport.
+- **Notes:** Go suite passed; Node syntax checks passed; served dashboard contains Phase 3 controls.

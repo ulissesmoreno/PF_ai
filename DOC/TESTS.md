@@ -629,3 +629,61 @@ After executing all tests:
 - **QA:** Passed. Go suite, Node syntax checks, and served frontend validation passed.
 - **DEVOPS:** Passed with note. `scripts/run-backend-local.ps1` provides a repeatable foreground backend startup path requiring `PF_AI_AUTH_SECRET` from the shell.
 - **TECH_LEAD:** No blocking defect remains for the Phase 2 baseline scope.
+
+---
+
+## 15. Phase 3 Executed Results
+
+### [2026-05-06 07:33] TEST-PHASE3-DOMAIN-001 - Orchestration Domain Rules
+- **Type:** Unit / Security
+- **Objective:** Validate planning cards, project registration, and MCP-compatible handoff envelope.
+- **Preconditions:** Phase 3 tests added before implementation.
+- **Step by step:**
+  1. Added tests for planning card owner/status validation.
+  2. Added test rejecting secret-like onboarding payload fields.
+  3. Added test exporting a handoff as an MCP-compatible envelope.
+  4. Ran `go test ./...`.
+- **Expected result:** Domain rules pass and reject unsafe onboarding payloads.
+- **Obtained result:** Passed.
+- **Status:** Passed.
+- **Notes:** MCP compatibility is represented as a transport-neutral envelope over the existing handoff schema.
+- **Corrective action:** None.
+
+### [2026-05-06 07:33] TEST-PHASE3-HTTP-001 - Protected Orchestration APIs
+- **Type:** Integration / Security
+- **Objective:** Validate protected APIs for planning cards, project registration, and MCP envelope export.
+- **Preconditions:** `/api/planning-cards`, `/api/projects`, and `/api/mcp-envelope` implemented.
+- **Step by step:**
+  1. Created a planning card through protected API.
+  2. Verified project registration rejects secret-like onboarding payload.
+  3. Exported a handoff as MCP-compatible envelope.
+  4. Ran `go test ./...`.
+- **Expected result:** APIs return expected statuses and do not accept secret-like registration fields.
+- **Obtained result:** Passed.
+- **Status:** Passed.
+- **Notes:** Existing protected-route tests continue to cover 401 behavior.
+- **Corrective action:** None.
+
+### [2026-05-06 07:33] TEST-PHASE3-FRONT-001 - Planning Board Dashboard
+- **Type:** Frontend / Acceptance
+- **Objective:** Validate user-visible Phase 3 dashboard features.
+- **Preconditions:** Dashboard updated with project registration, card board, and MCP export control.
+- **Step by step:**
+  1. Ran `node --check pf-ai-web\src\app.js`.
+  2. Ran `node --check pf-ai-web\server.mjs`.
+  3. Requested `http://127.0.0.1:5173`.
+  4. Scanned served HTML for `Planning Board`, `Register Project`, and `Export MCP Envelope`.
+- **Expected result:** Frontend syntax passes and served UI contains Phase 3 controls.
+- **Obtained result:** Passed.
+- **Status:** Passed.
+- **Notes:** Card board has local fallback through `localStorage` when API is unavailable.
+- **Corrective action:** None.
+
+### [2026-05-06 07:33] REVIEW-PHASE3-001 - Closure Review Snapshot
+- **Type:** Security / Code Review / QA
+- **Objective:** Confirm Phase 3 is ready for [HUMAN] Stage Closure Gate review.
+- **Result:** Approved for closure review.
+- **SECURITY:** Passed. Secret-like onboarding fields are rejected; MCP envelope reuses handoff secret validation; UI escapes card/project text.
+- **CODE_REVIEWER:** Passed. Domain orchestration models remain infrastructure-free; HTTP owns transport.
+- **QA:** Passed. Go suite, Node syntax checks, and served dashboard validation passed.
+- **TECH_LEAD:** No blocking defect remains for final roadmap closure review.

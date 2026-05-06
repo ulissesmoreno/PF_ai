@@ -217,3 +217,10 @@
 - **Metrics:** Phase 2 status: Done; Phase 3 remains blocked until explicit kickoff cycle.
 - **References:** `DOC/ROADMAP.md`, `DOC/PLAN.md`.
 - **Remaining Focus:** Await explicit [HUMAN] authorization for Phase 3 kickoff.
+
+### [2026-05-06 07:33] - [DEV_BACKEND:Pleno] / [DEV_FRONTEND:Pleno]: Phase 3 orchestration board completed
+- **Delivery description:** Added MCP-compatible handoff envelope export, project registration with onboarding payload validation, protected planning-card APIs, and a user-visible Planning Board dashboard with card creation and local fallback.
+- **Tests Performed:** `TEST-PHASE3-DOMAIN-001`; `TEST-PHASE3-HTTP-001`; `TEST-PHASE3-FRONT-001`; `REVIEW-PHASE3-001`.
+- **Metrics:** `go test ./...` passed; `node --check` passed for frontend files; served HTML contains `Planning Board`, `Register Project`, and `Export MCP Envelope`; 0 blocking review findings.
+- **References:** `src/domain/orchestration.go`, `src/infrastructure/httpapi/server.go`, `pf-ai-web/index.html`, `pf-ai-web/src/app.js`, `DOC/TESTS.md`.
+- **Remaining Focus:** Present Phase 3 Stage Closure Gate package to [HUMAN].
