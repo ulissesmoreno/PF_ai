@@ -1,96 +1,74 @@
-# ROADMAP.md - PF_ai GSD Execution Planning
+# ROADMAP.md - GSD Execution Planning
 
-This file tracks roadmap progress. [HUMAN:Ulisses] is the only authority for marking phases complete and authorizing advancement.
+This file must be **started or updated mandatorily** with each new phase, ensuring the plan reflects the most recent context without loss of traceability. Every phase represents a **value deliverable** — something functional and usable by the end user or client.
 
-## Phase 0: Onboarding and Foundation (Status: Done)
-- [x] **Project Onboarding**
-  - Criteria: `DOC/PROJECT.md`, `README.md`, `DOC/DESIGN.md`, `DOC/ARCHITECTURE.md`, `DOC/ENV_SETUP.md`, `DOC/ROADMAP.md`, and `DOC/PLAN.md` filled from [HUMAN] answers.
-  - Tests: Placeholder scan and documentation consistency review.
-  - Responsible: [CEO].
-- [x] **Architecture Baseline**
-  - Criteria: Go backend, TypeScript web, PostgreSQL, Docker, API/local model provider strategy, and handoff evolution path documented.
-  - Tests: Architecture review before implementation.
-  - Responsible: [CTO].
-- [x] **Security Baseline**
-  - Criteria: Deny-by-default routes, secret handling, sanitized logs, and local runtime isolation documented.
-  - Tests: Threat model before MVP implementation.
-  - Responsible: [SECURITY].
+> **Rule:** Advancement to the next phase requires explicit [HUMAN] approval. Stages are marked `[x]` exclusively by [HUMAN].
 
-## Phase 1: MVP - Agent, Model, Memory, and File Handoffs (Status: Done)
-- [x] **MVP Planning**
-  - Criteria: Acceptance criteria, tests, business rules, and dependencies finalized in `DOC/PLAN.md`.
-  - Tests: BA/CTO validation and SECURITY threat modeling.
-  - Responsible: [BA] / [CTO].
-- [x] **MVP Backend** (Status: Done)
-  - Criteria: Go API supports agent registry, model/provider registry, GSD memory reads, and file handoff creation.
-  - Tests: Unit and integration tests created before production code.
-  - Responsible: [DEV_BACKEND].
-- [x] **MVP Frontend** (Status: Done)
-  - Criteria: Web UI shows active phase/status, agents, models, key GSD memory files, and handoff actions.
-  - Tests: Component and acceptance tests.
-  - Responsible: [DEV_FRONTEND].
-- [x] **MVP Persistence** (Status: Done)
-  - Criteria: PostgreSQL schema stores agents, providers, sessions, and audit metadata.
-  - Tests: Migration and repository contract tests.
-  - Responsible: [DBA].
-- [X] **MVP Validation**
-  - Criteria: Human can operate at least one agent through file handoff flow and inspect project state.
-  - Tests: QA, SECURITY, and CODE_REVIEWER closure review.
-  - Responsible: [QA] / [SECURITY] / [CODE_REVIEWER].
+---
 
-## Phase 2: Local Runtime and Hybrid Provider Routing (Status: Done)
-- [x] **Local Model Runtime**
-  - Criteria: Docker service can run the selected local model endpoint.
-  - Tests: Health check, timeout handling, and resource validation.
-- [x] **Hybrid Routing**
-  - Criteria: Agent execution can choose API, local, or hybrid provider mode.
-  - Tests: Provider adapter contract tests.
-- [x] **Operational Hardening**
-  - Criteria: Logs, monitoring hooks, secrets handling, and fallback behavior validated.
-  - Tests: Security and reliability tests.
+## 🟢 PHASE 0: Foundation and Infra (Status: To Do)
 
-## Phase 3: MCP Handoffs and Advanced Orchestration (Status: Done)
-- [x] **MCP Handoff Transport**
-  - Criteria: File handoff schema maps cleanly to MCP-based communication.
-  - Tests: Transport compatibility and regression tests.
-- [x] **Advanced Agent Manager**
-  - Criteria: Agent routing, memory selection, model tiering, and skill mapping are managed through the UI/API.
-  - Tests: End-to-end orchestration scenarios.
-- [x] **Release Readiness**
-  - Criteria: Documentation, tests, observability, and release notes complete.
-  - Tests: Stage Closure Gate.
+- **Value Delivered:** Development environment ready; project structure validated. No user-facing value — justified as enabler for Phase 1.
+- [ ] **Initial Configuration:** Fill PROJECT.md with vision, objectives, and stack.
+  - Criteria: All placeholders replaced; stack validated.
+  - Tests: Environment validation.
+- [ ] **Environment Setup:** Install technologies from the defined stack.
+  - Criteria: Functional environment; Docker active.
+  - Tests: Security (JWT configured).
+  - Dependencies: PROJECT.md complete.
+- [ ] **Base Architecture:** Define components per ARCHITECTURE.md.
+  - Criteria: Documented and validated.
+  - Tests: Hexagonal isolation check.
+  - DoD: Files filled without placeholders.
 
-## General Notes
-- [HUMAN:Ulisses] must approve every Stage Closure Gate.
-- `CONTEXT.md` updates occur after onboarding completion or phase intake, per [HUMAN] instruction.
-- `wiki/` updates occur only at phase end unless [HUMAN] explicitly requests otherwise.
-- MVP uses file-based handoffs; MCP is final-stage scope.
-- Chat responses should remain compact in the Caveman style; details belong in files.
+---
 
-## Refactor Roadmap: Project-Centric Workspace (Status: R1 Closure Pending)
-- [x] **R1 - Project Registration First Deliverable**
-  - Criteria: A dedicated project registration page supports project name, description, audience, and technical stack; ID is automatic and hidden; project list appears in the sidebar; selected project scopes other screens.
-  - Tests: Project creation validation, local/API persistence behavior, project selection scoping, question-generation signal for new projects, and regression on existing agents/providers/board/handoffs.
-  - Responsible: [BA] / [CTO] for planning; [DEV_FRONTEND] / [DEV_BACKEND] after [HUMAN] approval.
-  - Status: Implemented; awaiting [HUMAN] closure review.
+## 🟡 PHASE 1: MVP (Status: To Do)
 
-## Version History (Immutable)
-- **[2026-05-05 15:06] - [CEO]:** Roadmap filled from onboarding answers and MVP confirmation.
-- **[2026-05-05 15:16] - [CEO]:** Phase 0 task items marked complete; phase status set to Closure Pending until [HUMAN] approval.
-- **[2026-05-05 15:20] - [CEO]:** [HUMAN:Ulisses] approved Phase 0 roadmap closure; phase status set to Done.
-- **[2026-05-05 15:23] - [CEO]:** Phase 1 planning opened after `[USER_DONE]`; implementation remains blocked until Phase 1 plan, threat model, and kickoff handoff are complete.
-- **[2026-05-05 15:30] - [CEO]:** Phase 1 implementation authorized by [HUMAN]; planning marked complete; backend, frontend, and persistence implementation started.
-- **[2026-05-05 18:50] - [DBA]:** Phase 1 MVP Persistence marked Done after migration validation and repository contract tests for agents, providers, sessions, and audit events passed.
-- **[2026-05-05 18:56] - [DEV_FRONTEND]:** Phase 1 MVP Frontend marked Done after static checks and local runtime validation at `http://127.0.0.1:5173`.
-- **[2026-05-05 19:02] - [DEV_BACKEND]:** Phase 1 MVP Backend marked Done after HTTP handler acceptance flow validated provider, agent, memory, and handoff behavior.
-- **[2026-05-05 19:03] - [TECH_LEAD]:** Phase 1 parallel review consolidated; no blocking implementation defect found, but OS-level backend background runtime validation remains unresolved before Stage Closure Gate.
-- **[2026-05-05 20:06] - [CEO]:** Phase 1 closure package prepared after human dashboard test notes were implemented. Phase status remains `Doing` until [HUMAN:Ulisses] approves Stage Closure Gate and marks completion.
-- **[2026-05-05 20:12] - [CEO]:** [HUMAN:Ulisses] approved Phase 1 Stage Closure Gate via `[USER_DONE]`; phase status set to Done.
-- **[2026-05-05 20:15] - [CEO]:** Phase 2 opened after `[USER_DONE]`; CEO/CTO/BA intake completed, SECURITY threat model drafted, and kickoff handoff prepared.
-- **[2026-05-05 20:21] - [TECH_LEAD]:** Phase 2 runtime/routing baseline implemented and closure package prepared. Phase status remains `Doing` until [HUMAN:Ulisses] approves Stage Closure Gate and marks completion.
-- **[2026-05-06 07:13] - [CEO]:** [HUMAN:Ulisses] approved Phase 2 Stage Closure Gate via `[USER_DONE]`; phase status set to Done.
-- **[2026-05-06 07:28] - [CEO]:** Phase 3 opened after `[USER_DONE]`; intake completed with user-value focus on planning cards, project registration/onboarding, and MCP-compatible handoffs.
-- **[2026-05-06 07:33] - [TECH_LEAD]:** Phase 3 orchestration board implemented and closure package prepared. Phase status remains `Doing` until [HUMAN:Ulisses] approves Stage Closure Gate and marks completion.
-- **[2026-05-06 07:39] - [CEO]:** [HUMAN:Ulisses] approved Phase 3 Stage Closure Gate via `[USER_DONE]`; phase status set to Done.
-- **[2026-05-06 08:00] - [CEO]:** Refactor roadmap opened in planning mode only. First deliverable is project registration; development blocked until [HUMAN] approves the plan.
-- **[2026-05-06 08:10] - [TECH_LEAD]:** R1 project registration implemented after [HUMAN] approval; closure is pending [HUMAN] review.
+- **Value Delivered:** [Describe what the user/client can do after this phase — the core hypothesis validated.]
+- [ ] **MVP Planning:** Define minimum features to validate the core hypothesis.
+  - Criteria: Clear scope; hypotheses defined.
+  - Tests: Functionality and security before code.
+- [ ] **MVP Implementation:** Develop core features with TDD.
+  - Criteria: Executable code; tests passing.
+  - Tests: Unit/integration coverage.
+  - Dependencies: Phase 0 complete.
+- [ ] **MVP Validation:** Feasibility tests; adjustments via NEW-INSTRUCTIONS.md if needed.
+  - Criteria: Core hypothesis validated; metrics achieved (see PROJECT.md KPIs).
+  - Tests: Security and performance.
+  - DoD: STATE.md updated.
+
+---
+
+## 🔴 PHASE 2: [Phase Name] (Status: To Do)
+
+- **Value Delivered:** [Describe the incremental value the user/client gains — what they can do now that they couldn't after Phase 1.]
+- [ ] **Feature:** [Description]
+  - Criteria: [Measurable]
+  - Tests: [Required validations]
+  - Dependencies: Phase 1 complete.
+
+---
+
+## 🔴 PHASE 3: [Phase Name] (Status: To Do)
+
+- **Value Delivered:** [Describe incremental value.]
+- [ ] **Feature:** [Description]
+  - Criteria: [Measurable]
+  - Tests: [Required validations]
+  - Dependencies: Phase 2 complete.
+
+---
+
+## 📋 General Notes
+
+- **Value First:** Every phase must deliver something usable. Purely technical phases must justify the absence of user-facing value in PLAN.md.
+- **MVP is mandatory:** Phase 1 always validates the core hypothesis before expansion.
+- **Approval:** Advancement authorized exclusively by [HUMAN]. Previous phase must be marked `[x]` before next begins.
+- **Updates:** Updated at phase start and closure. Register in QUESTIONS.md if open questions exist.
+- **Traceability:** Each phase with status, value delivered, responsible, and dependencies.
+- **References:** PROJECT.md (objectives), TESTS.md (validations), STATE.md (progress), PLAN.md (detail).
+
+## 📋 Version History (Immutable)
+- **[YYYY-MM-DD HH:MM] — [Responsible]:** Initial ROADMAP created.
+- [Add new entries here without deleting.]

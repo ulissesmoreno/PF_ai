@@ -1,595 +1,113 @@
-# PLAN - PF_ai
+# PLAN.md
 
-This file defines the active roadmap stage before code. Tests are mandatory before implementation.
+This file must be filled **completely and without fail** for each roadmap phase, ensuring consistency, traceability, and total documentation. Fill at phase closure — not before. Reminder: Tests are mandatory (TDD).
 
-## Updated on: 2026-05-05 15:06:38
+## Updated on: YYYY-MM-DD HH:MM:SS
 
-## 1. Stage Objective
-Complete Phase 0 onboarding and prepare Phase 1 MVP execution for PF_ai. The project must establish the product vision, stack, architecture, design direction, environment setup, roadmap, and MVP acceptance criteria before any code is written.
+---
 
-## 2. Roadmap Stage
-- **Stage name:** Phase 0 - Onboarding and Foundation
-- **Related roadmap item:** `DOC/ROADMAP.md#phase-0-onboarding-and-foundation-status-done`
+## 1. Phase Objective
+- Describe the purpose of this roadmap phase.
+- What must be delivered and why.
 
-## 3. Detailed Description
-- **What will be implemented:** No production code in Phase 0. This stage fills project documents and prepares the management handoff for Phase 1.
-- **Expected behavior:** All required onboarding files contain real PF_ai-specific content and no onboarding placeholders in required sections.
-- **Impacted components:** Documentation, architecture baseline, environment setup, design tokens, roadmap, and MVP plan.
+## 2. Value Delivered
+> **What the user/client can do after this phase that they could not before.**
+- [Clear, non-technical description of the value delivered.]
+- If this phase has no direct user-facing value (e.g., infrastructure): justify here why it enables future value.
 
-## 4. Acceptance Criteria
-- Criterion 1: `DOC/PROJECT.md` defines PF_ai vision, objectives, scope, stack, team, risks, and KPIs.
-- Criterion 2: `README.md` describes PF_ai in Portuguese and English without onboarding placeholders.
-- Criterion 3: `DOC/ARCHITECTURE.md` documents Go, TypeScript web, PostgreSQL, Docker, API/local providers, file handoffs, and MCP future scope.
-- Criterion 4: `DOC/DESIGN.md` contains concrete design tokens and layout guidance.
-- Criterion 5: `DOC/ENV_SETUP.md` defines local prerequisites and environment variables without real secrets.
-- Criterion 6: `DOC/ROADMAP.md` defines Phase 0 through Phase 3.
-- Criterion 7: `QUESTIONS.md` records the onboarding answers and decisions.
+## 3. Roadmap Reference
+- Phase name: [E.g.: MVP — Phase 1]
+- Related ROADMAP item: [Link to ROADMAP.md#Phase-X]
 
-## 5. Business Rules
-- Rule 1: [HUMAN:Ulisses] is the final authority for roadmap advancement.
-- Rule 2: PF_ai must support agents through API providers and local runtime paths.
-- Rule 3: MVP handoffs use files; MCP handoffs are final-stage scope.
-- Rule 4: Chat responses must stay compact; detailed state belongs in Markdown files.
-- Rule 5: `CONTEXT.md` must be updated only after onboarding completion or later phase intake.
+## 4. Detailed Description
+- What was implemented: [Details]
+- Expected behavior: [Description]
+- Impacted components: [List]
 
-## 6. Recommended Tests
-- Documentation test 1: Scan required onboarding files for placeholder markers.
-- Documentation test 2: Verify stack consistency across `PROJECT.md`, `ARCHITECTURE.md`, `ENV_SETUP.md`, `ROADMAP.md`, and `README.md`.
-- Security test 1: Confirm no real secrets were written to documentation.
-- Process test 1: Confirm `QUESTIONS.md` contains [HUMAN] answers and decisions.
-- Regression test 1: Confirm GSD chain of command and Stage Closure Gate rules remain documented.
+## 5. Acceptance Criteria
+- Criterion 1: [Measurable]
+- Criterion 2: [Measurable]
+- Criterion 3: [Measurable]
 
-## 7. Security Validations
-- Validation 1: Secrets are represented only as environment variable names.
-- Validation 2: API routes are planned as deny-by-default.
-- Validation 3: Logs are planned as structured and sanitized.
-- Validation 4: Local model runtime is isolated through Docker Compose.
-- Security notes: Threat modeling is mandatory before Phase 1 implementation.
+## 6. Business Rules
+- Rule 1: [Description]
+- Rule 2: [Description]
 
-## 8. Developer Validation Steps
-1. Review onboarding files listed in acceptance criteria.
-2. Confirm the stack and MVP scope.
-3. Confirm no required file still has onboarding placeholders.
-4. Approve or correct Phase 0 closure.
-5. Authorize Phase 1 kickoff only after Stage Closure Gate.
-6. Record any corrections in `QUESTIONS.md`.
-7. Record test results in `DOC/TESTS.md` during closure validation.
+## 7. Recommended Tests
+- Unit test 1: description and coverage.
+- Integration test 1: description and coverage.
+- Acceptance test 1: description and scenario.
+- Security test 1: mandatory validations.
+- Regression test 1: critical scenario.
+
+## 8. Security Validations
+- Validation 1: [E.g.: JWT active]
+- Validation 2: [E.g.: Data sanitized]
+- Validation 3: [E.g.: Zero leak]
+- Security notes: [Notes]
 
 ## 9. Responsible and Dependencies
-- **Responsible:** [CEO] for onboarding documents; [CTO]/[BA] for Phase 1 kickoff validation.
-- **Dependencies:** [HUMAN] confirmation in `QUESTIONS.md`.
-- **Time Estimate:** Phase 0 documentation pass: same work cycle.
-- **Extra-Code Prerequisites:** Docker availability and provider/model decisions before implementation.
+- Responsible: [Agent:Level]
+- Dependencies: [Prerequisites]
+- Time Estimate: [Hours/days]
+- **Extra-Code Prerequisites:** [API keys, environment variables, external services needed]
 
 ## 10. Risks and Mitigations
-- Risk 1: Local model runtime may exceed machine resources.
-  - Mitigation: Keep provider mode configurable and validate local runtime in Phase 2.
-- Risk 2: Handoff schemas may change before MCP migration.
-  - Mitigation: Version file handoff schemas from the MVP.
-- Risk 3: Documentation and application state may drift.
-  - Mitigation: Treat Markdown memory as an explicit adapter with tests.
+- Risk 1: [Description]
+  - Mitigation: [Action]
+- Risk 2: [Description]
+  - Mitigation: [Action]
 
 ## 11. Integration with Other Files
-- **ROADMAP.md:** Defines Phase 0 through Phase 3.
-- **STATE.md:** Updated by technical agents after implementation begins.
-- **TESTS.md:** Receives validation results at closure.
-- **CONTEXT.md:** Updated after onboarding completion per [HUMAN] instruction.
+- **ROADMAP.md:** Related phase.
+- **STATE.md:** Current progress.
+- **TESTS.md:** Validations performed.
 
 ## 12. Version History (Immutable)
-- **[2026-05-05 15:06] - [CEO]:** Phase 0 onboarding plan filled from [HUMAN] answers.
+- **[YYYY-MM-DD HH:MM] — [Responsible]:** Initial phase version.
+- [Add new entries here without deleting.]
 
 ## 13. Plan Validation
-- **Technical Feasibility:** Approved for planning. Go, TypeScript web, PostgreSQL, Docker, and file handoffs are feasible for the MVP.
-- **Project Alignment:** Aligned with PF_ai objective as agent/model/memory manager.
-- **Risks Assessed:** Local model runtime and MCP migration risks documented.
-- **Approval:** Approved for Phase 0 documentation completion. Phase 1 implementation still requires Stage Closure Gate.
-- **ROADMAP.md Reference:** This plan is validated here; `ROADMAP.md` tracks phase progress.
+- **Technical Feasibility:** [Confirm if components and stack support the phase.]
+- **Value Alignment:** [Verify if "Value Delivered" meets PROJECT.md objectives and client expectations.]
+- **Risks Assessed:** [Review mitigations; register in QUESTIONS.md if open questions.]
+- **Approval:** [Status: Approved / Rejected — Reason.]
 
-## 14. Stage Closure Gate
+---
 
-### Completed Stage: Phase 0 - Onboarding and Foundation
-### Closure Date: 2026-05-05 15:16
-### Responsible: [CEO]
+## 14. Phase Closure Gate ⛔
+
+> Filled by the agent at phase closure. Presented to [HUMAN] for approval. Advancement blocked until [HUMAN] confirms.
+
+### Closed Phase: [Phase name]
+### Closure Date: [YYYY-MM-DD HH:MM]
+### Responsible: [Agent]
+
+### Value Delivered Confirmation
+- [ ] Value Delivered as described in §2 was achieved and is usable.
+- [ ] [HUMAN] can validate the delivered value without additional setup.
 
 ### Closure Checklist
 
 | # | File | Status | Note |
 | :- | :--- | :---: | :--- |
-| 1 | `TESTS.md` | `[x]` | Phase 0 validation results recorded. |
-| 2 | `STATE.md` | `[x]` | Phase 0 onboarding completion recorded. |
-| 3 | `TASKS.md` | `[x]` | Phase 0 documentation and architecture tasks recorded as Done. |
-| 4 | `CONTEXT.md` | `[x]` | Updated after onboarding completion and new instruction intake. |
-| 5 | `README.md` | `[x]` | Filled during onboarding. |
-| 6 | `ROADMAP.md` | `[x]` | Phase 0 approved by [HUMAN:Ulisses] and marked Done. |
-| 7 | `VERSIONS.md` | `[x]` | `1.2.0-alpha.1` onboarding milestone recorded. |
+| 1 | `TESTS.md` | `[ ]` | All tests recorded with real results and timestamp |
+| 2 | `STATE.md` | `[ ]` | Updated with delivery description and metrics |
+| 3 | `TASKS.md` | `[ ]` | All phase tasks marked Done *(Medium+)* |
+| 4 | `CONTEXT.md` | `[ ]` | Decisions documented *(Medium+)* |
+| 5 | `README.md` | `[ ]` | Reflects delivered code reality |
+| 6 | `ROADMAP.md` | `[ ]` | Stage marked `[x]` by [HUMAN] *(Medium+)* |
+| 7 | `VERSIONS.md` | `[ ]` | Entry added *(Medium+, Phase 1+)* |
+| 8 | `WIKI` | `[ ]` | Updated with phase deliverables *(Medium+)* |
+| 9 | `RETROSPECTIVE.md` | `[ ]` | Phase entry consolidated by CEO *(Medium+)* |
 
 ### Pending Items / Blockers
-- None.
+- [Describe any incomplete item and reason]
 
 ### Delivery Summary
-- Phase 0 onboarding documentation was filled from [HUMAN] answers and validated.
-- Metrics: 0 onboarding placeholders found; 0 real secrets found; Go/Hexagonal compatibility confirmed.
-
-### User Approval
-- [x] User confirmed stage closure and authorizes roadmap advancement on 2026-05-05 15:20.
-
----
-
-## 15. Phase 1 Plan - MVP Agent, Model, Memory, and File Handoffs
-
-## Updated on: 2026-05-05 15:23:09
-
-## 15.1 Stage Objective
-Deliver the PF_ai MVP planning baseline and prepare implementation for a web-first agent/model/memory manager. Phase 1 must prove that [HUMAN:Ulisses] can operate PF_ai through a UI/API that registers agents and model providers, reads GSD memory files, and creates structured file handoffs.
-
-## 15.2 Roadmap Stage
-- **Stage name:** Phase 1 - MVP Agent, Model, Memory, and File Handoffs.
-- **Related roadmap item:** `DOC/ROADMAP.md#phase-1-mvp---agent-model-memory-and-file-handoffs-status-doing`
-
-## 15.3 Detailed Description
-- **What will be implemented after kickoff approval:** Go backend, TypeScript web frontend, PostgreSQL schema, file-memory adapters, `.agent_handoff/` JSON creation, and protected local API routes.
-- **Expected behavior:** [HUMAN:Ulisses] can inspect current phase/status, register agents, register model/provider configurations, view key GSD files, and create a structured handoff file.
-- **Impacted components:** `pf-ai-service`, `pf-ai-web`, PostgreSQL, Docker Compose, `.agent_handoff/`, Markdown memory adapters, authentication/session handling.
-
-## 15.4 Acceptance Criteria
-- Criterion 1: Backend exposes protected API endpoints for agents, model providers, GSD memory reads, and handoff creation.
-- Criterion 2: Domain packages contain no framework, database, HTTP, Docker, or filesystem dependencies.
-- Criterion 3: PostgreSQL schema persists agents, providers, sessions, and audit metadata.
-- Criterion 4: File adapter reads approved GSD memory files without writing outside the project root.
-- Criterion 5: Handoff adapter creates schema-valid JSON files under `.agent_handoff/` without secrets.
-- Criterion 6: Web UI shows phase/status, agents, providers, selected memory files, and handoff actions.
-- Criterion 7: Unauthenticated requests to protected routes return 401.
-- Criterion 8: Tests are written before production code and results are recorded in `DOC/TESTS.md`.
-
-## 15.5 Business Rules
-- Rule 1: MVP handoffs use files; MCP remains later-stage scope.
-- Rule 2: Agents can be configured for API, local, or hybrid provider mode, but local model execution itself belongs to Phase 2 unless explicitly pulled forward.
-- Rule 3: Secrets never appear in `.md`, logs, database seed data, or handoff files.
-- Rule 4: `QUESTIONS.md` is used only when an agent must ask [HUMAN] a direct question.
-- Rule 5: `VERSIONS.md` and `wiki/` are updated at phase closure only.
-
-## 15.6 Recommended Tests
-- Unit: Domain validation for agent definitions, provider modes, memory paths, and handoff metadata.
-- Unit: Handoff schema builder rejects missing required fields and secret-looking fields.
-- Integration: PostgreSQL repositories persist and retrieve agents, providers, sessions, and audit metadata.
-- Integration: File-memory adapter rejects path traversal and unauthorized files.
-- Security: Protected routes return 401 without a valid session/token.
-- Acceptance: UI flow creates one agent, one provider config, reads a GSD file, and generates one handoff file.
-- Regression: Phase 0 documentation validation remains clean.
-
-## 15.7 Security Validations
-- Threat 1: Path traversal through memory-file reads.
-  - Mitigation: Canonicalize paths and restrict reads to approved project-root files.
-- Threat 2: Secret leakage into logs or handoff files.
-  - Mitigation: Redaction tests and denylisted field checks.
-- Threat 3: Unauthenticated local API access.
-  - Mitigation: Deny-by-default protected routes and auth/session tests.
-- Threat 4: Prompt or handoff injection through Markdown memory.
-  - Mitigation: Treat memory text as data; preserve source labels; avoid executing embedded instructions automatically.
-- Threat 5: Provider-mode confusion between local and API models.
-  - Mitigation: Explicit provider mode and adapter contract tests.
-
-## 15.8 Developer Validation Steps
-1. Confirm Docker is active.
-2. Confirm Go and Node.js are installed.
-3. Create tests before production code.
-4. Run backend unit/integration tests.
-5. Run frontend component/acceptance tests.
-6. Validate protected routes return 401 without auth.
-7. Validate generated handoff files contain no secrets.
-8. Record all results in `DOC/TESTS.md`.
-
-## 15.9 Responsible and Dependencies
-- **Responsible:** [BA] and [CTO] for planning/kickoff; [SECURITY] for threat model; [DEV_BACKEND], [DEV_FRONTEND], [DBA], [DEVOPS] for implementation after kickoff.
-- **Dependencies:** Phase 0 closed; Docker available; Go available; Node.js available; PostgreSQL via Compose.
-- **Time Estimate:** To be estimated by CTO during kickoff handoff.
-- **Extra-Code Prerequisites:** Local `.env` must be created outside git before runtime tests.
-
-## 15.10 Risks and Mitigations
-- Risk 1: MVP scope expands into Phase 2 local runtime.
-  - Mitigation: Keep local runtime as configurable provider path only in Phase 1.
-- Risk 2: File-memory adapter can corrupt docs.
-  - Mitigation: MVP reads approved GSD memory files; writes only to `.agent_handoff/` unless explicitly approved.
-- Risk 3: UI becomes decorative instead of operational.
-  - Mitigation: Use dense workbench design from `DOC/DESIGN.md`.
-
-## 15.11 Plan Validation
-- **Business Feasibility:** Approved for MVP planning.
-- **Technical Feasibility:** Approved pending environment verification.
-- **Security Readiness:** Threat model drafted; SECURITY must validate before implementation.
-- **Approval:** Implementation authorized by [HUMAN] after kickoff handoff.
-
-## 15.12 Stage Closure Gate Placeholder
-- Phase 1 closure gate will be filled only after implementation, review, QA, SECURITY audit, and [HUMAN] approval.
-
-## 15.13 Stage Closure Gate - Phase 1 MVP
-
-### Completed Stage Candidate: Phase 1 - MVP Agent, Model, Memory, and File Handoffs
-### Closure Package Date: 2026-05-05 20:06
-### Responsible: [CEO] / [TECH_LEAD]
-
-### Closure Checklist
-
-| # | File | Status | Note |
-| :- | :--- | :---: | :--- |
-| 1 | `TESTS.md` | `[x]` | Final validation recorded as `TEST-PHASE1-CLOSURE-001` and `REVIEW-PHASE1-002`. |
-| 2 | `STATE.md` | `[x]` | MVP closure-ready state recorded. |
-| 3 | `TASKS.md` | `[x]` | MVP implementation, review, and closure tasks recorded as Done. Backend persistent runner deferred as DevOps/runtime hardening. |
-| 4 | `CONTEXT.md` | `[x]` | Provider ownership, optional agent provider, local-save fallback, and security audit decisions recorded. |
-| 5 | `README.md` | `[x]` | MVP usage and local validation notes updated. |
-| 6 | `ROADMAP.md` | `[x]` | Phase 1 approved by [HUMAN:Ulisses] and marked Done. |
-| 7 | `PLAN.md` | `[x]` | Closure Gate section filled. |
-| 8 | `VERSIONS.md` | `[x]` | Phase 1 release entry added. |
-| 9 | `RETROSPECTIVE.md` | `[x]` | Phase 1 retrospective added. |
-| 10 | `WIKI` | `[x]` | Phase 1 wiki/user-manual entry added. |
-
-### Acceptance Criteria Result
-- **Criterion 1:** Passed. Protected API endpoints exist for agents, providers, memory reads, and handoff creation.
-- **Criterion 2:** Passed. Domain packages remain free of framework, database, HTTP, Docker, and filesystem dependencies.
-- **Criterion 3:** Passed. PostgreSQL migration and repository contracts cover agents, providers, sessions, and audit events.
-- **Criterion 4:** Passed. File-memory adapter allowlists approved GSD files and rejects unsafe paths.
-- **Criterion 5:** Passed. Handoff adapter writes schema-valid JSON under `.agent_handoff/` and blocks secret-looking payloads.
-- **Criterion 6:** Passed. Web UI shows phase/status, agents, providers, memory, and handoff actions, with save controls.
-- **Criterion 7:** Passed. Protected routes return 401 without bearer token.
-- **Criterion 8:** Passed. Tests were recorded in `DOC/TESTS.md`.
-
-### Pending Items / Deferrals
-- Backend OS-level persistent background runner is deferred to DevOps/runtime hardening. Foreground backend startup works and API behavior is validated through HTTP handler tests.
-- Runtime PostgreSQL wiring with a concrete Go driver is deferred; Phase 1 includes schema and `database/sql`-compatible repository contracts.
-- Local model execution remains Phase 2 scope.
-
-### Delivery Summary
-- Phase 1 MVP is ready for [HUMAN] Stage Closure Gate review.
-- Metrics: Go suite passed; frontend syntax passed; frontend served HTTP 200; no blocking SECURITY/CODE_REVIEWER/QA findings.
-
-### User Approval
-- [x] User confirmed Phase 1 Stage Closure Gate and authorizes roadmap advancement on 2026-05-05 20:12.
-
----
-
-## 16. Phase 2 Plan - Local Runtime and Hybrid Provider Routing
-
-## Updated on: 2026-05-05 20:15:10
-
-## 16.1 Stage Objective
-Deliver local runtime and hybrid provider routing so PF_ai can verify a configured local model endpoint, route provider calls by mode, and harden operational runtime behavior left deferred from Phase 1.
-
-## 16.2 Roadmap Stage
-- **Stage name:** Phase 2 - Local Runtime and Hybrid Provider Routing.
-- **Related roadmap item:** `DOC/ROADMAP.md#phase-2-local-runtime-and-hybrid-provider-routing-status-doing`
-
-## 16.3 Detailed Description
-- **What will be implemented after kickoff:** Docker/Compose local model runtime baseline, provider execution ports, local/API/hybrid routing policy, backend persistent runtime hardening, frontend provider status controls, and runtime health checks.
-- **Expected behavior:** [HUMAN:Ulisses] can register or select a provider, verify whether it is API/local/hybrid, run health validation, and see routing status without exposing secrets.
-- **Impacted components:** `pf-ai-service`, `pf-ai-web`, Docker Compose, provider domain/application ports, runtime adapters, health checks, logging, and operational docs.
-
-## 16.4 Acceptance Criteria
-- Criterion 1: Local provider runtime has a Docker Compose service or documented local endpoint contract with health validation.
-- Criterion 2: Backend exposes protected provider health/routing endpoints for API, local, and hybrid modes.
-- Criterion 3: Provider execution uses application ports; domain remains framework and infrastructure free.
-- Criterion 4: Hybrid routing has deterministic fallback policy and timeout handling.
-- Criterion 5: Backend persistent local startup is hardened or documented with an approved runner path.
-- Criterion 6: Frontend shows provider runtime status and health results.
-- Criterion 7: Logs and UI never expose raw API keys, auth secrets, or provider payload secrets.
-- Criterion 8: Tests cover provider mode contracts, health checks, timeout/fallback behavior, and protected routes.
-
-## 16.5 Business Rules
-- Rule 1: Provider runtime configuration stays on provider records; agents may remain providerless.
-- Rule 2: Local model execution must be isolated from GSD memory and cannot execute Markdown instructions as commands.
-- Rule 3: Hybrid routing must be explicit and auditable; silent provider switching is not allowed.
-- Rule 4: Secrets are referenced by environment variable names or secret refs only.
-- Rule 5: Non-MVP planning should evolve toward card-based dashboard planning, but Phase 2 implementation remains scoped to runtime/routing unless explicitly pulled forward.
-
-## 16.6 Recommended Tests
-- Unit: Provider routing policy chooses API/local/hybrid deterministically.
-- Unit: Timeout and fallback rules return auditable statuses.
-- Integration: Local runtime health adapter validates healthy/unhealthy endpoints.
-- Integration: Protected runtime routes return 401 without auth.
-- DevOps: Docker Compose service config resolves and local runtime health check behaves as expected.
-- Frontend: Provider status action renders success/failure without leaking secrets.
-- Security: Secret marker scan across logs, handoffs, docs, and UI fixtures.
-- Regression: Phase 1 provider/agent/memory/handoff flow remains passing.
-
-## 16.7 Security Validations
-- Threat 1: Secret leakage through provider health logs.
-  - Mitigation: Redact authorization headers, API keys, provider payloads, and env values.
-- Threat 2: Local runtime command injection.
-  - Mitigation: Treat local runtime as configured endpoint/path only; never execute user-provided text as shell commands.
-- Threat 3: SSRF through local provider URLs.
-  - Mitigation: Validate allowed schemes/hosts for local runtime in local mode.
-- Threat 4: Prompt injection from model responses into handoffs.
-  - Mitigation: Treat model output as data and label source/route metadata.
-- Threat 5: Hybrid fallback masking failures.
-  - Mitigation: Return structured route decision and fallback reason.
-
-## 16.8 Developer Validation Steps
-1. Run Phase 1 regression suite: `go test ./...`, frontend syntax checks, and protected route checks.
-2. Validate Docker availability and Compose config.
-3. Add failing routing and health tests before implementation.
-4. Implement provider execution ports and adapters.
-5. Validate frontend provider status behavior.
-6. Run security scans for secret markers.
-7. Record results in `DOC/TESTS.md` during closure.
-
-## 16.9 Responsible and Dependencies
-- **Responsible:** [BA] and [CTO] for kickoff; [SECURITY] for threat model; [DEV_BACKEND], [DEV_FRONTEND], [DEVOPS], and [QA] for execution.
-- **Dependencies:** Phase 1 Done; Go available; Node.js available; Docker available; local model endpoint selection may be mocked unless [HUMAN] provides a specific runtime.
-- **Time Estimate:** Same work cycle for routing baseline; local model image pull may vary by model size and network access.
-- **Extra-Code Prerequisites:** No raw provider credentials in repo; local runtime secrets/config only through env vars.
-
-## 16.10 Risks and Mitigations
-- Risk 1: Local model image pull requires network or large disk/memory.
-  - Mitigation: Implement endpoint contract and mockable health adapter first; make concrete image configurable.
-- Risk 2: Hybrid routing hides provider failures.
-  - Mitigation: Expose route decision, fallback reason, and provider status in API/UI.
-- Risk 3: Backend persistent runner remains flaky.
-  - Mitigation: Harden startup path separately from model routing and document approved local run command.
-
-## 16.11 Plan Validation
-- **Business Feasibility:** Approved for Phase 2 planning after Phase 1 closure.
-- **Technical Feasibility:** Approved with Docker/local runtime dependency risk.
-- **Security Readiness:** Threat model drafted; SECURITY validation is mandatory before closure.
-- **Approval:** Phase 2 kickoff opened by [HUMAN] via `[USER_DONE]`; implementation proceeds under GSD autonomy until closure unless a critical blocker appears.
-
-## 16.12 Stage Closure Gate - Phase 2
-
-### Completed Stage Candidate: Phase 2 - Local Runtime and Hybrid Provider Routing
-### Closure Package Date: 2026-05-05 20:21
-### Responsible: [CEO] / [TECH_LEAD]
-
-### Closure Checklist
-
-| # | File | Status | Note |
-| :- | :--- | :---: | :--- |
-| 1 | `TESTS.md` | `[x]` | Phase 2 validation recorded in `TEST-PHASE2-*` and `REVIEW-PHASE2-001`. |
-| 2 | `STATE.md` | `[x]` | Runtime/routing baseline completion recorded. |
-| 3 | `TASKS.md` | `[x]` | Phase 2 implementation and QA tasks recorded as Done. |
-| 4 | `CONTEXT.md` | `[x]` | Runtime/routing and security decisions recorded. |
-| 5 | `README.md` | `[x]` | Phase 2 local runtime usage updated. |
-| 6 | `ROADMAP.md` | `[x]` | Phase 2 approved by [HUMAN:Ulisses] and marked Done. |
-| 7 | `PLAN.md` | `[x]` | Closure Gate section filled. |
-| 8 | `VERSIONS.md` | `[x]` | Phase 2 release entry added. |
-| 9 | `RETROSPECTIVE.md` | `[x]` | Phase 2 retrospective added. |
-| 10 | `WIKI` | `[x]` | Phase 2 user manual entry added. |
-
-### Acceptance Criteria Result
-- **Criterion 1:** Passed. Local provider runtime uses a documented loopback endpoint contract with HTTP health validation.
-- **Criterion 2:** Passed. Backend exposes protected provider health/routing endpoint.
-- **Criterion 3:** Passed. Domain remains framework-free; HTTP adapter owns runtime endpoint checks.
-- **Criterion 4:** Passed. Hybrid routing has deterministic local-first fallback to API with fallback reason.
-- **Criterion 5:** Passed. `scripts/run-backend-local.ps1` provides a repeatable foreground startup path requiring shell-provided `PF_AI_AUTH_SECRET`.
-- **Criterion 6:** Passed. Frontend shows provider status action and redacted route/status result.
-- **Criterion 7:** Passed. Tests verify no local auth sentinel leaks in provider health response.
-- **Criterion 8:** Passed. Tests cover provider mode contracts, endpoint validation, health route protection, local health, and fallback.
-
-### Pending Items / Deferrals
-- Concrete local model image selection remains configurable and should be explicitly chosen when model execution, not endpoint health, becomes required.
-- MCP handoff transport remains Phase 3 scope.
-
-### Delivery Summary
-- Phase 2 baseline is ready for [HUMAN] Stage Closure Gate review.
-- Metrics: Go suite passed; frontend syntax passed; frontend served HTTP 200; no blocking SECURITY/CODE_REVIEWER/QA/DEVOPS findings.
-
-### User Approval
-- [x] User confirmed Phase 2 Stage Closure Gate and authorizes roadmap advancement on 2026-05-06 07:13.
-
----
-
-## 17. Phase 3 Plan - MCP Handoffs and Advanced Orchestration
-
-## Updated on: 2026-05-06 07:28:36
-
-## 17.1 Stage Objective
-Deliver the final orchestration layer in a way that is visible and valuable to [HUMAN:Ulisses]: project registration, onboarding-driven kickoff, card-based planning dashboard, agent assignment, memory selection, model tier visibility, and MCP-compatible handoff envelopes.
-
-## 17.2 Roadmap Stage
-- **Stage name:** Phase 3 - MCP Handoffs and Advanced Orchestration.
-- **Related roadmap item:** `DOC/ROADMAP.md#phase-3-mcp-handoffs-and-advanced-orchestration-status-doing`
-
-## 17.3 Acceptance Criteria
-- Criterion 1: Handoff schema can be exported as an MCP-compatible envelope without secrets.
-- Criterion 2: Backend exposes protected endpoints for project registration and planning cards.
-- Criterion 3: Card board supports status, priority, responsible agent, phase, and task reference.
-- Criterion 4: Dashboard shows planning cards as the operational dashboard.
-- Criterion 5: Project registration captures onboarding inputs and prepares CEO questions before project start.
-- Criterion 6: Advanced agent manager shows routing/provider/tier metadata without exposing raw credentials.
-- Criterion 7: Regression tests for Phase 1 and Phase 2 remain passing.
-
-## 17.4 Security Validations
-- Threat 1: MCP envelope leaks secrets.
-  - Mitigation: Reuse handoff secret-field rejection and validate MCP export output.
-- Threat 2: Planning card payload injection.
-  - Mitigation: Treat all card text as data and escape in UI.
-- Threat 3: Project registration stores credentials.
-  - Mitigation: Store secret references only; reject secret-like fields in onboarding payload.
-- Threat 4: Agent routing metadata reveals raw provider credentials.
-  - Mitigation: Show provider IDs, modes, health, and secret refs only.
-
-## 17.5 Responsible and Dependencies
-- **Responsible:** [BA] / [CTO] for kickoff; [SECURITY] for threat model; [DEV_BACKEND], [DEV_FRONTEND], [QA], and [DOCUMENTATION] for execution.
-- **Dependencies:** Phase 2 Done; existing provider/agent/handoff APIs; frontend dashboard.
-- **Business value focus:** This phase must feel like an orchestration product, not only a technical transport upgrade.
-
-## 17.6 Plan Validation
-- **Business Feasibility:** Approved. Card board and project registration directly address [HUMAN] value feedback.
-- **Technical Feasibility:** Approved. Existing handoff/domain/API/frontend foundation can be extended.
-- **Security Readiness:** Threat model drafted; closure audit mandatory.
-- **Approval:** Phase 3 kickoff opened by [HUMAN] via `[USER_DONE]`; execution proceeds under GSD autonomy until closure.
-
-## 17.7 Stage Closure Gate - Phase 3
-
-### Completed Stage Candidate: Phase 3 - MCP Handoffs and Advanced Orchestration
-### Closure Package Date: 2026-05-06 07:33
-### Responsible: [CEO] / [TECH_LEAD]
-
-### Closure Checklist
-
-| # | File | Status | Note |
-| :- | :--- | :---: | :--- |
-| 1 | `TESTS.md` | `[x]` | Phase 3 validation recorded in `TEST-PHASE3-*` and `REVIEW-PHASE3-001`. |
-| 2 | `STATE.md` | `[x]` | Orchestration board completion recorded. |
-| 3 | `TASKS.md` | `[x]` | Phase 3 implementation and QA tasks recorded as Done. |
-| 4 | `CONTEXT.md` | `[x]` | User-visible orchestration and security decisions recorded. |
-| 5 | `README.md` | `[x]` | Phase 3 usage updated. |
-| 6 | `ROADMAP.md` | `[x]` | Phase 3 approved by [HUMAN:Ulisses] and marked Done. |
-| 7 | `PLAN.md` | `[x]` | Closure Gate section filled. |
-| 8 | `VERSIONS.md` | `[x]` | Phase 3 release entry added. |
-| 9 | `RETROSPECTIVE.md` | `[x]` | Phase 3 retrospective added. |
-| 10 | `WIKI` | `[x]` | Phase 3 user manual entry added. |
-
-### Acceptance Criteria Result
-- **Criterion 1:** Passed. Handoff schema exports MCP-compatible envelope without secrets.
-- **Criterion 2:** Passed. Protected endpoints exist for project registration and planning cards.
-- **Criterion 3:** Passed. Card board supports status, priority, responsible agent, phase, and task reference.
-- **Criterion 4:** Passed. Dashboard shows planning cards as the operational dashboard.
-- **Criterion 5:** Passed. Project registration captures onboarding payload and rejects secret-like fields.
-- **Criterion 6:** Passed. Agent/provider routing metadata remains visible without raw credentials.
-- **Criterion 7:** Passed. Phase 1 and Phase 2 regression suite remains passing.
-
-### Delivery Summary
-- Phase 3 is ready for [HUMAN] Stage Closure Gate review.
-- Metrics: Go suite passed; frontend syntax passed; served dashboard contains planning board, project registration, and MCP envelope export.
-
-### User Approval
-- [x] User confirmed Phase 3 Stage Closure Gate and authorizes roadmap completion on 2026-05-06 07:39.
-
----
-
-## 18. Refactor Plan - R1 Project Registration
-
-## Updated on: 2026-05-06 08:00
-
-## 18.1 Stage Objective
-Plan the first deliverable of the full PF_ai refactor before any development. The deliverable is project-centric operation: a dedicated project registration flow that becomes the entry point for all later screens and scopes the workspace by selected project.
-
-## 18.2 Roadmap Stage
-- **Stage name:** R1 - Project Registration.
-- **Related roadmap item:** `DOC/ROADMAP.md#refactor-roadmap-project-centric-workspace-status-planning`
-- **Development status:** Blocked until [HUMAN] approves this plan.
-
-## 18.3 Detailed Description
-- **What will be implemented after approval:** A project registration page; automatic hidden project ID; project summary persistence; project list in the sidebar; selected-project context; and project-scoped filtering for existing screens.
-- **Expected behavior:** [HUMAN:Ulisses] can create a project, see it in the sidebar, select it, and operate the rest of PF_ai inside that project context.
-- **Impacted components:** `pf-ai-web`, Go domain/API for project registration, local fallback storage, future PostgreSQL persistence path, `QUESTIONS.md` signaling flow for new-project questions.
-
-## 18.4 User-Facing Scope
-- Create a dedicated page for project registration.
-- Fields:
-  - Project name.
-  - Description.
-  - Audience.
-  - Technical stack.
-- Project ID:
-  - Generated automatically.
-  - Not required to be visible in UI.
-- Sidebar:
-  - Shows projects as the primary navigation.
-  - After selecting a project, other screens show only data related to it.
-- New project flow:
-  - CEO registers a new project context.
-  - If required information is missing, `QUESTIONS.md` receives a project-specific question signal.
-
-## 18.5 Out Of Scope For R1
-- Full multi-tenant database migration.
-- Authentication/authorization per project.
-- Migrating all historical unscoped data automatically.
-- Full onboarding wizard beyond the requested summary fields.
-- Production deployment.
-
-## 18.6 Acceptance Criteria
-- Criterion 1: Project registration page exists and is separate from Agents, Providers, Board, Memory, and Handoffs.
-- Criterion 2: Project creation accepts name, description, audience, and technical stack.
-- Criterion 3: Project ID is generated automatically and stored.
-- Criterion 4: Sidebar lists projects, not mixed feature links as the primary navigation.
-- Criterion 5: Selecting a project sets active project context.
-- Criterion 6: Existing screens can read active project context and filter/scope their local data model.
-- Criterion 7: Missing required onboarding fields trigger a project-specific question entry or question signal.
-- Criterion 8: No raw secrets are accepted in project fields.
-- Criterion 9: Existing regression suite remains passing.
-
-## 18.7 Business Rules
-- Rule 1: Project is the root workspace entity.
-- Rule 2: Agents, providers, cards, comments, memory references, and handoffs must belong to a selected project after R1 implementation.
-- Rule 3: New project creation must not require visible/manual ID entry.
-- Rule 4: `QUESTIONS.md` is used only for agent-to-human questions; project decisions remain in project records or context docs.
-- Rule 5: Development starts only after [HUMAN] approves this planning section.
-
-## 18.8 Recommended Tests
-- Unit: Project registration rejects missing name.
-- Unit: Project registration rejects secret-like fields.
-- Unit: Project ID generation is deterministic enough for repeatable tests and unique enough for local operation.
-- Integration: Protected project API creates and lists projects.
-- Frontend: Project form creates a project and updates sidebar.
-- Frontend: Selecting a project scopes visible board/agent/provider data.
-- Regression: Existing Go suite and frontend syntax checks pass.
-
-## 18.9 Security Validations
-- Threat 1: Secret leakage in project description or stack fields.
-  - Mitigation: Reject secret-like keys/fields and avoid logging raw project payloads.
-- Threat 2: Cross-project data bleed.
-  - Mitigation: Require project_id on scoped records after selection.
-- Threat 3: Project name injection into UI.
-  - Mitigation: Escape all rendered project fields.
-- Threat 4: `QUESTIONS.md` pollution.
-  - Mitigation: Only write direct CEO-to-HUMAN questions, with project name/id signal.
-
-## 18.10 Proposed Technical Shape
-- Domain:
-  - Add/extend `ProjectRegistration` into a first-class `Project`.
-  - Add `ProjectID` to future scoped records.
-- Backend:
-  - Protected `GET /api/projects`.
-  - Protected `POST /api/projects`.
-  - Optional `POST /api/projects/{id}/questions-signal` if question writing is not pulled into R1.
-- Frontend:
-  - Sidebar becomes project list.
-  - Feature pages remain available inside selected project context.
-  - LocalStorage fallback stores projects under `pf_ai_projects`.
-- Documentation:
-  - R1 results recorded in `STATE.md` during execution and closure docs only after implementation.
-
-## 18.11 Task Cards Planned
-- `R1-PLAN-001`: Approve project registration plan.
-- `R1-BACKEND-001`: Implement project domain/API.
-- `R1-FRONTEND-001`: Implement project page and sidebar project navigation.
-- `R1-SCOPING-001`: Scope existing UI data to active project.
-- `R1-QA-001`: Validate registration, selection, scoping, and regressions.
-- `R1-SECURITY-001`: Audit project fields and cross-project data isolation.
-
-## 18.12 Open Questions For Approval
-- Should R1 write a real entry into `QUESTIONS.md` automatically, or only show a visible "questions needed" signal for CEO to confirm?
-- Should project data persist only in frontend localStorage for R1, or also through backend in-memory API immediately?
-- Should existing unscoped records be shown under a default legacy project, or hidden until a project is selected?
-
-## 18.13 Approval Gate
-- [x] Approved by [HUMAN:Ulisses] via `[USER_DONE]` on 2026-05-06 08:10.
-- R1 implementation authorized and executed.
-
-## 18.14 Delivery Result - R1 Project Registration
-
-### Delivery Date
-- 2026-05-06 08:10
-
-### Implemented Scope
-- Dedicated project registration page with name, description, audience, and technical stack.
-- Automatic project ID generation in domain/API and local frontend fallback.
-- Sidebar changed to project list as the primary navigation.
-- Feature navigation moved inside the workspace after project context.
-- Active project context persisted in localStorage.
-- Agents, providers, cards, comments, and local handoffs scoped by selected project in the frontend model.
-- New project creation emits a CEO question signal in the UI/local state without writing decisions into `QUESTIONS.md`.
-
-### Acceptance Criteria Result
-- Criterion 1: Passed.
-- Criterion 2: Passed.
-- Criterion 3: Passed.
-- Criterion 4: Passed.
-- Criterion 5: Passed.
-- Criterion 6: Passed for frontend/local model and API project registration.
-- Criterion 7: Passed through visible CEO question signal.
-- Criterion 8: Passed through backend project validation and secret-like summary/onboarding rejection.
-- Criterion 9: Passed.
-
-### Deferrals
-- Backend project_id scoping for agents/providers/cards/handoffs remains a follow-up persistence/API refactor.
-- Real append into `QUESTIONS.md` from the browser remains out of scope; UI emits a CEO question signal for traceability.
+- [Brief description of what was delivered]
+- Metrics: [E.g.: mutation score 82%, 0 security failures]
+
+### ✅ User Approval
+> **Awaiting [HUMAN] confirmation to advance to the next phase.**
+- [ ] [HUMAN] confirmed phase closure and authorizes start of next phase.

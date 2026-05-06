@@ -11,7 +11,7 @@ This document defines the inviolable development rules. Any deviation invalidate
 The **[CEO]** is the first to act in every new phase. Reading sequence (strict order, once per phase):
 1. `DOC/GSD-RULES.md`
 2. `PLAYBOOK.md`
-3. `NEW-INSTRUCTIONS.md`
+3. `NEW-INSTRUCTIONS.md` — only if [HUMAN] has added new content since last read
 4. `DOC/PLAN.md`
 5. `DOC/ONBOARDING.md` — only on new projects with placeholder `PROJECT.md`
 
@@ -29,22 +29,57 @@ The **[CEO]** is the first to act in every new phase. Reading sequence (strict o
 - **[HUMAN] acts only at phase closure** — approves or rejects the deliverable.
 - Mid-phase interruptions only for: Critical bug, credential leak, impasse after 3 review rounds.
 
-### 0.3 Management Autonomy
+### 0.3 NEW-INSTRUCTIONS.md — Purpose & Rules
+
+- **[HUMAN]-only document.** Written during development when [HUMAN] wants to change scope, priority, or give a new directive.
+- CEO reads it when triggered by [HUMAN] — never on automatic kickoff.
+- CEO performs formatting and timestamp only — never deletes or modifies [HUMAN] content.
+- Each item has an inline response line for [HUMAN]:
+  ```
+  - Item or instruction
+    > Response:
+  ```
+
+### 0.4 Management Autonomy
 
 - CEO, CTO, and BA have full autonomy to execute phases until the deliverable is ready.
 - No human approval required mid-phase unless one of the three exceptions above occurs.
-- **Explicit Stage Conclusion Authorization:** [HUMAN] may extend autonomy explicitly in `NEW-INSTRUCTIONS.md`, specifying the stage limit. Expires automatically. Active agent notes: `[CEO] Concluding Stage X — authorized via NEW-INSTRUCTIONS.md [YYYY-MM-DD].`
+- **Explicit Stage Conclusion Authorization:** [HUMAN] may extend autonomy in `NEW-INSTRUCTIONS.md`, specifying the stage limit. Expires automatically. Active agent notes: `[CEO] Concluding Stage X — authorized via NEW-INSTRUCTIONS.md [YYYY-MM-DD].`
 
-### 0.4 Phase Kickoff — Single Intake
+### 0.5 Project Classification — CEO Responsibility
+
+At kickoff, **CEO classifies the project** based on [HUMAN]'s answers. No additional question to [HUMAN] — classification recorded in the kickoff handoff.
+
+| Type | Criteria | Active Agents | Docs Written | When |
+| :--- | :--- | :--- | :--- | :--- |
+| **Nano** | Script, landing page, simple automation | CEO + 1 technical | STATE + QUESTIONS | End of project |
+| **Small** | CRUD, simple API, fast MVP | CEO + CTO + 2 technical | + PLAN + TESTS | End of each deliverable |
+| **Medium** | SaaS, product with end user | Full team without ML | Standard flow | End of each phase |
+| **Large** | ML, microservices, complex product | Full team | Full flow | End of each phase + closure gate |
+
+> Dormant agents consume no context. CEO activates only what the project type requires.
+
+### 0.6 Value Deliverable Planning
+
+Every project is planned as a sequence of **value deliverables** — phases that produce something functional and usable by the end user or client.
+
+**Rules:**
+- **Phase 1 is always the MVP** — validates the core hypothesis with minimum viable functionality.
+- Every subsequent phase adds incremental, usable value — not just technical increments.
+- Each phase in `ROADMAP.md` must declare a **"Value Delivered"** field: what the user/client can do after this phase that they couldn't before.
+- A phase with no user-facing value must be justified in `PLAN.md` (e.g., infrastructure phase enabling future value).
+- CEO validates value alignment at kickoff. CMO may be activated for market validation on Medium/Large projects.
+
+### 0.7 Phase Kickoff — Single Intake
 
 At the start of each phase:
 1. CEO + CTO + BA perform full intake — **once per phase only**.
 2. CTO assigns seniority based on BA business complexity input — recorded in `.agent_handoff/`, never in chat.
 3. SECURITY performs **threat modeling** — maps attack surfaces, defines phase security criteria.
-4. CEO generates `phase_context` snapshot and dispatches single `PHASE_KICKOFF` handoff to all technical agents.
+4. CEO generates `phase_context` snapshot and dispatches single `PHASE_KICKOFF` handoff to all active technical agents.
 5. Technical agents work from the handoff snapshot — no file reading for Junior/Pleno tasks.
 
-### 0.5 Seniority Assignment (CTO-led)
+### 0.8 Seniority Assignment (CTO-led)
 
 - **BA** assesses business complexity → informs CTO via handoff.
 - **CTO** decides seniority — BA does not co-decide.
@@ -57,7 +92,7 @@ At the start of each phase:
 
 > **Token Economy Rule:** Always assign the lowest sufficient seniority. The multi-agent objective is token economy — specialized agents with limited scope consume less context than a single generalist. When an external orchestrator is available, it **should** route to specific models per tier.
 
-### 0.6 Technical Agents
+### 0.9 Technical Agents
 
 | Agent | Scope |
 | :--- | :--- |
@@ -68,16 +103,16 @@ At the start of each phase:
 | `[DEVOPS]` | CI/CD, containers, infrastructure |
 | `[DATA_ENGINEER]` | ETL, data pipelines, data quality |
 
-### 0.7 Escalation Protocol
+### 0.10 Escalation Protocol
 
 - Technical agents escalate **once per phase** via `CLARIFICATION_REQUEST` handoff.
 - Management responds via handoff if possible — no [HUMAN] interruption.
 - If management cannot resolve → `QUESTIONS.md` → [HUMAN] → development freezes.
 - **Autonomous decision rule:** Agent decides independently on *how to implement*. Escalates only for *what to implement* or *architectural scope*.
 
-### 0.8 Quality & Review Gates
+### 0.11 Quality & Review Gates
 
-**Parallel review at phase closure:**
+**Parallel review at phase/deliverable closure:**
 
 | Reviewer | Scope | Always included |
 | :--- | :--- | :--- |
@@ -99,22 +134,22 @@ At the start of each phase:
 Reviewers (parallel) → TECH_LEAD consolidates → CTO/BA approve → [HUMAN] releases PR → Merge
 ```
 
-> Every phase must produce a functional, validated, and tested codebase ready for merge.
+> Every closure must produce a functional, validated, and tested codebase ready for use.
 
-### 0.9 SECURITY as Structural Foundation
+### 0.12 SECURITY as Structural Foundation
 
-- **Phase Kickoff:** Threat modeling — attack surfaces, security criteria for the phase.
-- **Phase Closure:** Conformance audit — verifies implementation against kickoff threat model.
+- **Kickoff:** Threat modeling — attack surfaces, security criteria.
+- **Closure:** Conformance audit — verifies implementation against kickoff threat model.
 - **Pre-production:** Full audit before any merge to production branch. Veto power active.
 - These are distinct activities — no overlap.
 
-### 0.10 Creative & Market Agents
+### 0.13 Creative & Market Agents
 
 Activated on demand by CEO or CMO:
 
 | Agent | Output |
 | :--- | :--- |
-| `[CMO]` | KPI review, roadmap alignment |
+| `[CMO]` | KPI review, roadmap alignment, value validation |
 | `[WRITER]` | Marketing copy |
 | `[ARTIST]` | Visual marketing assets |
 
@@ -124,31 +159,31 @@ Activated on demand by CEO or CMO:
 
 ## §1. Document Ownership & Write Rules
 
-### 1.1 When to Write
+### 1.1 File Purpose (Inviolable Definitions)
 
-| File | Written | By |
-| :--- | :--- | :--- |
-| `STATE.md` | During and at end of phase | Technical agents |
-| `NEW-INSTRUCTIONS.md` | Only if [HUMAN] intervenes mid-phase | [HUMAN] exclusively |
-| `CONTEXT.md` | Phase closure only | Management agents (CEO, CTO, BA) |
-| `PLAN.md` | Phase closure only | BA |
-| `TASKS.md` | Phase closure only | All agents |
-| `TESTS.md` | Phase closure only | QA / Technical agents |
-| `WIKI` | Phase closure only | DOCUMENTATION agent |
-| `VERSIONS.md` | Phase closure only, from Phase 1 onward | Phase-closing agent |
-| `RETROSPECTIVE.md` | Phase closure only | CEO |
-| `QUESTIONS.md` | Only when agent needs to ask [HUMAN] | Any agent |
-| `ROADMAP.md` | Marked by [HUMAN] at closure | [HUMAN] |
-| `PLAYBOOK.md` | When any interaction changes understanding of [HUMAN] work preferences | CEO |
-
-### 1.2 File Purpose (Inviolable Definitions)
-
-- **PLAYBOOK.md** — [HUMAN]'s work preferences and working style. Updated only when understanding changes.
+- **PLAYBOOK.md** — [HUMAN]'s work preferences and working style. Updated only when understanding of how [HUMAN] works changes.
 - **CONTEXT.md** — Architectural and project decisions with justifications. Owned by management agents.
 - **STATE.md** — Agent execution memory: what is done, pending, and blocked. Owned by technical agents.
 - **QUESTIONS.md** — Exclusively for agents to ask [HUMAN]. No decisions, no logs, no architecture notes.
-- **WIKI** — Project knowledge base + end-user manual (`wiki/user-manual/`). Filled at phase closure.
+- **WIKI** — Project knowledge base + end-user manual (`wiki/user-manual/`).
 - **VERSIONS.md** — Release history. Written at phase closure, starting from Phase 1.
+- **NEW-INSTRUCTIONS.md** — [HUMAN] directives written during development. CEO reads when triggered.
+
+### 1.2 When to Write — By Project Type
+
+| File | Nano | Small | Medium | Large |
+| :--- | :--- | :--- | :--- | :--- |
+| `STATE.md` | During + end | During + end | During + end | During + end |
+| `QUESTIONS.md` | When needed | When needed | When needed | When needed |
+| `PLAN.md` | — | End of deliverable | End of phase | End of phase |
+| `TESTS.md` | — | End of deliverable | End of phase | End of phase |
+| `CONTEXT.md` | — | — | End of phase | End of phase |
+| `TASKS.md` | — | — | End of phase | End of phase |
+| `WIKI` | — | — | End of phase | End of phase |
+| `VERSIONS.md` | — | — | End of phase (Phase 1+) | End of phase (Phase 1+) |
+| `RETROSPECTIVE.md` | — | — | End of phase | End of phase |
+| `README.md` | End of project | End of project | End of phase | End of phase |
+| `PLAYBOOK.md` | On change | On change | On change | On change |
 
 ### 1.3 Reading Rules
 
@@ -156,55 +191,56 @@ Activated on demand by CEO or CMO:
 - **Technical agents (Senior):** Handoff + `ARCHITECTURE.md` only if task requires it.
 - **Management agents:** Full intake once per phase. No re-reading unless [HUMAN] intervenes.
 - **QUESTIONS.md:** Written only when registering a question for [HUMAN]. Never read at kickoff.
-- **RETROSPECTIVE.md / WIKI:** Written at closure only.
+- **NEW-INSTRUCTIONS.md:** Read by CEO only when [HUMAN] signals a change.
 
 ---
 
-## §2. Phase Lifecycle
+## §2. Phase/Deliverable Lifecycle
 
-### 2.1 Phase Start
-1. CEO + CTO + BA: full intake (once).
-2. SECURITY: threat modeling.
-3. CTO: seniority assignment via handoff.
-4. CEO: generates `phase_context` snapshot + dispatches single `PHASE_KICKOFF` handoff.
+### 2.1 Start
+1. CEO classifies project type (first phase only).
+2. CEO validates "Value Delivered" for this phase against ROADMAP.
+3. CEO + CTO + BA: full intake (once per phase).
+4. SECURITY: threat modeling.
+5. CTO: seniority assignment via handoff.
+6. CEO: generates `phase_context` snapshot + dispatches single `PHASE_KICKOFF` handoff.
 
-### 2.2 During Phase
+### 2.2 During
 - Technical agents execute from handoff context.
 - `STATE.md` updated as tasks complete.
-- `NEW-INSTRUCTIONS.md` only if [HUMAN] intervenes.
+- `NEW-INSTRUCTIONS.md` read only if [HUMAN] signals change.
 - `playbook_update: true` flag in handoff when a decision reveals a work preference.
-- `retrospective_note` field populated in handoffs during the phase — consolidated at closure.
+- `retrospective_note` field populated in handoffs — consolidated at closure.
 
-### 2.3 Phase Closure
+### 2.3 Closure
 1. Parallel review: SECURITY + CODE_REVIEWER + QA ± DBA/DEVOPS.
 2. TECH_LEAD consolidates → CTO/BA approve.
-3. All documentation written: CONTEXT, PLAN, TASKS, TESTS, WIKI, VERSIONS (Phase 1+), RETROSPECTIVE.
+3. Documentation written per project type (§1.2).
 4. CEO updates PLAYBOOK if `playbook_update: true` flags received.
-5. Stage Closure Checklist presented to [HUMAN].
-6. [HUMAN] approves → marks ROADMAP → releases PR → Merge.
+5. CEO validates "Value Delivered" was achieved.
+6. Closure checklist presented to [HUMAN].
+7. [HUMAN] approves → marks ROADMAP → releases PR → Merge.
 
-### 2.4 Stage Closure Checklist
+### 2.4 Closure Checklist (adapt per project type)
 
 | # | File | What to Check |
 | :- | :--- | :--- |
-| 1 | `TESTS.md` | All tests recorded with results and timestamp |
-| 2 | `STATE.md` | Updated with delivery and metrics |
-| 3 | `TASKS.md` | All tasks Done; estimated vs. actual time recorded |
-| 4 | `CONTEXT.md` | Architectural decisions documented |
-| 5 | `README.md` | Reflects delivered code reality |
-| 6 | `ROADMAP.md` | Stage marked `[x]` by [HUMAN] |
-| 7 | `PLAN.md` | Closure Gate section filled |
-| 8 | `VERSIONS.md` | Entry added (Phase 1 onward) |
-| 9 | `RETROSPECTIVE.md` | Phase entry consolidated by CEO |
-| 10 | `WIKI` | Updated with phase deliverables |
+| 1 | `STATE.md` | Updated with delivery and metrics |
+| 2 | `PLAN.md` | Value Delivered field confirmed *(Small+)* |
+| 3 | `TESTS.md` | Tests recorded with results and timestamp *(Small+)* |
+| 4 | `TASKS.md` | All tasks Done; estimated vs. actual time *(Medium+)* |
+| 5 | `CONTEXT.md` | Architectural decisions documented *(Medium+)* |
+| 6 | `README.md` | Reflects delivered code reality |
+| 7 | `ROADMAP.md` | Stage marked `[x]` by [HUMAN] *(Medium+)* |
+| 8 | `VERSIONS.md` | Entry added *(Medium+, Phase 1+)* |
+| 9 | `RETROSPECTIVE.md` | Phase entry consolidated by CEO *(Medium+)* |
+| 10 | `WIKI` | Updated with phase deliverables *(Medium+)* |
 
 > **[HUMAN] is the sole approval authority for stage advancement.**
 
 ---
 
 ## §3. Rollback Protocol
-
-### 3.1 Severity Levels
 
 | Level | Criteria | Rollback |
 | :--- | :--- | :--- |
@@ -215,7 +251,6 @@ Activated on demand by CEO or CMO:
 
 > **Critical only:** DEVOPS may initiate preventive rollback while awaiting [HUMAN].
 
-### 3.2 Rollback Flow
 ```
 Bug identified + severity defined
 → Critical/High: next phase FREEZES
@@ -271,8 +306,6 @@ Leak identified
 
 ## §6. Quality Standards
 
-### 6.1 Test Quality
-
 | Layer | Criteria |
 | :--- | :--- |
 | Domain | Mutation score ≥ 80% |
@@ -280,16 +313,9 @@ Leak identified
 | Infrastructure | Contract tests |
 | Frontend | Behavior tests, not implementation tests |
 
-**By seniority:**
-- Junior: happy path mandatory.
-- Pleno: happy + unhappy path.
-- Senior: mutation testing + edge cases.
+**By seniority:** Junior → happy path. Pleno → happy + unhappy. Senior → mutation + edge cases.
 
-### 6.2 Conflict Resolution
-
-- *How code was written* → `[CODE_REVIEWER]`.
-- *Whether behavior is correct* → `[QA]`.
-- Cross-scope → `[TECH_LEAD]` → `[CTO]`.
+**Conflict resolution:** *How written* → `[CODE_REVIEWER]`. *Whether correct* → `[QA]`. Cross-scope → `[TECH_LEAD]` → `[CTO]`.
 
 ---
 
@@ -308,8 +334,7 @@ Leak identified
 - **APPLICATION (Ports):** Input/output contract interfaces.
 - **INFRASTRUCTURE (Adapters):** DB, APIs, UI implementations.
 
-**Naming:**
-- Web → `<name>-web` | Mobile → `<name>-app` | Desktop → `<name>-desktop` | Service → `<name>-service`
+**Naming:** Web → `<name>-web` | Mobile → `<name>-app` | Desktop → `<name>-desktop` | Service → `<name>-service`
 
 ---
 
@@ -327,7 +352,7 @@ Leak identified
 
 Seniority and LLM Tier are **separate concepts**.
 - Seniority → autonomy scope.
-- Tier → which model runs.
+- Tier → which model runs (local via Ollama or API).
 
 | Tier | Purpose |
 | :--- | :--- |
@@ -335,7 +360,7 @@ Seniority and LLM Tier are **separate concepts**.
 | Tier 2 — Development | Standard TDD, feature implementation |
 | Tier 3 — Expert | Architectural decisions, complex domain, security design |
 
-> When an external orchestrator is available, it **should** route tasks to specific models per tier. The multi-agent objective is token economy.
+> When an external orchestrator is available, it **should** route tasks to specific models per tier. Local models (Ollama) and API models (Claude, GPT) may be combined per project needs. The multi-agent objective is token economy.
 
 ---
 
@@ -364,26 +389,26 @@ CTO is the sole responsible agent for skill mapping per phase. Recorded in `CONT
 
 | File | Location | Owner | Written |
 | :--- | :--- | :--- | :--- |
-| `README.md` | Root | DOCUMENTATION | Post-onboarding; updated at closure |
+| `README.md` | Root | DOCUMENTATION | Per project type |
 | `PLAYBOOK.md` | Root | CEO | On preference change |
-| `NEW-INSTRUCTIONS.md` | Root | [HUMAN] exclusively | On new instructions |
+| `NEW-INSTRUCTIONS.md` | Root | [HUMAN] exclusively | During development, when needed |
 | `QUESTIONS.md` | Root | Any agent | Only to ask [HUMAN] |
-| `RETROSPECTIVE.md` | Root | CEO | Phase closure |
+| `RETROSPECTIVE.md` | Root | CEO | Phase closure (Medium+) |
 | `GSD-RULES.md` | `DOC/` | — | Inviolable |
-| `ARCHITECTURE.md` | `DOC/` | CTO | Phase closure |
+| `ARCHITECTURE.md` | `DOC/` | CTO | Phase closure (Medium+) |
 | `PROJECT.md` | `DOC/` | CEO / BA | Onboarding |
-| `PLAN.md` | `DOC/` | BA | Phase closure |
-| `ROADMAP.md` | `DOC/` | CEO / [HUMAN] | Phase closure |
+| `PLAN.md` | `DOC/` | BA | Per project type |
+| `ROADMAP.md` | `DOC/` | CEO / [HUMAN] | Phase closure (Medium+) |
 | `STATE.md` | `DOC/` | Technical agents | During + closure |
-| `CONTEXT.md` | `DOC/` | Management agents | Phase closure |
-| `TASKS.md` | `DOC/` | All agents | Phase closure |
-| `TESTS.md` | `DOC/` | QA / Technical | Phase closure |
+| `CONTEXT.md` | `DOC/` | Management agents | Phase closure (Medium+) |
+| `TASKS.md` | `DOC/` | All agents | Phase closure (Medium+) |
+| `TESTS.md` | `DOC/` | QA / Technical | Per project type |
 | `ENV_SETUP.md` | `DOC/` | DEVOPS / SECURITY | Phase closure |
 | `DESIGN.md` | `DOC/` | UX_RESEARCHER | Phase closure |
-| `VERSIONS.md` | `DOC/` | Phase-closing agent | Phase closure, Phase 1+ |
+| `VERSIONS.md` | `DOC/` | Phase-closing agent | Phase closure, Phase 1+ (Medium+) |
 | `ONBOARDING.md` | `DOC/` | CEO | Once per new project |
-| `wiki/` | `wiki/` | DOCUMENTATION | Phase closure |
-| `wiki/user-manual/` | `wiki/` | DOCUMENTATION | Phase closure |
+| `wiki/` | `wiki/` | DOCUMENTATION | Phase closure (Medium+) |
+| `wiki/user-manual/` | `wiki/` | DOCUMENTATION | Phase closure (Medium+) |
 
 ---
 
