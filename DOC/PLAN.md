@@ -346,7 +346,7 @@ Deliver local runtime and hybrid provider routing so PF_ai can verify a configur
 | 3 | `TASKS.md` | `[x]` | Phase 2 implementation and QA tasks recorded as Done. |
 | 4 | `CONTEXT.md` | `[x]` | Runtime/routing and security decisions recorded. |
 | 5 | `README.md` | `[x]` | Phase 2 local runtime usage updated. |
-| 6 | `ROADMAP.md` | `[ ]` | Pending [HUMAN] approval and marking. |
+| 6 | `ROADMAP.md` | `[x]` | Phase 2 approved by [HUMAN:Ulisses] and marked Done. |
 | 7 | `PLAN.md` | `[x]` | Closure Gate section filled. |
 | 8 | `VERSIONS.md` | `[x]` | Phase 2 release entry added. |
 | 9 | `RETROSPECTIVE.md` | `[x]` | Phase 2 retrospective added. |
@@ -371,4 +371,4 @@ Deliver local runtime and hybrid provider routing so PF_ai can verify a configur
 - Metrics: Go suite passed; frontend syntax passed; frontend served HTTP 200; no blocking SECURITY/CODE_REVIEWER/QA/DEVOPS findings.
 
 ### User Approval
-- [ ] Pending [HUMAN:Ulisses] approval.
+- [x] User confirmed Phase 2 Stage Closure Gate and authorizes roadmap advancement on 2026-05-06 07:13.
