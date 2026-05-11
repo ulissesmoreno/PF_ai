@@ -40,18 +40,17 @@ type Config struct {
 }
 
 func loadConfig() Config {
-	return Config{
-		InboxRaw:        env("INBOX_RAW_DIR",        "../inbox/raw"),
-		Processing:      env("PROCESSING_DIR",       "../inbox/processing"),
-		PendingPython:   env("PENDING_PYTHON_DIR",   "../inbox/pending_python"),
-		Extracted:       env("EXTRACTED_DIR",        "../inbox/extracted"),
-		ProcessedPython: env("PROCESSED_PYTHON_DIR", "../inbox/processed_python"),
-		Success:         env("SUCCESS_DIR",          "../inbox/success"),
-		Failed:          env("FAILED_DIR",           "../inbox/failed"),
+	return Config{		
+		Processing:      env("PROCESSING_DIR",       "../.agent_handoff/processing"),
+		PendingPython:   env("PENDING_PYTHON_DIR",   "../.agent_handoff/pending_python"),
+		Extracted:       env("EXTRACTED_DIR",        "../.agent_handoff/extracted"),
+		ProcessedPython: env("PROCESSED_PYTHON_DIR", "../.agent_handoff/processed_python"),
+		Success:         env("SUCCESS_DIR",          "../.agent_handoff/success"),
+		Failed:          env("FAILED_DIR",           "../.agent_handoff/failed"),
 		VaultPath:       env("VAULT_PATH",           "vault"),
 		DBPath:          env("DB_PATH",              "data/wiki.db"),
 
-		AgentHandoffDir: env("AGENT_HANDOFF_DIR",    ".agent_handoff"),
+		AgentHandoffDir: env("AGENT_HANDOFF_DIR",    "../.agent_handoff"),
 		AgentsConfigDir: env("AGENTS_CONFIG_DIR",    "AGENTS"),
 		AgentOutputDir:  env("AGENT_OUTPUT_DIR",     "output"),
 
@@ -70,7 +69,7 @@ func loadConfig() Config {
 
 func (c Config) log() {
 	log.Println("── Configuração ──────────────────────────────")
-	log.Printf("  inbox/raw       : %s", c.InboxRaw)
+	log.Printf("  .agent_handoff/raw       : %s", c.InboxRaw)
 	log.Printf("  vault           : %s", c.VaultPath)
 	log.Printf("  banco           : %s", c.DBPath)
 	log.Println("──")

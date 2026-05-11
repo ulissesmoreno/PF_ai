@@ -104,6 +104,7 @@ func (w *Watcher) ScanInitial() error {
 		}
 
 		found++
+		log.Printf("🔍 %d arquivo(s) encontrado(s) em %s", found, w.dir)
 		log.Printf("📥 Processando inicial: %s", base)
 		go w.handler(path) // não bloqueia o scan
 

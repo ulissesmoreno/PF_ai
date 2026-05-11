@@ -9,6 +9,16 @@ import (
 	"strings"
 )
 
+type PhaseKickoffPayload struct {
+    PhaseRef, PlanRef, SeniorityLevel string
+    LLMTier                           int
+    SecurityCriteria                  string
+    ApplicableSkills, Constraints     []string
+    Priority                          string
+    ExplicitConclusionAuthorized      bool
+    AuthorizedUntilStage              *string
+}
+
 // HandoffHeader representa o cabeçalho obrigatório (§4.2.1)
 type HandoffHeader struct {
 	Timestamp string `json:"timestamp"`
@@ -44,7 +54,7 @@ func CreateHandoff[T any](dir string, header HandoffHeader, payload T) (string, 
 	}
 
 	// Define o nome do arquivo: INTENT_SENDER_TASK_TIMESTAMP.json
-	fileName := fmt.Sprintf("_%s_TO_%s_%s_%s.json",
+	fileName := fmt.Sprintf("%s_TO_%s_%s_%s.json",
 		strings.Trim(header.Sender, "[]"),    // Remove os colchetes para o nome do arquivo
 		strings.Trim(header.Recipient, "[]"),
 		header.Intent,

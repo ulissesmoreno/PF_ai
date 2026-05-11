@@ -9,25 +9,30 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
 var (
+	mu           sync.RWMutex
 	ollamaURL    string
 	model        string
-	systemPrompt string // Carregado dinamicamente de AGEND.md
+	systemPrompt string // Carregado dinamicamente de AGENTS/
 	client       = &http.Client{Timeout: 60 * time.Minute}
 )
 
-// Init configura o cliente do agente LLM e carrega as definições do AGEND.md.
+// Init configura o cliente do agente LLM e carrega as definições de AGENTS/.
 func Init(url, llmModel string) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	ollamaURL = url
 	model = llmModel
 
 	// Carrega o System Prompt do arquivo local para permitir ajustes sem recompilação
-	p, err := CarregarVariavel("SYSTEM_PROMPT")
+	p, err := carregarVariavelDeAgente("SYSTEM_PROMPT", "SYSTEM_PROMPT")
 	if err != nil {
-		fmt.Printf("⚠️  Aviso: SYSTEM_PROMPT não encontrado em AGENTS. Usando configuração padrão.\n")
+		fmt.Printf("⚠️  Aviso: SYSTEM_PROMPT não encontrado em AGENTS/. Usando configuração padrão.\n")
 		systemPrompt = "Você é um assistente útil e fiel aos dados fornecidos."
 	} else {
 		systemPrompt = p
@@ -58,16 +63,20 @@ func GerarArquivo(tema string, chunks []string) (string, error) {
 
 	contexto := strings.Join(chunks, "\n\n---\n\n")
 	prompt := fmt.Sprintf(
-		"Crie uma nota Obsidian completa sobre o tema: **%s**\n\nContexto extraído do documento:\n\n%s",
+		"Contexto extraído do documento:\n\n%s",
 		tema, contexto,
-	)
+	)	
 
-	// Salva o prompt exato para auditoria (evita alucinações como 'Dr. Amorim')
-	
+	mu.RLock()
+	currentModel := model
+	currentURL := ollamaURL
+	currentPrompt := systemPrompt
+	mu.RUnlock()
+
 	body, err := json.Marshal(chatRequest{
-		Model: model,
+		Model: currentModel,
 		Messages: []message{
-			{Role: "system", Content: systemPrompt},
+			{Role: "system", Content: currentPrompt},
 			{Role: "user", Content: prompt},
 		},
 		Stream: true,
@@ -77,7 +86,7 @@ func GerarArquivo(tema string, chunks []string) (string, error) {
 	}
 
 	resp, err := client.Post(
-		ollamaURL+"/api/chat",
+		currentURL+"/api/chat",
 		"application/json",
 		bytes.NewReader(body),
 	)
@@ -131,7 +140,7 @@ func GerarArquivo(tema string, chunks []string) (string, error) {
 	return strings.TrimSpace(sb.String()), nil
 }
 
-// salvarPromptLocal gera um log do prompt em /prompts com timestamp para depuração.
+// salvarPromptLocal gera um log do prompt em prompts/ com timestamp para depuração.
 func salvarPromptLocal(tema string, conteudo string) error {
 	dir := "prompts"
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -139,7 +148,7 @@ func salvarPromptLocal(tema string, conteudo string) error {
 	}
 
 	timestamp := time.Now().Format("20060102_150405")
-	
+
 	// Sanitização básica do nome do arquivo
 	temaLimpo := strings.Map(func(r rune) rune {
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
@@ -152,9 +161,15 @@ func salvarPromptLocal(tema string, conteudo string) error {
 	return os.WriteFile(filepath.Join(dir, fileName), []byte(conteudo), 0644)
 }
 
-// CarregarVariavel extrai configurações de AGENTS/*.md, suportando blocos de texto.
-func CarregarVariavel(chave string) (string, error) {
-	file, err := os.ReadFile("AGENTS/" + chave + ".md")
+// ────────────────────────────────────────────────────────────────────
+// Leitura de configuração de agentes
+// ────────────────────────────────────────────────────────────────────
+
+// carregarVariavelDeAgente lê AGENTS/{nomeArquivo}.md e extrai o valor da chave informada.
+// nomeArquivo e chave são separados para evitar nomes de arquivo com caracteres inválidos.
+func carregarVariavelDeAgente(nomeArquivo, chave string) (string, error) {
+	filePath := filepath.Join("AGENTS", nomeArquivo+".md")
+	file, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", err
 	}
@@ -163,22 +178,26 @@ func CarregarVariavel(chave string) (string, error) {
 	var capturando bool
 	var resultado []string
 
+	upperChave := strings.ToUpper(chave) + ":"
+
 	for _, linha := range linhas {
 		linhaTrim := strings.TrimSpace(linha)
-		
-		// Inicia captura ao encontrar a Chave:
-		if strings.HasPrefix(strings.ToUpper(linhaTrim), strings.ToUpper(chave)+":") {
+
+		// Inicia captura ao encontrar a Chave: (case-insensitive na detecção,
+		// mas usa o índice do prefixo para cortar — evita TrimPrefix com case errado)
+		if strings.HasPrefix(strings.ToUpper(linhaTrim), upperChave) {
 			capturando = true
-			conteudoMesmaLinha := strings.TrimSpace(strings.TrimPrefix(linhaTrim, chave+":"))
+			conteudoMesmaLinha := strings.TrimSpace(linhaTrim[len(upperChave):])
 			if conteudoMesmaLinha != "" {
 				resultado = append(resultado, conteudoMesmaLinha)
 			}
 			continue
 		}
 
-		// Para a captura ao encontrar outra definição de variável (Padrão Chave:)
-		if capturando && strings.Contains(linhaTrim, ":") && !strings.HasPrefix(linha, " ") && !strings.HasPrefix(linha, "\t") {
-			parts := strings.Split(linhaTrim, ":")
+		// Para a captura ao encontrar outra definição de variável (padrão Chave:)
+		if capturando && strings.Contains(linhaTrim, ":") &&
+			!strings.HasPrefix(linha, " ") && !strings.HasPrefix(linha, "\t") {
+			parts := strings.SplitN(linhaTrim, ":", 2)
 			if len(parts[0]) < 25 && !strings.Contains(parts[0], " ") {
 				break
 			}
@@ -190,66 +209,65 @@ func CarregarVariavel(chave string) (string, error) {
 	}
 
 	if len(resultado) == 0 {
-		return "", fmt.Errorf("variável %s não encontrada em AGEND.md", chave)
+		return "", fmt.Errorf("chave %q não encontrada em AGENTS/%s.md", chave, nomeArquivo)
 	}
 
 	return strings.TrimSpace(strings.Join(resultado, "\n")), nil
+}
+
+// CarregarVariavel mantém compatibilidade com chamadas existentes.
+// Usa o próprio nome da chave como nome do arquivo (ex: "SYSTEM_PROMPT" → AGENTS/SYSTEM_PROMPT.md).
+func CarregarVariavel(chave string) (string, error) {
+	return carregarVariavelDeAgente(chave, chave)
 }
 
 // ────────────────────────────────────────────────────────────────────
 // Resolução de Modelos por Agente (baseado em ENV_SETUP.md)
 // ────────────────────────────────────────────────────────────────────
 
-// ResolverModeloAgente lê ENV_SETUP.md e retorna o modelo para o agente especificado.
-// Mapeia agentes a seus respectivos modelos conforme seção 3.1.
+// ResolverModeloAgente retorna o modelo LLM para o agente especificado.
+// Mapeia agentes a seus respectivos modelos conforme ENV_SETUP.md seção 3.1.
 func ResolverModeloAgente(nomeAgente string) (string, error) {
-	// Mapeamento de agentes a modelos/tiers
-	// Baseado em ENV_SETUP.md seção 3.1 AI Agents Configuration
 	agentModelMap := map[string]string{
-		"CEO":           "deepseek-r1:7b",       // TIER_3_EXPERT_MODEL
-		"BA":            "qwen2.5-coder",        // TIER_2_DEVELOPMENT_MODEL
-		"CTO":           "deepseek-r1:7b",       // TIER_3_EXPERT_MODEL
-		"DEV_FRONTEND":  "qwen2.5-coder",        // TIER_2_DEVELOPMENT_MODEL
-		"DEV_BACKEND":   "qwen2.5-coder",        // TIER_2_DEVELOPMENT_MODEL
-		"DBA":           "qwen2.5-coder",        // TIER_2_DEVELOPMENT_MODEL
-		"DS_ML":         "qwen2.5-coder",        // TIER_2_DEVELOPMENT_MODEL
-		"SECURITY":      "deepseek-r1:7b",       // TIER_3_EXPERT_MODEL
-		"QA":            "gemma4:latest",        // TIER_1_EFFICIENCY_MODEL
-		"DATA_ENGINEER": "qwen2.5-coder",        // TIER_2_DEVELOPMENT_MODEL
-		"PM":            "deepseek-r1:7b",       // TIER_3_EXPERT_MODEL
-		"UX_RESEARCHER": "qwen2.5-coder",        // TIER_2_DEVELOPMENT_MODEL
-		"WRITER":        "gemma4:latest",        // TIER_1_EFFICIENCY_MODEL
-		"DOCUMENTATION":"gemma4:latest",         // TIER_1_EFFICIENCY_MODEL
-		"ARTIST":        "gemma4:latest",        // TIER_1_EFFICIENCY_MODEL
-		"DEVOPS":        "qwen2.5-coder",        // TIER_2_DEVELOPMENT_MODEL
-		"CODE_REVIEWER": "deepseek-r1:7b",       // TIER_3_EXPERT_MODEL
-		"CMO":           "gemma4:latest",        // TIER_1_EFFICIENCY_MODEL
+		"CEO":           "deepseek-r1:7b",  // TIER_3_EXPERT_MODEL
+		"BA":            "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
+		"CTO":           "deepseek-r1:7b",  // TIER_3_EXPERT_MODEL
+		"DEV_FRONTEND":  "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
+		"DEV_BACKEND":   "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
+		"DBA":           "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
+		"DS_ML":         "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
+		"SECURITY":      "deepseek-r1:7b",  // TIER_3_EXPERT_MODEL
+		"QA":            "gemma4:latest",   // TIER_1_EFFICIENCY_MODEL
+		"DATA_ENGINEER": "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
+		"PM":            "deepseek-r1:7b",  // TIER_3_EXPERT_MODEL
+		"UX_RESEARCHER": "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
+		"WRITER":        "gemma4:latest",   // TIER_1_EFFICIENCY_MODEL
+		"DOCUMENTATION": "gemma4:latest",   // TIER_1_EFFICIENCY_MODEL
+		"ARTIST":        "gemma4:latest",   // TIER_1_EFFICIENCY_MODEL
+		"DEVOPS":        "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
+		"CODE_REVIEWER": "deepseek-r1:7b",  // TIER_3_EXPERT_MODEL
+		"CMO":           "gemma4:latest",   // TIER_1_EFFICIENCY_MODEL
 	}
 
-	// Normalizar nome do agente (uppercase)
 	agentUpper := strings.ToUpper(nomeAgente)
-
 	if m, exists := agentModelMap[agentUpper]; exists {
 		return m, nil
 	}
-
-	// Se não encontrar no mapa, retorna erro
-	return "", fmt.Errorf("agente %s não mapeado em ENV_SETUP.md", nomeAgente)
+	return "", fmt.Errorf("agente %q não mapeado em ENV_SETUP.md", nomeAgente)
 }
 
 // CarregarConfigAgente carrega modelo e system prompt para um agente específico.
-// Tenta ler de AGENTS/{nomeAgente}.md primeiro, depois aplica o modelo do mapeamento.
+// Lê AGENTS/{nomeAgente}.md e busca a chave SYSTEM_PROMPT dentro do arquivo.
 func CarregarConfigAgente(nomeAgente string) (modeloResolvido, systemPromptResolvido string, err error) {
-	// Resolver modelo do agente
 	modeloResolvido, err = ResolverModeloAgente(nomeAgente)
 	if err != nil {
 		return "", "", err
 	}
 
-	// Tentar carregar system prompt do arquivo de configuração do agente
-	systemPromptResolvido, err = CarregarVariavel(nomeAgente + ":SYSTEM_PROMPT")
+	// Lê AGENTS/{AGENTE}.md e extrai a chave SYSTEM_PROMPT
+	systemPromptResolvido, err = carregarVariavelDeAgente(nomeAgente, "SYSTEM_PROMPT")
 	if err != nil {
-		// Se não encontrar, usar um padrão genérico
+		// Fallback para prompt genérico se o arquivo/chave não existir
 		systemPromptResolvido = fmt.Sprintf(
 			"Você é o agente %s. Responda com precisão e clareza, fornecendo respostas estruturadas.",
 			nomeAgente,
@@ -260,15 +278,17 @@ func CarregarConfigAgente(nomeAgente string) (modeloResolvido, systemPromptResol
 }
 
 // InitComAgente configura o cliente LLM específico para um agente.
-// Carrega modelo e system prompt baseado no arquivo ENV_SETUP.md.
+// Carrega modelo e system prompt baseado em AGENTS/{nomeAgente}.md.
 func InitComAgente(url, nomeAgente string) error {
-	ollamaURL = url
-
 	modelResolvido, promptResolvido, err := CarregarConfigAgente(nomeAgente)
 	if err != nil {
 		return fmt.Errorf("erro ao carregar config do agente %s: %w", nomeAgente, err)
 	}
 
+	mu.Lock()
+	defer mu.Unlock()
+
+	ollamaURL = url
 	model = modelResolvido
 	systemPrompt = promptResolvido
 

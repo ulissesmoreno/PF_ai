@@ -21,8 +21,8 @@ import (
 type Source int
 
 const (
-	SourceRaw       Source = iota // arquivo novo em inbox/raw/
-	SourceExtracted                // .chunks.json pronto do Python
+	SourceRaw      Source = iota // arquivo novo em inbox/raw/
+	SourceExtracted               // .chunks.json pronto do Python
 )
 
 // Job representa um arquivo a processar.
@@ -46,10 +46,9 @@ type Config struct {
 
 // Pipeline gerencia o worker pool.
 type Pipeline struct {
-	cfg     Config
-	jobs    chan Job
-	wg      sync.WaitGroup
-	// pending mapeia id → canal para notificar quando chunks chegarem
+	cfg       Config
+	jobs      chan Job
+	wg        sync.WaitGroup
 	pendingMu sync.Mutex
 	pending   map[string]chan string // id → path do .chunks.json
 }
@@ -90,7 +89,7 @@ func (p *Pipeline) Submit(job Job) {
 	select {
 	case p.jobs <- job:
 	default:
-		log.Printf("⚠️  Fila cheia — esperando: %s", filepath.Base(job.Path))
+		log.Printf("⚠️  Fila cheia — descartando: %s", filepath.Base(job.Path))
 	}
 }
 
@@ -133,7 +132,7 @@ func (p *Pipeline) handleExtracted(path string) {
 // ── Processamento de arquivo novo ─────────────────────────────────────────────
 
 func (p *Pipeline) handleRaw(ctx context.Context, path string) {
-	ext := strings.ToLower(filepath.Ext(path)) // alterar para padrão de nome
+	ext := strings.ToLower(filepath.Ext(path))
 	id := fileID(path)
 	nome := filepath.Base(path)
 
@@ -150,7 +149,7 @@ func (p *Pipeline) handleRaw(ctx context.Context, path string) {
 
 	switch ext {
 	case ".json":
-		chunks, err = p.processNative(ctx, procPath, id, extractor.ExtractJSON)	
+		chunks, err = p.processNative(ctx, procPath, id, extractor.ExtractJSON)
 	default:
 		log.Printf("⚠️  [%s] Extensão não suportada: %s", id, ext)
 		moveFile(procPath, p.cfg.Failed) //nolint
@@ -176,7 +175,7 @@ func (p *Pipeline) handleRaw(ctx context.Context, path string) {
 	log.Printf("✅ [%s] Concluído", id)
 }
 
-// ── Extração nativa (EPUB, TXT) ───────────────────────────────────────────────
+// ── Extração nativa (JSON, TXT) ───────────────────────────────────────────────
 
 func (p *Pipeline) processNative(
 	ctx context.Context,
@@ -195,7 +194,7 @@ func (p *Pipeline) processNative(
 			Index:      i,
 			Text:       c,
 			Tokens:     estimarTokens(c),
-			PageApprox: 0, // TXT e EPUB não têm páginas
+			PageApprox: 0,
 		})
 	}
 	return result, nil
@@ -227,8 +226,11 @@ func (p *Pipeline) processPython(
 		Type:         tipo,
 		CreatedAt:    time.Now().UTC().Format(time.RFC3339),
 	}
+	metaBytes, err := json.MarshalIndent(meta, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("serializar meta: %w", err)
+	}
 	metaPath := filepath.Join(p.cfg.PendingPython, id+".json")
-	metaBytes, _ := json.MarshalIndent(meta, "", "  ")
 	if err := os.WriteFile(metaPath, metaBytes, 0644); err != nil {
 		return nil, fmt.Errorf("salvar meta: %w", err)
 	}
@@ -288,7 +290,6 @@ func (p *Pipeline) indexAndGenerate(
 ) error {
 	log.Printf("🧮 [%s] Gerando embeddings (%d chunks)...", id, len(chunks))
 
-	// Fan-out: embeddings em paralelo
 	type result struct {
 		chunk embeddedChunk
 		err   error
@@ -347,34 +348,16 @@ func (p *Pipeline) indexAndGenerate(
 
 	// TODO: Indexar no SQLite (vectorstore)
 	log.Printf("💾 [%s] Indexando %d chunks...", id, len(embedded))
-	// var vsChunks []vectorstore.Chunk
-	// for _, e := range embedded {
-	// 	vsChunks = append(vsChunks, vectorstore.Chunk{
-	// 		ID:         e.ID,
-	// 		Source:     nome,
-	// 		Text:       e.Text,
-	// 		PageApprox: e.PageApprox,
-	// 		Embedding:  e.Embedding,
-	// 	})
-	// }
-	// if err := vectorstore.Add(vsChunks); err != nil {
-	// 	return fmt.Errorf("vectorstore: %w", err)
-	// }
 
-	// TODO: Buscar contexto para a nota
-	// queryEmb, err := embeddings.Generate("resumo conceitos principais " + id)
-	// if err != nil {
-	// 	return fmt.Errorf("embedding query: %w", err)
-	// }
-	// topChunks, err := vectorstore.Query(queryEmb, 5)
-	// if err != nil {
-	// 	return fmt.Errorf("query vectorstore: %w", err)
-	// }
-
-	var textos []string
-	// for _, c := range topChunks {
-	// 	textos = append(textos, c.Text)
-	// }
+	// Montar slice de textos para a nota — limita aos 5 primeiros chunks
+	// (substitui a busca por similaridade até o vectorstore ser reativado)
+	textos := make([]string, 0, min(5, len(embedded)))
+	for _, c := range embedded {
+		textos = append(textos, c.Text)
+		if len(textos) == 5 {
+			break
+		}
+	}
 
 	// Gerar nota
 	log.Printf("✍️ [%s] Recebendo resposta...", id)
@@ -426,7 +409,7 @@ func moveFile(src, destDir string) (string, error) {
 		return "", err
 	}
 	dest := filepath.Join(destDir, filepath.Base(src))
-	// Evitar colisão
+	// Evitar colisão de nomes
 	if _, err := os.Stat(dest); err == nil {
 		ts := time.Now().Format("20060102_150405")
 		ext := filepath.Ext(dest)
@@ -449,13 +432,6 @@ func writeError(failedDir, id, nome string, err error) {
 // estimarTokens — aproximação simples sem tokenizador externo.
 func estimarTokens(s string) int {
 	return max(1, len(s)/4)
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 // chunkSemântico — Estratégia D: agrupa parágrafos naturais.
@@ -484,7 +460,6 @@ func chunkSemântico(texto string, maxTokens, minTokens int) []string {
 
 		if t > maxTokens {
 			flush()
-			// Subdividir por sentença
 			for _, sub := range splitSentencas(bloco, maxTokens) {
 				chunks = append(chunks, sub)
 			}
@@ -515,14 +490,12 @@ func splitBlocos(texto string) []string {
 }
 
 func splitSentencas(texto string, maxTokens int) []string {
-	// Divide em frases por . ! ?
 	var sentencas []string
 	current := ""
 	for _, r := range texto {
 		current += string(r)
 		if r == '.' || r == '!' || r == '?' {
-			s := strings.TrimSpace(current)
-			if s != "" {
+			if s := strings.TrimSpace(current); s != "" {
 				sentencas = append(sentencas, s)
 			}
 			current = ""

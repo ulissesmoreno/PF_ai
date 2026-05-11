@@ -2,3 +2,4 @@
 .agent_handoff/
 TODO.md
 .gocache/
+bin/

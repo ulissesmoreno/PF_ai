@@ -10,14 +10,14 @@ import (
 	"pf_ai/agent"
 	"pf_ai/code_writer"
 	"pf_ai/embeddings"
-	"pf_ai/pipeline"
-	"pf_ai/watcher"	
 	"pf_ai/hand_off"
+	"pf_ai/pipeline"
+	"pf_ai/watcher"
 
 	"github.com/joho/godotenv"
 )
 
-func createCEOKickoff(cfg config) error {
+func createCEOKickoff(cfg Config) error {
 	// 1. Definição do Header conforme §4.2.1
 	header := hand_off.HandoffHeader{
 		Sender:    "[SYSTEM_INIT]",
@@ -59,7 +59,7 @@ func main() {
 	// Carregar .env (ignora se não existir — usa variáveis do sistema)
 	// Tenta carregar da pasta atual, se falhar tenta na pasta anterior
 	if err := godotenv.Load(); err != nil {
-		if err := godotenv.Load("../.env"); err != nil {
+		if err := godotenv.Load(".env"); err != nil {
 			log.Println("⚠️  .env não encontrado nas pastas local ou superior.")
 		}
 	}
@@ -68,16 +68,15 @@ func main() {
 	cfg.log()
 
 	// Garantir pastas
-	dirs := []string{
-		cfg.InboxRaw,
+	dirs := []string{		
+		cfg.AgentHandoffDir,
 		cfg.Processing,
 		cfg.PendingPython,
 		cfg.Extracted,
 		cfg.ProcessedPython,
 		cfg.Success,
 		cfg.Failed,
-		cfg.VaultPath,
-		cfg.AgentHandoffDir,
+		cfg.VaultPath,		
 		cfg.AgentsConfigDir,
 		cfg.AgentOutputDir,
 		"data",
