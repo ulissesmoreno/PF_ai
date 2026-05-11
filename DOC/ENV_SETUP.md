@@ -42,9 +42,10 @@ Configure the API keys, local endpoints, and model placeholders for the specific
    - FINANCIAL_SPECIALIST_MODEL: {{TIER_3_EXPERT_MODEL}} (Financial Analysis & Market Data)
 
 ### LLM Tiering Strategy (Antigravity)
-   - TIER_1_EFFICIENCY_MODEL: [E.g.: gemini-1.5-flash] - For logs, formatting, and linting.
-   - TIER_2_DEVELOPMENT_MODEL: [E.g.: llama3.1:8b / gemini-1.5-flash] - For TDD and standard coding.
-   - TIER_3_EXPERT_MODEL: [E.g.: gemini-1.5-pro] - For architectural decisions and complex logic.
+   - TIER_3_EXPERT_MODEL: qwen3 / deepseek-r1:7b
+   - TIER_2_DEVELOPMENT_MODEL: qwen2.5-coder
+   - TIER_1_EFFICIENCY_MODEL: gemma4:latest
+   - EMBEDDING_MODEL: nomic-embed-text
 
 ### Connectivity & Keys
    - GOOGLE_AI_API_KEY: [Secure key for Gemini Pro/Flash access]
