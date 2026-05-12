@@ -70,7 +70,7 @@ func createCEOKickoff(cfg Config, store *context_store.Store) error {
 	}
 
 	if projectStarted {
-		payload.Instructions = "Projeto iniciado detectado na persistência. Continue o plano usando o contexto persistido. Gere handoffs estruturados para os agentes apropriados. Atualizações operacionais devem usar ações CQRS como update_context, update_plan e record_test. Wiki deve ser criada/atualizada como arquivo em wiki/. QUESTIONS.md continua append-only para perguntas ao humano."
+		payload.Instructions = "Projeto iniciado detectado na persistencia. Continue o plano usando o contexto persistido. Gere handoffs estruturados para os agentes apropriados. Atualizacoes operacionais devem usar acoes CQRS como update_context, update_plan e record_test. Wiki deve ser criada/atualizada como arquivo em wiki/. Perguntas ao humano devem usar ask_human para gerar handoff JSON _TO_HUMAN_."
 		payload.PersistedContext, err = store.QueryContextForHandoff("CEO", "", 20)
 		if err != nil {
 			return err
@@ -117,7 +117,7 @@ func buildInitialPromptFromREADME(workspaceRoot string) (string, error) {
 - Não edite DOC/*.md diretamente para contexto, plano, estado, testes, decisões ou retrospectiva.
 - Use ações CQRS append-only: update_context, update_plan, update_state, record_test, record_decision e record_retrospective.
 - Use write_code apenas para código e arquivos reais exigidos pelo filesystem, incluindo wiki/*.md para Obsidian.
-- QUESTIONS.md permanece arquivo append-only para perguntas ao humano; NEW-INSTRUCTIONS.md permanece humano-only.
+- Perguntas ao humano devem usar ask_human para gerar handoff JSON _TO_HUMAN_; o humano responde e renomeia para _TO_CEO_ ou para o agente de destino.
 - Monte próximos handoffs usando o contexto persistido recebido em persisted_context.
 - Se o PROJECT persistido ainda estiver em template/placeholders, conduza onboarding pelo CEO antes de delegar implementação.
 `
@@ -203,22 +203,26 @@ func main() {
 	defer cancel()
 
 	pl := pipeline.New(pipeline.Config{
-		WorkerCount:      cfg.WorkerCount,
-		EmbedWorkerCount: cfg.EmbedWorkerCount,
-		PendingPython:    cfg.PendingPython,
-		Extracted:        cfg.Extracted,
-		Processing:       cfg.Processing,
-		ProcessedPython:  cfg.ProcessedPython,
-		Success:          cfg.Success,
-		Failed:           cfg.Failed,
-		PythonTimeout:    cfg.PythonTimeout,
-		HandoffDir:       cfg.AgentHandoffDir,
-		AgentOutputDir:   cfg.AgentOutputDir,
-		WorkspaceRoot:    cfg.WorkspaceRoot,
-		ContextStore:     contextStore,
-		CEOProvider:      cfg.CEOProvider,
-		CodexCEOCLI:      cfg.CodexCEOCLI,
-		CodexCEOTimeout:  cfg.CodexCEOTimeout,
+		WorkerCount:       cfg.WorkerCount,
+		EmbedWorkerCount:  cfg.EmbedWorkerCount,
+		PendingPython:     cfg.PendingPython,
+		Extracted:         cfg.Extracted,
+		Processing:        cfg.Processing,
+		ProcessedPython:   cfg.ProcessedPython,
+		Success:           cfg.Success,
+		Failed:            cfg.Failed,
+		PythonTimeout:     cfg.PythonTimeout,
+		HandoffDir:        cfg.AgentHandoffDir,
+		AgentOutputDir:    cfg.AgentOutputDir,
+		WorkspaceRoot:     cfg.WorkspaceRoot,
+		ContextStore:      contextStore,
+		CEOProvider:       cfg.CEOProvider,
+		CodexCEOCLI:       cfg.CodexCEOCLI,
+		CodexCEOTimeout:   cfg.CodexCEOTimeout,
+		AuditProvider:     cfg.AuditProvider,
+		AuditAgents:       cfg.AuditAgents,
+		CodexAuditCLI:     cfg.CodexAuditCLI,
+		CodexAuditTimeout: cfg.CodexAuditTimeout,
 	})
 	pl.Start(ctx)
 

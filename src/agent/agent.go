@@ -184,6 +184,7 @@ Quando a resposta for atualização operacional, não escreva DOC/*.md. Use uma 
 {"action":"update_context","document_type":"CONTEXT","section":"...","title":"...","content":"...","tags":["..."]}
 {"action":"update_plan","item_type":"plan","reference":"DOC/PLAN.md#...","title":"...","status":"...","priority":"...","content":"..."}
 {"action":"record_test","test_name":"...","status":"PASSED|FAILED|SKIPPED","command":"...","output":"..."}
+{"action":"ask_human","questions":[{"question":"...","priority":"High|Medium|Low","blocking":true}]}
 
 Para wiki/Obsidian, crie arquivos markdown reais em wiki/ usando write_code.
 
@@ -194,39 +195,47 @@ Handoff recebido:
 }
 
 func ChamarCEOComCodexCLI(handoff, cliCommand, workspaceRoot string, timeout time.Duration) (string, error) {
+	return ChamarAgenteComCodexCLI("CEO", handoff, cliCommand, workspaceRoot, timeout)
+}
+
+func ChamarAgenteComCodexCLI(nomeAgente, handoff, cliCommand, workspaceRoot string, timeout time.Duration) (string, error) {
+	agentName := strings.ToUpper(strings.TrimSpace(nomeAgente))
+	if agentName == "" {
+		return "", fmt.Errorf("nome do agente vazio para Codex CLI")
+	}
 	if strings.TrimSpace(cliCommand) == "" {
-		return "", fmt.Errorf("CODEX_CEO_CLI vazio")
+		return "", fmt.Errorf("comando Codex CLI vazio para agente %s", agentName)
 	}
 	if timeout <= 0 {
 		timeout = 10 * time.Minute
 	}
 
-	ceoPrompt, err := carregarArquivoAgente("CEO")
+	agentPrompt, err := carregarArquivoAgente(agentName)
 	if err != nil {
-		return "", fmt.Errorf("carregar CEO para Codex CLI: %w", err)
+		return "", fmt.Errorf("carregar agente %s para Codex CLI: %w", agentName, err)
 	}
 
-	prompt := fmt.Sprintf(`Você está atuando como o agente CEO deste orquestrador local.
+	prompt := fmt.Sprintf(`Voce esta atuando como o agente %s deste orquestrador local.
 
-INSTRUÇÕES DO AGENTE CEO:
+INSTRUCOES DO AGENTE %s:
 %s
 
 CONTRATO DE RESPOSTA:
-- Responda exclusivamente com JSON válido.
+- Responda exclusivamente com JSON valido.
 - Para chamar outro agente, use {"action":"handoff","handoffs":[{"header":{...},"payload":{...}}]}.
-- Para atualizar contexto/plano/estado/testes, use ações CQRS: update_context, update_plan, update_state, record_test, record_decision ou record_retrospective.
-- Para perguntas ao humano, gere uma ação ask_human com questions.
-- Para wiki/Obsidian ou código, use write_code com paths relativos ao workspace.
+- Para atualizar contexto/plano/estado/testes, use acoes CQRS: update_context, update_plan, update_state, record_test, record_decision ou record_retrospective.
+- Para perguntas ao humano, gere uma acao ask_human com questions. O sistema criara um handoff _TO_HUMAN que nao passa pela pipeline ate o humano responder e renomear para o agente destinatario.
+- Para wiki/Obsidian ou codigo, use write_code com paths relativos ao workspace.
 
 HANDOFF RECEBIDO:
-%s`, ceoPrompt, handoff)
+%s`, agentName, agentName, agentPrompt, handoff)
 
 	args, err := shellquote.Split(cliCommand)
 	if err != nil {
-		return "", fmt.Errorf("parsear CODEX_CEO_CLI: %w", err)
+		return "", fmt.Errorf("parsear comando Codex CLI do agente %s: %w", agentName, err)
 	}
 	if len(args) == 0 {
-		return "", fmt.Errorf("CODEX_CEO_CLI inválido")
+		return "", fmt.Errorf("comando Codex CLI invalido para agente %s", agentName)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -245,14 +254,14 @@ HANDOFF RECEBIDO:
 
 	if err := cmd.Run(); err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			return "", fmt.Errorf("codex cli timeout após %s", timeout)
+			return "", fmt.Errorf("codex cli timeout para agente %s apos %s", agentName, timeout)
 		}
-		return "", fmt.Errorf("codex cli falhou: %w: %s", err, strings.TrimSpace(stderr.String()))
+		return "", fmt.Errorf("codex cli falhou para agente %s: %w: %s", agentName, err, strings.TrimSpace(stderr.String()))
 	}
 
 	output := strings.TrimSpace(stdout.String())
 	if output == "" {
-		return "", fmt.Errorf("codex cli retornou resposta vazia: %s", strings.TrimSpace(stderr.String()))
+		return "", fmt.Errorf("codex cli retornou resposta vazia para agente %s: %s", agentName, strings.TrimSpace(stderr.String()))
 	}
 	return output, nil
 }

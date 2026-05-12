@@ -4,10 +4,11 @@ import "testing"
 
 func TestExtractAgentNameFromHandoffFilename(t *testing.T) {
 	tests := map[string]string{
-		"SYSTEM_INIT_TO_CEO_PHASE_KICKOFF_120000.json": "CEO",
-		"CEO_TO_DEV_BACKEND_TASK_001.json":             "DEV_BACKEND",
-		"review_to_CODE_REVIEWER.md":                   "CODE_REVIEWER",
-		"no_recipient.json":                            "",
+		"SYSTEM_INIT_TO_CEO_PHASE_KICKOFF_120000.json":   "CEO",
+		"CEO_TO_DEV_BACKEND_TASK_001.json":               "DEV_BACKEND",
+		"review_to_CODE_REVIEWER.md":                     "CODE_REVIEWER",
+		"CEO_TO_HUMAN_CLARIFICATION_REQUEST_120000.json": "",
+		"no_recipient.json":                              "",
 	}
 
 	for filename, want := range tests {

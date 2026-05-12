@@ -87,6 +87,9 @@ func ExtractAgentName(filename string) string {
 		idx++
 	}
 	recipientPart := upper[idx+len("TO_"):]
+	if recipientPart == "HUMAN" || strings.HasPrefix(recipientPart, "HUMAN_") {
+		return ""
+	}
 
 	for _, agent := range knownAgents {
 		if recipientPart == agent || strings.HasPrefix(recipientPart, agent+"_") {

@@ -37,22 +37,26 @@ type Job struct {
 
 // Config agrupa parâmetros do pipeline.
 type Config struct {
-	WorkerCount      int
-	EmbedWorkerCount int
-	PendingPython    string
-	Extracted        string
-	Processing       string
-	ProcessedPython  string
-	Success          string
-	Failed           string
-	PythonTimeout    time.Duration
-	HandoffDir       string
-	AgentOutputDir   string
-	WorkspaceRoot    string
-	ContextStore     *context_store.Store
-	CEOProvider      string
-	CodexCEOCLI      string
-	CodexCEOTimeout  time.Duration
+	WorkerCount       int
+	EmbedWorkerCount  int
+	PendingPython     string
+	Extracted         string
+	Processing        string
+	ProcessedPython   string
+	Success           string
+	Failed            string
+	PythonTimeout     time.Duration
+	HandoffDir        string
+	AgentOutputDir    string
+	WorkspaceRoot     string
+	ContextStore      *context_store.Store
+	CEOProvider       string
+	CodexCEOCLI       string
+	CodexCEOTimeout   time.Duration
+	AuditProvider     string
+	AuditAgents       []string
+	CodexAuditCLI     string
+	CodexAuditTimeout time.Duration
 }
 
 // Pipeline gerencia o worker pool.
@@ -211,7 +215,8 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 
 func (p *Pipeline) callAgent(agentName, input string) (string, error) {
 	if strings.EqualFold(agentName, "CEO") && strings.EqualFold(p.cfg.CEOProvider, "codex_cli") {
-		return agent.ChamarCEOComCodexCLI(
+		return agent.ChamarAgenteComCodexCLI(
+			agentName,
 			input,
 			p.cfg.CodexCEOCLI,
 			p.cfg.WorkspaceRoot,
@@ -219,7 +224,26 @@ func (p *Pipeline) callAgent(agentName, input string) (string, error) {
 		)
 	}
 
+	if p.isAuditAgent(agentName) && strings.EqualFold(p.cfg.AuditProvider, "codex_cli") {
+		return agent.ChamarAgenteComCodexCLI(
+			agentName,
+			input,
+			p.cfg.CodexAuditCLI,
+			p.cfg.WorkspaceRoot,
+			p.cfg.CodexAuditTimeout,
+		)
+	}
+
 	return agent.ChamarAgente(agentName, input)
+}
+
+func (p *Pipeline) isAuditAgent(agentName string) bool {
+	for _, auditAgent := range p.cfg.AuditAgents {
+		if strings.EqualFold(auditAgent, agentName) {
+			return true
+		}
+	}
+	return false
 }
 
 // ── Processamento de arquivo novo ─────────────────────────────────────────────
@@ -466,17 +490,39 @@ func (p *Pipeline) indexAndGenerate(
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 type agentAction struct {
-	Action   string                  `json:"action"`
-	Files    []code_writer.CodeFile  `json:"files"`
-	File     *code_writer.CodeFile   `json:"file"`
-	Handoffs []json.RawMessage       `json:"handoffs"`
-	Handoff  json.RawMessage         `json:"handoff"`
-	Header   *hand_off.HandoffHeader `json:"header"`
-	Payload  json.RawMessage         `json:"payload"`
-	Message  string                  `json:"message"`
+	Action    string                  `json:"action"`
+	Files     []code_writer.CodeFile  `json:"files"`
+	File      *code_writer.CodeFile   `json:"file"`
+	Handoffs  []json.RawMessage       `json:"handoffs"`
+	Handoff   json.RawMessage         `json:"handoff"`
+	Header    *hand_off.HandoffHeader `json:"header"`
+	Payload   json.RawMessage         `json:"payload"`
+	Message   string                  `json:"message"`
+	Questions []humanQuestion         `json:"questions"`
+	Question  string                  `json:"question"`
+	Blocking  bool                    `json:"blocking"`
+	Priority  string                  `json:"priority"`
 	context_store.ContextEntry
 	context_store.PlanningItem
 	context_store.TestRecord
+}
+
+type humanQuestion struct {
+	ID       string `json:"id"`
+	Question string `json:"question"`
+	Priority string `json:"priority"`
+	Blocking bool   `json:"blocking"`
+	TaskRef  string `json:"task_ref"`
+	AskedBy  string `json:"asked_by"`
+	Response string `json:"response"`
+}
+
+type humanHandoffPayload struct {
+	ResponseKey  string          `json:"response_key"`
+	RespondTo    string          `json:"respond_to"`
+	Instructions string          `json:"instructions"`
+	Questions    []humanQuestion `json:"questions"`
+	Response     string          `json:"response"`
 }
 
 func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error {
@@ -546,6 +592,10 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error 
 			record.SourceAgent = defaultString(record.SourceAgent, agentName)
 			record.TaskRef = defaultString(record.TaskRef, taskID)
 			if err := p.cfg.ContextStore.SaveTestRecord(record); err != nil {
+				return err
+			}
+		case "ask_human", "question", "clarification_for_human":
+			if err := p.createHumanHandoff(agentName, taskID, action); err != nil {
 				return err
 			}
 		case "handoff":
@@ -642,6 +692,71 @@ func (p *Pipeline) saveAgentOutput(agentName, taskID, content string) error {
 	}
 	name := fmt.Sprintf("%s_%s.md", time.Now().Format("20060102_150405"), taskID)
 	return os.WriteFile(filepath.Join(dir, name), []byte(content), 0644)
+}
+
+func (p *Pipeline) createHumanHandoff(agentName, taskID string, action agentAction) error {
+	questions := action.Questions
+	if strings.TrimSpace(action.Question) != "" {
+		questions = append(questions, humanQuestion{
+			Question: action.Question,
+			Priority: action.Priority,
+			Blocking: action.Blocking,
+		})
+	}
+	if len(questions) == 0 {
+		return fmt.Errorf("ask_human sem perguntas")
+	}
+
+	responseKey := fmt.Sprintf("response_%s_%d", sanitizeKey(taskID), time.Now().Unix())
+	for i := range questions {
+		if questions[i].ID == "" {
+			questions[i].ID = fmt.Sprintf("%s_q%d", responseKey, i+1)
+		}
+		if questions[i].TaskRef == "" {
+			questions[i].TaskRef = taskID
+		}
+		if questions[i].AskedBy == "" {
+			questions[i].AskedBy = strings.ToUpper(agentName)
+		}
+		if questions[i].Priority == "" {
+			questions[i].Priority = "Medium"
+		}
+	}
+
+	payload := humanHandoffPayload{
+		ResponseKey: responseKey,
+		RespondTo:   fmt.Sprintf("[%s]", strings.ToUpper(agentName)),
+		Instructions: "Preencha a chave response ou questions[].response. Depois renomeie este arquivo trocando _TO_HUMAN_ por _TO_" +
+			strings.ToUpper(agentName) + "_ para retornar ao pipeline.",
+		Questions: questions,
+		Response:  "",
+	}
+
+	header := hand_off.HandoffHeader{
+		Sender:    fmt.Sprintf("[%s]", strings.ToUpper(agentName)),
+		Recipient: "[HUMAN]",
+		TaskRef:   taskID,
+		Intent:    "HUMAN_CLARIFICATION_REQUEST",
+	}
+
+	_, err := hand_off.CreateHandoff(p.cfg.HandoffDir, header, payload)
+	return err
+}
+
+func sanitizeKey(value string) string {
+	var sb strings.Builder
+	for _, r := range strings.ToLower(value) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			sb.WriteRune(r)
+			continue
+		}
+		sb.WriteRune('_')
+	}
+	result := strings.Trim(sb.String(), "_")
+	if result == "" {
+		return "question"
+	}
+	return result
 }
 
 func (p *Pipeline) recordHandoffEvent(path string, data []byte) error {

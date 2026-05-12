@@ -1,51 +1,62 @@
 # NEW-INSTRUCTIONS
 
-> **Ownership:** This file is filled **exclusively by [HUMAN]**. CEO adds timestamp and formatting only — never deletes or modifies content.
-> **Response format:** Each item or question has an inline response line for [HUMAN] to fill before CEO formats.
+> **Status:** Do not write new instructions directly in this file.
+> New instructions must be sent as a JSON handoff to `[CEO]`.
+> Copy the template below, fill the fields, save it in `.agent_handoff/`, and name it with `_TO_CEO_`.
 
-## Updated on: [CEO adds timestamp after [HUMAN] fills content]
+## Filename Template
 
----
+```text
+HUMAN_TO_CEO_NEW_INSTRUCTION_YYYYMMDD_HHMMSS.json
+```
 
-## Objective
-- [HUMAN fills]
-  > Response:
+## JSON Template
 
-## Scope
-- [HUMAN fills]
-  > Response:
+```json
+{
+  "header": {
+    "timestamp": "YYYY-MM-DD HH:MM",
+    "sender": "[HUMAN]",
+    "recipient": "[CEO]",
+    "task_ref": "NEW-INSTRUCTION-YYYYMMDD-HHMMSS",
+    "intent": "NEW_INSTRUCTION"
+  },
+  "payload": {
+    "objective": "",
+    "scope": "",
+    "deliverables": [],
+    "constraints": [],
+    "dependencies": [],
+    "current_context": "",
+    "notes": "",
+    "priority": "High | Medium | Low",
+    "blocking": false,
+    "playbook_update": false,
+    "explicit_stage_conclusion_authorization": {
+      "authorized": false,
+      "authorized_agents": [],
+      "authorized_until_stage": null
+    },
+    "response_required": {
+      "required": true,
+      "response_key": "ceo_response"
+    },
+    "ceo_response": ""
+  }
+}
+```
 
-## Deliverables
-- [HUMAN fills]
-  > Response:
+## Usage
 
-## Constraints and Dependencies
-- [HUMAN fills]
-  > Response:
+1. Copy the JSON template.
+2. Fill the `payload` fields.
+3. Save the file in `.agent_handoff/`.
+4. Use a filename containing `_TO_CEO_`.
+5. The watcher will route it directly to the CEO.
 
-## Current Context
-- [HUMAN fills]
-  > Response:
+## Rules
 
-## Notes
-- [HUMAN fills]
-  > Response:
-
----
-
-## Explicit Stage Conclusion Authorization (optional)
-> Fill only if authorizing CEO/CTO/BA to conclude stages autonomously.
-
-- Authorized agents: [e.g.: CEO, CTO]
-  > Response:
-- Authorized until stage: [e.g.: Stage 2]
-  > Response:
-
----
-
-## Structured Markers
-- [ ] Clear instruction
-- [ ] Defined scope
-- [ ] Documented constraints
-- [ ] Updated context
-- [ ] PLAYBOOK.md reviewed by CEO — new entries appended if preference revealed
+- Do not place the instruction text outside the JSON.
+- Do not edit `AGENTS/` for normal project instructions.
+- If the instruction reveals a work preference, set `playbook_update` to `true`.
+- If the instruction blocks execution, set `blocking` to `true`.
