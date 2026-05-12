@@ -34,6 +34,20 @@ CREATE TABLE IF NOT EXISTS document_sections (
     FOREIGN KEY (import_id) REFERENCES document_imports(id)
 );
 
+CREATE TABLE IF NOT EXISTS document_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL,
+    import_id INTEGER NOT NULL,
+    entry_type TEXT NOT NULL,
+    heading TEXT,
+    ordinal INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (document_id) REFERENCES documents(id),
+    FOREIGN KEY (import_id) REFERENCES document_imports(id)
+);
+
 CREATE TABLE IF NOT EXISTS context_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     entry_type TEXT NOT NULL,
@@ -120,6 +134,7 @@ CREATE TABLE IF NOT EXISTS read_context_items (
 );
 
 CREATE INDEX IF NOT EXISTS idx_document_sections_document_id ON document_sections(document_id);
+CREATE INDEX IF NOT EXISTS idx_document_entries_document_id ON document_entries(document_id);
 CREATE INDEX IF NOT EXISTS idx_document_imports_document_id ON document_imports(document_id);
 CREATE INDEX IF NOT EXISTS idx_context_entries_lookup ON context_entries(document_type, entry_type, task_ref);
 CREATE INDEX IF NOT EXISTS idx_planning_items_lookup ON planning_items(item_type, status, task_ref);

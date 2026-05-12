@@ -73,7 +73,7 @@ func loadConfig() Config {
 		OllamaLLMModel:   env("OLLAMA_LLM_MODEL", "deepseek-r1:7b"),
 		OllamaEmbedModel: env("OLLAMA_EMBED_MODEL", "nomic-embed-text"),
 		OllamaGemmaModel: env("OLLAMA_GEMMA_MODEL", "gemma4:latest"),
-		CEOProvider:      env("CEO_PROVIDER", "ollama"),
+		CEOProvider:      env("CEO_PROVIDER", "codex_cli"),
 		CodexCEOCLI:      env("CODEX_CEO_CLI", "codex exec -"),
 
 		PythonTimeout:   envDuration("PYTHON_TIMEOUT_MINUTES", 60) * time.Minute,

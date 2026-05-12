@@ -47,6 +47,41 @@ func TestImportDocumentIsAppendOnly(t *testing.T) {
 	}
 }
 
+func TestImportEntryDocumentStoresEntriesOnly(t *testing.T) {
+	workspace := t.TempDir()
+	docPath := filepath.Join(workspace, "DOC")
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "# STATE.md\n\n## Done\n\n- **[2026-05-12 10:00] - [CEO]:** first entry\n  - Ref: A\n\n- **[2026-05-12 10:01] - [CTO]:** second entry"
+	if err := os.WriteFile(filepath.Join(docPath, "STATE.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "DOC/STATE.md", DocumentType: "STATE", Owner: "Technical agents"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var sections int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM document_sections").Scan(&sections); err != nil {
+		t.Fatal(err)
+	}
+	if sections != 0 {
+		t.Fatalf("sections = %d, want 0 for entry document", sections)
+	}
+
+	var entries int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM document_entries").Scan(&entries); err != nil {
+		t.Fatal(err)
+	}
+	if entries != 2 {
+		t.Fatalf("entries = %d, want 2", entries)
+	}
+}
+
 func TestSaveContextEntryProjectsReadModel(t *testing.T) {
 	workspace := t.TempDir()
 	store := openTestStore(t, workspace)

@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/kballard/go-shellquote"
 )
 
 var (
@@ -219,7 +221,10 @@ CONTRATO DE RESPOSTA:
 HANDOFF RECEBIDO:
 %s`, ceoPrompt, handoff)
 
-	args := strings.Fields(cliCommand)
+	args, err := shellquote.Split(cliCommand)
+	if err != nil {
+		return "", fmt.Errorf("parsear CODEX_CEO_CLI: %w", err)
+	}
 	if len(args) == 0 {
 		return "", fmt.Errorf("CODEX_CEO_CLI inválido")
 	}

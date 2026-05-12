@@ -291,6 +291,10 @@ func (s *Store) QueryContextForHandoff(agentName, taskRef string, limit int) ([]
 		`SELECT content
 		   FROM read_context_items
 		  WHERE (? = '' OR task_ref = ? OR task_ref = '' OR task_ref IS NULL)
+		    AND NOT (
+				source_table = 'document_sections'
+				AND document_type IN ('TASKS', 'STATE', 'CONTEXT', 'PLAYBOOK', 'TESTS', 'VERSIONS', 'RETROSPECTIVE')
+			)
 		  ORDER BY projected_at DESC
 		  LIMIT ?`,
 		taskRef,
