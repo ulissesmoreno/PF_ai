@@ -184,6 +184,13 @@ Quando precisar chamar outro agente, use um handoff estruturado com "header" e "
 Se não houver arquivo ou handoff a gerar, use:
 {"action":"note","message":"resumo objetivo da execução"}
 
+Quando a resposta for atualização operacional, não escreva DOC/*.md. Use uma ação de banco:
+{"action":"update_context","document_type":"CONTEXT","section":"...","title":"...","content":"...","tags":["..."]}
+{"action":"update_plan","item_type":"plan","reference":"DOC/PLAN.md#...","title":"...","status":"...","priority":"...","content":"..."}
+{"action":"record_test","test_name":"...","status":"PASSED|FAILED|SKIPPED","command":"...","output":"..."}
+
+Para wiki/Obsidian, crie arquivos markdown reais em wiki/ usando write_code.
+
 Handoff recebido:
 %s`, strings.ToUpper(nomeAgente), handoff)
 

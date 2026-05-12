@@ -13,6 +13,7 @@ import (
 
 	"pf_ai/agent"
 	"pf_ai/code_writer"
+	"pf_ai/context_store"
 	"pf_ai/embeddings"
 	"pf_ai/extractor"
 	"pf_ai/hand_off"
@@ -48,6 +49,7 @@ type Config struct {
 	HandoffDir       string
 	AgentOutputDir   string
 	WorkspaceRoot    string
+	ContextStore     *context_store.Store
 }
 
 // Pipeline gerencia o worker pool.
@@ -163,6 +165,12 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 		return
 	}
 
+	if p.cfg.ContextStore != nil {
+		if err := p.recordHandoffEvent(procPath, data); err != nil {
+			log.Printf("[%s] Registrar handoff: %v", id, err)
+		}
+	}
+
 	select {
 	case <-ctx.Done():
 		moveFile(procPath, p.cfg.Failed) //nolint
@@ -170,7 +178,16 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 	default:
 	}
 
-	response, err := agent.ChamarAgente(agentName, string(data))
+	agentInput := string(data)
+	if p.cfg.ContextStore != nil {
+		if enriched, err := p.enrichHandoffWithContext(agentName, data); err == nil {
+			agentInput = enriched
+		} else {
+			log.Printf("[%s] Contexto consultável indisponível: %v", id, err)
+		}
+	}
+
+	response, err := agent.ChamarAgente(agentName, agentInput)
 	if err != nil {
 		log.Printf("[%s] Agente %s falhou: %v", id, agentName, err)
 		writeError(p.cfg.Failed, id, filepath.Base(path), err)
@@ -441,6 +458,9 @@ type agentAction struct {
 	Header   *hand_off.HandoffHeader `json:"header"`
 	Payload  json.RawMessage         `json:"payload"`
 	Message  string                  `json:"message"`
+	context_store.ContextEntry
+	context_store.PlanningItem
+	context_store.TestRecord
 }
 
 func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error {
@@ -474,6 +494,42 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error 
 		switch strings.ToLower(action.Action) {
 		case "write_code", "create_file", "write_files":
 			if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, action.Files); err != nil {
+				return err
+			}
+		case "update_context", "record_context", "record_decision", "record_retrospective":
+			if p.cfg.ContextStore == nil {
+				return p.saveAgentOutput(agentName, taskID, response)
+			}
+			entry := action.ContextEntry
+			entry.SourceAgent = defaultString(entry.SourceAgent, agentName)
+			entry.TaskRef = defaultString(entry.TaskRef, taskID)
+			if entry.EntryType == "" {
+				entry.EntryType = strings.ToLower(action.Action)
+			}
+			if err := p.cfg.ContextStore.SaveContextEntry(entry); err != nil {
+				return err
+			}
+		case "update_plan", "record_plan", "update_state", "record_task":
+			if p.cfg.ContextStore == nil {
+				return p.saveAgentOutput(agentName, taskID, response)
+			}
+			item := action.PlanningItem
+			item.SourceAgent = defaultString(item.SourceAgent, agentName)
+			item.TaskRef = defaultString(item.TaskRef, taskID)
+			if item.ItemType == "" {
+				item.ItemType = strings.ToLower(action.Action)
+			}
+			if err := p.cfg.ContextStore.SavePlanningItem(item); err != nil {
+				return err
+			}
+		case "record_test":
+			if p.cfg.ContextStore == nil {
+				return p.saveAgentOutput(agentName, taskID, response)
+			}
+			record := action.TestRecord
+			record.SourceAgent = defaultString(record.SourceAgent, agentName)
+			record.TaskRef = defaultString(record.TaskRef, taskID)
+			if err := p.cfg.ContextStore.SaveTestRecord(record); err != nil {
 				return err
 			}
 		case "handoff":
@@ -560,12 +616,69 @@ func splitAgentActions(raw []byte) ([]json.RawMessage, error) {
 }
 
 func (p *Pipeline) saveAgentOutput(agentName, taskID, content string) error {
+	if p.cfg.ContextStore != nil {
+		return p.cfg.ContextStore.SaveAgentOutput(agentName, taskID, "note", content)
+	}
+
 	dir := filepath.Join(p.cfg.AgentOutputDir, strings.ToUpper(agentName))
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 	name := fmt.Sprintf("%s_%s.md", time.Now().Format("20060102_150405"), taskID)
 	return os.WriteFile(filepath.Join(dir, name), []byte(content), 0644)
+}
+
+func (p *Pipeline) recordHandoffEvent(path string, data []byte) error {
+	var parsed struct {
+		Header  hand_off.HandoffHeader `json:"header"`
+		Payload json.RawMessage        `json:"payload"`
+	}
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		return err
+	}
+
+	return p.cfg.ContextStore.SaveHandoffEvent(context_store.HandoffEvent{
+		Path:      path,
+		Sender:    parsed.Header.Sender,
+		Recipient: parsed.Header.Recipient,
+		TaskRef:   parsed.Header.TaskRef,
+		Intent:    parsed.Header.Intent,
+		Payload:   string(parsed.Payload),
+		RawJSON:   string(data),
+	})
+}
+
+func (p *Pipeline) enrichHandoffWithContext(agentName string, data []byte) (string, error) {
+	var parsed struct {
+		Header hand_off.HandoffHeader `json:"header"`
+	}
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		return string(data), err
+	}
+
+	contextItems, err := p.cfg.ContextStore.QueryContextForHandoff(agentName, parsed.Header.TaskRef, 8)
+	if err != nil {
+		return string(data), err
+	}
+	if len(contextItems) == 0 {
+		return string(data), nil
+	}
+
+	var sb strings.Builder
+	sb.WriteString("HANDOFF:\n")
+	sb.Write(data)
+	sb.WriteString("\n\nCONTEXTO_CONSULTAVEL:\n")
+	for i, item := range contextItems {
+		sb.WriteString(fmt.Sprintf("\n--- contexto %d ---\n%s\n", i+1, item))
+	}
+	return sb.String(), nil
+}
+
+func defaultString(value, fallback string) string {
+	if strings.TrimSpace(value) != "" {
+		return value
+	}
+	return fallback
 }
 
 // ChunksFile representa um chunk no .chunks.json do Python.

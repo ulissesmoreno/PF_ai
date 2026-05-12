@@ -19,6 +19,7 @@ type Config struct {
 	VaultPath       string
 	DBPath          string
 	WorkspaceRoot   string
+	MigrationsDir   string
 
 	// ── Pastas do sistema de agentes ───────────────────────────
 	AgentHandoffDir string // Entrada para processamento de agentes
@@ -51,13 +52,14 @@ func loadConfig() Config {
 		ProcessedPython: env("PROCESSED_PYTHON_DIR", filepathJoin(handoffDir, "processed_python")),
 		Success:         env("SUCCESS_DIR", filepathJoin(handoffDir, "success")),
 		Failed:          env("FAILED_DIR", filepathJoin(handoffDir, "failed")),
-		VaultPath:       env("VAULT_PATH", "vault"),
-		DBPath:          env("DB_PATH", "data/wiki.db"),
+		VaultPath:       env("VAULT_PATH", filepathJoin(workspaceRoot, "vault")),
+		DBPath:          env("DB_PATH", filepathJoin(workspaceRoot, "data", "wiki.db")),
 		WorkspaceRoot:   workspaceRoot,
+		MigrationsDir:   env("MIGRATIONS_DIR", filepathJoin(workspaceRoot, "db", "migrations")),
 
 		AgentHandoffDir: handoffDir,
 		AgentsConfigDir: env("AGENTS_CONFIG_DIR", filepathJoin(workspaceRoot, "AGENTS")),
-		AgentOutputDir:  env("AGENT_OUTPUT_DIR", "output"),
+		AgentOutputDir:  env("AGENT_OUTPUT_DIR", filepathJoin(workspaceRoot, "output")),
 
 		WorkerCount:      envInt("WORKER_COUNT", 3),
 		EmbedWorkerCount: envInt("EMBED_WORKER_COUNT", 5),
@@ -78,6 +80,7 @@ func (c Config) log() {
 	log.Printf("  vault           : %s", c.VaultPath)
 	log.Printf("  banco           : %s", c.DBPath)
 	log.Printf("  workspace       : %s", c.WorkspaceRoot)
+	log.Printf("  migrations      : %s", c.MigrationsDir)
 	log.Println("──")
 	log.Printf("  agent handoff   : %s", c.AgentHandoffDir)
 	log.Printf("  agents config   : %s", c.AgentsConfigDir)

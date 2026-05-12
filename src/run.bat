@@ -60,9 +60,9 @@ for %%d in (
     ..\.agent_handoff\failed
     ..\AGENTS
     ..\bin    
-    output
-    data
-    logs
+    ..\output
+    ..\data
+    ..\logs
 ) do (
     if not exist "%%d" (
         mkdir "%%d"

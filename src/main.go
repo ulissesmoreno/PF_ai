@@ -10,6 +10,7 @@ import (
 
 	"pf_ai/agent"
 	"pf_ai/code_writer"
+	"pf_ai/context_store"
 	"pf_ai/embeddings"
 	"pf_ai/hand_off"
 	"pf_ai/pipeline"
@@ -74,8 +75,8 @@ func main() {
 		cfg.VaultPath,
 		cfg.AgentsConfigDir,
 		cfg.AgentOutputDir,
-		"data",
-		"logs",
+		filepathJoin(cfg.WorkspaceRoot, "data"),
+		filepathJoin(cfg.WorkspaceRoot, "logs"),
 	}
 	for _, d := range dirs {
 		if err := os.MkdirAll(d, 0755); err != nil {
@@ -87,6 +88,16 @@ func main() {
 	agent.SetConfigDir(cfg.AgentsConfigDir)
 	embeddings.Init(cfg.OllamaURL, cfg.OllamaEmbedModel)
 	agent.Init(cfg.OllamaURL, cfg.OllamaLLMModel)
+
+	contextStore, err := context_store.Open(cfg.DBPath, cfg.MigrationsDir, cfg.WorkspaceRoot)
+	if err != nil {
+		log.Fatalf("Context store: %v", err)
+	}
+	defer contextStore.Close()
+
+	if err := contextStore.ImportOperationalDocuments(); err != nil {
+		log.Fatalf("Importar documentos operacionais: %v", err)
+	}
 
 	log.Println("Inicializando agente CEO...")
 	if err := agent.InitComAgente(cfg.OllamaURL, "CEO"); err != nil {
@@ -109,6 +120,7 @@ func main() {
 		HandoffDir:       cfg.AgentHandoffDir,
 		AgentOutputDir:   cfg.AgentOutputDir,
 		WorkspaceRoot:    cfg.WorkspaceRoot,
+		ContextStore:     contextStore,
 	})
 	pl.Start(ctx)
 
