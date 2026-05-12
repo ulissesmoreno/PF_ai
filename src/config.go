@@ -18,6 +18,7 @@ type Config struct {
 	Failed          string
 	VaultPath       string
 	DBPath          string
+	WorkspaceRoot   string
 
 	// ── Pastas do sistema de agentes ───────────────────────────
 	AgentHandoffDir string // Entrada para processamento de agentes
@@ -35,32 +36,36 @@ type Config struct {
 	OllamaGemmaModel string
 
 	// ── Timeouts ───────────────────────────────────────────────
-	PythonTimeout  time.Duration
-	AgentTimeout   time.Duration
+	PythonTimeout time.Duration
+	AgentTimeout  time.Duration
 }
 
 func loadConfig() Config {
-	return Config{		
-		Processing:      env("PROCESSING_DIR",       "../.agent_handoff/processing"),
-		PendingPython:   env("PENDING_PYTHON_DIR",   "../.agent_handoff/pending_python"),
-		Extracted:       env("EXTRACTED_DIR",        "../.agent_handoff/extracted"),
-		ProcessedPython: env("PROCESSED_PYTHON_DIR", "../.agent_handoff/processed_python"),
-		Success:         env("SUCCESS_DIR",          "../.agent_handoff/success"),
-		Failed:          env("FAILED_DIR",           "../.agent_handoff/failed"),
-		VaultPath:       env("VAULT_PATH",           "vault"),
-		DBPath:          env("DB_PATH",              "data/wiki.db"),
+	workspaceRoot := env("WORKSPACE_ROOT", detectWorkspaceRoot())
+	handoffDir := env("AGENT_HANDOFF_DIR", filepathJoin(workspaceRoot, ".agent_handoff"))
+	return Config{
+		InboxRaw:        env("INBOX_RAW_DIR", filepathJoin(handoffDir, "raw")),
+		Processing:      env("PROCESSING_DIR", filepathJoin(handoffDir, "processing")),
+		PendingPython:   env("PENDING_PYTHON_DIR", filepathJoin(handoffDir, "pending_python")),
+		Extracted:       env("EXTRACTED_DIR", filepathJoin(handoffDir, "extracted")),
+		ProcessedPython: env("PROCESSED_PYTHON_DIR", filepathJoin(handoffDir, "processed_python")),
+		Success:         env("SUCCESS_DIR", filepathJoin(handoffDir, "success")),
+		Failed:          env("FAILED_DIR", filepathJoin(handoffDir, "failed")),
+		VaultPath:       env("VAULT_PATH", "vault"),
+		DBPath:          env("DB_PATH", "data/wiki.db"),
+		WorkspaceRoot:   workspaceRoot,
 
-		AgentHandoffDir: env("AGENT_HANDOFF_DIR",    "../.agent_handoff"),
-		AgentsConfigDir: env("AGENTS_CONFIG_DIR",    "AGENTS"),
-		AgentOutputDir:  env("AGENT_OUTPUT_DIR",     "output"),
+		AgentHandoffDir: handoffDir,
+		AgentsConfigDir: env("AGENTS_CONFIG_DIR", filepathJoin(workspaceRoot, "AGENTS")),
+		AgentOutputDir:  env("AGENT_OUTPUT_DIR", "output"),
 
-		WorkerCount:      envInt("WORKER_COUNT",       3),
+		WorkerCount:      envInt("WORKER_COUNT", 3),
 		EmbedWorkerCount: envInt("EMBED_WORKER_COUNT", 5),
 
-		OllamaURL:        env("OLLAMA_URL",           "http://localhost:11434"),
-		OllamaLLMModel:   env("OLLAMA_LLM_MODEL",    "deepseek-r1:7b"),
-		OllamaEmbedModel: env("OLLAMA_EMBED_MODEL",   "nomic-embed-text"),
-		OllamaGemmaModel: env("OLLAMA_GEMMA_MODEL",   "gemma4:latest"),
+		OllamaURL:        env("OLLAMA_URL", "http://localhost:11434"),
+		OllamaLLMModel:   env("OLLAMA_LLM_MODEL", "deepseek-r1:7b"),
+		OllamaEmbedModel: env("OLLAMA_EMBED_MODEL", "nomic-embed-text"),
+		OllamaGemmaModel: env("OLLAMA_GEMMA_MODEL", "gemma4:latest"),
 
 		PythonTimeout: envDuration("PYTHON_TIMEOUT_MINUTES", 60) * time.Minute,
 		AgentTimeout:  envDuration("AGENT_TIMEOUT_SECONDS", 60) * time.Minute,
@@ -72,6 +77,7 @@ func (c Config) log() {
 	log.Printf("  .agent_handoff/raw       : %s", c.InboxRaw)
 	log.Printf("  vault           : %s", c.VaultPath)
 	log.Printf("  banco           : %s", c.DBPath)
+	log.Printf("  workspace       : %s", c.WorkspaceRoot)
 	log.Println("──")
 	log.Printf("  agent handoff   : %s", c.AgentHandoffDir)
 	log.Printf("  agents config   : %s", c.AgentsConfigDir)
@@ -116,4 +122,46 @@ func envDuration(key string, fallbackMinutes int) time.Duration {
 		log.Printf("⚠️  %s inválido, usando padrão %d minutos", key, fallbackMinutes)
 	}
 	return time.Duration(fallbackMinutes)
+}
+
+func detectWorkspaceRoot() string {
+	if dirExists("AGENTS") && dirExists("DOC") {
+		return "."
+	}
+	if dirExists("../AGENTS") && dirExists("../DOC") {
+		return ".."
+	}
+	return "."
+}
+
+func firstExisting(paths ...string) string {
+	for _, path := range paths {
+		if dirExists(path) {
+			return path
+		}
+	}
+	if len(paths) == 0 {
+		return "."
+	}
+	return paths[0]
+}
+
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
+func filepathJoin(parts ...string) string {
+	if len(parts) == 0 {
+		return ""
+	}
+	result := parts[0]
+	for _, part := range parts[1:] {
+		if result == "" || result == "." {
+			result = part
+			continue
+		}
+		result += string(os.PathSeparator) + part
+	}
+	return result
 }

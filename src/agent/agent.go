@@ -18,8 +18,15 @@ var (
 	ollamaURL    string
 	model        string
 	systemPrompt string // Carregado dinamicamente de AGENTS/
+	agentsDir    = "AGENTS"
 	client       = &http.Client{Timeout: 60 * time.Minute}
 )
+
+func SetConfigDir(dir string) {
+	mu.Lock()
+	defer mu.Unlock()
+	agentsDir = dir
+}
 
 // Init configura o cliente do agente LLM e carrega as definições de AGENTS/.
 func Init(url, llmModel string) {
@@ -63,9 +70,9 @@ func GerarArquivo(tema string, chunks []string) (string, error) {
 
 	contexto := strings.Join(chunks, "\n\n---\n\n")
 	prompt := fmt.Sprintf(
-		"Contexto extraído do documento:\n\n%s",
+		"Tema: %s\n\nContexto extraído do documento:\n\n%s",
 		tema, contexto,
-	)	
+	)
 
 	mu.RLock()
 	currentModel := model
@@ -141,6 +148,103 @@ func GerarArquivo(tema string, chunks []string) (string, error) {
 }
 
 // salvarPromptLocal gera um log do prompt em prompts/ com timestamp para depuração.
+func ChamarAgente(nomeAgente, handoff string) (string, error) {
+	modeloResolvido, promptResolvido, err := CarregarConfigAgente(nomeAgente)
+	if err != nil {
+		return "", fmt.Errorf("carregar agente %s: %w", nomeAgente, err)
+	}
+
+	mu.RLock()
+	currentURL := ollamaURL
+	mu.RUnlock()
+	if currentURL == "" {
+		return "", fmt.Errorf("ollama url não inicializada")
+	}
+
+	userPrompt := fmt.Sprintf(`Você recebeu um handoff para execução.
+
+Leia o handoff e responda exclusivamente com um JSON válido.
+
+Quando precisar criar ou atualizar arquivos de código, use este formato:
+{
+  "action": "write_code",
+  "files": [
+    {"path": "caminho/relativo/ao/workspace.ext", "content": "conteúdo completo do arquivo"}
+  ]
+}
+
+Quando precisar chamar outro agente, use um handoff estruturado com "header" e "payload" ou:
+{
+  "action": "handoff",
+  "handoffs": [
+    {"header": {"sender": "[%s]", "recipient": "[AGENTE]", "task_ref": "TASK-XXX", "intent": "..."}, "payload": {}}
+  ]
+}
+
+Se não houver arquivo ou handoff a gerar, use:
+{"action":"note","message":"resumo objetivo da execução"}
+
+Handoff recebido:
+%s`, strings.ToUpper(nomeAgente), handoff)
+
+	return callChat(currentURL, modeloResolvido, promptResolvido, userPrompt)
+}
+
+func callChat(url, modelName, prompt, userPrompt string) (string, error) {
+	body, err := json.Marshal(chatRequest{
+		Model: modelName,
+		Messages: []message{
+			{Role: "system", Content: prompt},
+			{Role: "user", Content: userPrompt},
+		},
+		Stream: true,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.Post(
+		url+"/api/chat",
+		"application/json",
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return "", fmt.Errorf("ollama connection: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("ollama api error: status %d", resp.StatusCode)
+	}
+
+	var sb strings.Builder
+	scanner := bufio.NewScanner(resp.Body)
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 512*1024)
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		var chunk streamChunk
+		if err := json.Unmarshal([]byte(line), &chunk); err != nil {
+			continue
+		}
+
+		sb.WriteString(chunk.Message.Content)
+		if chunk.Done {
+			break
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("ler resposta do modelo: %w", err)
+	}
+
+	return strings.TrimSpace(sb.String()), nil
+}
+
 func salvarPromptLocal(tema string, conteudo string) error {
 	dir := "prompts"
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -168,7 +272,11 @@ func salvarPromptLocal(tema string, conteudo string) error {
 // carregarVariavelDeAgente lê AGENTS/{nomeArquivo}.md e extrai o valor da chave informada.
 // nomeArquivo e chave são separados para evitar nomes de arquivo com caracteres inválidos.
 func carregarVariavelDeAgente(nomeArquivo, chave string) (string, error) {
-	filePath := filepath.Join("AGENTS", nomeArquivo+".md")
+	mu.RLock()
+	dir := agentsDir
+	mu.RUnlock()
+
+	filePath := filepath.Join(dir, nomeArquivo+".md")
 	file, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", err
@@ -229,24 +337,24 @@ func CarregarVariavel(chave string) (string, error) {
 // Mapeia agentes a seus respectivos modelos conforme ENV_SETUP.md seção 3.1.
 func ResolverModeloAgente(nomeAgente string) (string, error) {
 	agentModelMap := map[string]string{
-		"CEO":           "deepseek-r1:7b",  // TIER_3_EXPERT_MODEL
-		"BA":            "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
-		"CTO":           "deepseek-r1:7b",  // TIER_3_EXPERT_MODEL
-		"DEV_FRONTEND":  "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
-		"DEV_BACKEND":   "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
-		"DBA":           "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
-		"DS_ML":         "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
-		"SECURITY":      "deepseek-r1:7b",  // TIER_3_EXPERT_MODEL
-		"QA":            "gemma4:latest",   // TIER_1_EFFICIENCY_MODEL
-		"DATA_ENGINEER": "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
-		"PM":            "deepseek-r1:7b",  // TIER_3_EXPERT_MODEL
-		"UX_RESEARCHER": "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
-		"WRITER":        "gemma4:latest",   // TIER_1_EFFICIENCY_MODEL
-		"DOCUMENTATION": "gemma4:latest",   // TIER_1_EFFICIENCY_MODEL
-		"ARTIST":        "gemma4:latest",   // TIER_1_EFFICIENCY_MODEL
-		"DEVOPS":        "qwen2.5-coder",   // TIER_2_DEVELOPMENT_MODEL
-		"CODE_REVIEWER": "deepseek-r1:7b",  // TIER_3_EXPERT_MODEL
-		"CMO":           "gemma4:latest",   // TIER_1_EFFICIENCY_MODEL
+		"CEO":           "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
+		"BA":            "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
+		"CTO":           "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
+		"DEV_FRONTEND":  "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
+		"DEV_BACKEND":   "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
+		"DBA":           "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
+		"DS_ML":         "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
+		"SECURITY":      "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
+		"QA":            "gemma4:latest",  // TIER_1_EFFICIENCY_MODEL
+		"DATA_ENGINEER": "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
+		"PM":            "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
+		"UX_RESEARCHER": "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
+		"WRITER":        "gemma4:latest",  // TIER_1_EFFICIENCY_MODEL
+		"DOCUMENTATION": "gemma4:latest",  // TIER_1_EFFICIENCY_MODEL
+		"ARTIST":        "gemma4:latest",  // TIER_1_EFFICIENCY_MODEL
+		"DEVOPS":        "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
+		"CODE_REVIEWER": "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
+		"CMO":           "gemma4:latest",  // TIER_1_EFFICIENCY_MODEL
 	}
 
 	agentUpper := strings.ToUpper(nomeAgente)

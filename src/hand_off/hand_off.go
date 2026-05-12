@@ -5,18 +5,21 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 	"strings"
+	"time"
 )
 
 type PhaseKickoffPayload struct {
-    PhaseRef, PlanRef, SeniorityLevel string
-    LLMTier                           int
-    SecurityCriteria                  string
-    ApplicableSkills, Constraints     []string
-    Priority                          string
-    ExplicitConclusionAuthorized      bool
-    AuthorizedUntilStage              *string
+	PhaseRef                     string   `json:"phase_ref"`
+	PlanRef                      string   `json:"plan_ref"`
+	SeniorityLevel               string   `json:"seniority_level"`
+	LLMTier                      int      `json:"llm_tier"`
+	SecurityCriteria             string   `json:"security_criteria"`
+	ApplicableSkills             []string `json:"applicable_skills"`
+	Constraints                  []string `json:"constraints"`
+	Priority                     string   `json:"priority"`
+	ExplicitConclusionAuthorized bool     `json:"explicit_conclusion_authorized"`
+	AuthorizedUntilStage         *string  `json:"authorized_until_stage"`
 }
 
 // HandoffHeader representa o cabeçalho obrigatório (§4.2.1)
@@ -55,12 +58,12 @@ func CreateHandoff[T any](dir string, header HandoffHeader, payload T) (string, 
 
 	// Define o nome do arquivo: INTENT_SENDER_TASK_TIMESTAMP.json
 	fileName := fmt.Sprintf("%s_TO_%s_%s_%s.json",
-		strings.Trim(header.Sender, "[]"),    // Remove os colchetes para o nome do arquivo
+		strings.Trim(header.Sender, "[]"), // Remove os colchetes para o nome do arquivo
 		strings.Trim(header.Recipient, "[]"),
 		header.Intent,
 		time.Now().Format("150405"),
 	)
-	
+
 	filePath := filepath.Join(dir, fileName)
 
 	// Serialização com indentação para legibilidade (essencial para auditoria humana/IA)
@@ -70,6 +73,41 @@ func CreateHandoff[T any](dir string, header HandoffHeader, payload T) (string, 
 	}
 
 	if err := os.WriteFile(filePath, data, 0644); err != nil {
+		return "", fmt.Errorf("erro ao gravar arquivo de handoff: %w", err)
+	}
+
+	return filePath, nil
+}
+
+func SaveRawHandoff(dir string, data []byte) (string, error) {
+	var handoff HandoffSchema[json.RawMessage]
+	if err := json.Unmarshal(data, &handoff); err != nil {
+		return "", fmt.Errorf("handoff json inválido: %w", err)
+	}
+	if handoff.Header.Sender == "" || handoff.Header.Recipient == "" || handoff.Header.Intent == "" {
+		return "", fmt.Errorf("handoff sem sender, recipient ou intent")
+	}
+	if handoff.Header.Timestamp == "" {
+		handoff.Header.Timestamp = time.Now().Format("2006-01-02 15:04")
+	}
+
+	normalized, err := json.MarshalIndent(handoff, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("normalizar handoff: %w", err)
+	}
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", fmt.Errorf("falha ao criar diretório de handoff: %w", err)
+	}
+
+	fileName := fmt.Sprintf("%s_TO_%s_%s_%s.json",
+		strings.Trim(handoff.Header.Sender, "[]"),
+		strings.Trim(handoff.Header.Recipient, "[]"),
+		handoff.Header.Intent,
+		time.Now().Format("150405"),
+	)
+	filePath := filepath.Join(dir, fileName)
+	if err := os.WriteFile(filePath, normalized, 0644); err != nil {
 		return "", fmt.Errorf("erro ao gravar arquivo de handoff: %w", err)
 	}
 

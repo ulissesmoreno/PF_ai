@@ -51,13 +51,13 @@ echo [3/6] Criando estrutura de pastas...
 
 :: Pastas do pipeline (relativas a src/, pois o binario roda de src/)
 for %%d in (    
+    ..\.agent_handoff\raw
     ..\.agent_handoff\processing
     ..\.agent_handoff\pending_python
     ..\.agent_handoff\extracted
     ..\.agent_handoff\processed_python
     ..\.agent_handoff\success
     ..\.agent_handoff\failed
-    .agent_handoff
     ..\AGENTS
     ..\bin    
     output

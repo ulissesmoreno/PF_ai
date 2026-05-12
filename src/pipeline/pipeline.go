@@ -15,20 +15,23 @@ import (
 	"pf_ai/code_writer"
 	"pf_ai/embeddings"
 	"pf_ai/extractor"
+	"pf_ai/hand_off"
 )
 
 // Source indica a origem do job.
 type Source int
 
 const (
-	SourceRaw      Source = iota // arquivo novo em inbox/raw/
+	SourceRaw       Source = iota // arquivo novo em inbox/raw/
 	SourceExtracted               // .chunks.json pronto do Python
+	SourceHandoff                 // handoff para um agente
 )
 
 // Job representa um arquivo a processar.
 type Job struct {
-	Path   string
-	Source Source
+	Path      string
+	Source    Source
+	AgentName string
 }
 
 // Config agrupa parâmetros do pipeline.
@@ -42,6 +45,9 @@ type Config struct {
 	Success          string
 	Failed           string
 	PythonTimeout    time.Duration
+	HandoffDir       string
+	AgentOutputDir   string
+	WorkspaceRoot    string
 }
 
 // Pipeline gerencia o worker pool.
@@ -107,6 +113,8 @@ func (p *Pipeline) handle(ctx context.Context, job Job) {
 		p.handleRaw(ctx, job.Path)
 	case SourceExtracted:
 		p.handleExtracted(job.Path)
+	case SourceHandoff:
+		p.handleHandoff(ctx, job.Path, job.AgentName)
 	}
 }
 
@@ -127,6 +135,58 @@ func (p *Pipeline) handleExtracted(path string) {
 	}
 	// Se não há job aguardando, o fsnotify disparou antes do registro —
 	// o job vai encontrar o arquivo ao verificar no disco.
+}
+
+func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
+	if agentName == "" {
+		log.Printf("Handoff sem agente: %s", filepath.Base(path))
+		return
+	}
+
+	id := fileID(path)
+	log.Printf("[%s] Chamando agente %s", id, agentName)
+
+	procPath, err := moveFile(path, p.cfg.Processing)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return
+		}
+		log.Printf("Mover handoff para processing: %v", err)
+		return
+	}
+
+	data, err := os.ReadFile(procPath)
+	if err != nil {
+		log.Printf("[%s] Ler handoff: %v", id, err)
+		writeError(p.cfg.Failed, id, filepath.Base(path), err)
+		moveFile(procPath, p.cfg.Failed) //nolint
+		return
+	}
+
+	select {
+	case <-ctx.Done():
+		moveFile(procPath, p.cfg.Failed) //nolint
+		return
+	default:
+	}
+
+	response, err := agent.ChamarAgente(agentName, string(data))
+	if err != nil {
+		log.Printf("[%s] Agente %s falhou: %v", id, agentName, err)
+		writeError(p.cfg.Failed, id, filepath.Base(path), err)
+		moveFile(procPath, p.cfg.Failed) //nolint
+		return
+	}
+
+	if err := p.applyAgentResponse(agentName, id, response); err != nil {
+		log.Printf("[%s] Aplicar resposta do agente %s: %v", id, agentName, err)
+		writeError(p.cfg.Failed, id, filepath.Base(path), err)
+		moveFile(procPath, p.cfg.Failed) //nolint
+		return
+	}
+
+	moveFile(procPath, p.cfg.Success) //nolint
+	log.Printf("[%s] Agente %s concluido", id, agentName)
 }
 
 // ── Processamento de arquivo novo ─────────────────────────────────────────────
@@ -367,10 +427,146 @@ func (p *Pipeline) indexAndGenerate(
 	}
 
 	// Salvar no vault
-	return code_writer.SalvarNota(id, nome, nota)
+	return code_writer.SaveFile(id, nome, nota)
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+type agentAction struct {
+	Action   string                  `json:"action"`
+	Files    []code_writer.CodeFile  `json:"files"`
+	File     *code_writer.CodeFile   `json:"file"`
+	Handoffs []json.RawMessage       `json:"handoffs"`
+	Handoff  json.RawMessage         `json:"handoff"`
+	Header   *hand_off.HandoffHeader `json:"header"`
+	Payload  json.RawMessage         `json:"payload"`
+	Message  string                  `json:"message"`
+}
+
+func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error {
+	raw, err := extractJSONPayload(response)
+	if err != nil {
+		return p.saveAgentOutput(agentName, taskID, response)
+	}
+
+	items, err := splitAgentActions(raw)
+	if err != nil {
+		return p.saveAgentOutput(agentName, taskID, response)
+	}
+
+	for _, item := range items {
+		var action agentAction
+		if err := json.Unmarshal(item, &action); err != nil {
+			return fmt.Errorf("parsear ação do agente: %w", err)
+		}
+
+		if action.Header != nil {
+			if _, err := hand_off.SaveRawHandoff(p.cfg.HandoffDir, item); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if action.File != nil {
+			action.Files = append(action.Files, *action.File)
+		}
+
+		switch strings.ToLower(action.Action) {
+		case "write_code", "create_file", "write_files":
+			if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, action.Files); err != nil {
+				return err
+			}
+		case "handoff":
+			if len(action.Handoff) > 0 {
+				action.Handoffs = append(action.Handoffs, action.Handoff)
+			}
+			for _, handoff := range action.Handoffs {
+				if _, err := hand_off.SaveRawHandoff(p.cfg.HandoffDir, handoff); err != nil {
+					return err
+				}
+			}
+		case "note", "":
+			if len(action.Files) > 0 {
+				if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, action.Files); err != nil {
+					return err
+				}
+				continue
+			}
+			if len(action.Handoffs) > 0 {
+				for _, handoff := range action.Handoffs {
+					if _, err := hand_off.SaveRawHandoff(p.cfg.HandoffDir, handoff); err != nil {
+						return err
+					}
+				}
+				continue
+			}
+			if action.Message != "" {
+				if err := p.saveAgentOutput(agentName, taskID, action.Message); err != nil {
+					return err
+				}
+			}
+		default:
+			return p.saveAgentOutput(agentName, taskID, response)
+		}
+	}
+
+	return nil
+}
+
+func extractJSONPayload(response string) ([]byte, error) {
+	text := strings.TrimSpace(response)
+	if strings.HasPrefix(text, "```") {
+		lines := strings.Split(text, "\n")
+		if len(lines) >= 3 {
+			text = strings.Join(lines[1:len(lines)-1], "\n")
+		}
+	}
+
+	objectStart := strings.Index(text, "{")
+	arrayStart := strings.Index(text, "[")
+	start := -1
+	if objectStart == -1 {
+		start = arrayStart
+	} else if arrayStart == -1 || objectStart < arrayStart {
+		start = objectStart
+	} else {
+		start = arrayStart
+	}
+	if start == -1 {
+		return nil, fmt.Errorf("resposta sem JSON")
+	}
+
+	objectEnd := strings.LastIndex(text, "}")
+	arrayEnd := strings.LastIndex(text, "]")
+	end := max(objectEnd, arrayEnd)
+	if end < start {
+		return nil, fmt.Errorf("json incompleto")
+	}
+
+	return []byte(strings.TrimSpace(text[start : end+1])), nil
+}
+
+func splitAgentActions(raw []byte) ([]json.RawMessage, error) {
+	var list []json.RawMessage
+	if err := json.Unmarshal(raw, &list); err == nil {
+		return list, nil
+	}
+
+	var single json.RawMessage
+	if err := json.Unmarshal(raw, &single); err != nil {
+		return nil, err
+	}
+	return []json.RawMessage{single}, nil
+}
+
+func (p *Pipeline) saveAgentOutput(agentName, taskID, content string) error {
+	dir := filepath.Join(p.cfg.AgentOutputDir, strings.ToUpper(agentName))
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+	name := fmt.Sprintf("%s_%s.md", time.Now().Format("20060102_150405"), taskID)
+	return os.WriteFile(filepath.Join(dir, name), []byte(content), 0644)
+}
 
 // ChunksFile representa um chunk no .chunks.json do Python.
 type ChunksFile struct {
