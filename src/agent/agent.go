@@ -35,15 +35,7 @@ func Init(url, llmModel string) {
 
 	ollamaURL = url
 	model = llmModel
-
-	// Carrega o System Prompt do arquivo local para permitir ajustes sem recompilação
-	p, err := carregarVariavelDeAgente("SYSTEM_PROMPT", "SYSTEM_PROMPT")
-	if err != nil {
-		fmt.Printf("⚠️  Aviso: SYSTEM_PROMPT não encontrado em AGENTS/. Usando configuração padrão.\n")
-		systemPrompt = "Você é um assistente útil e fiel aos dados fornecidos."
-	} else {
-		systemPrompt = p
-	}
+	systemPrompt = "Você é um assistente útil e fiel aos dados fornecidos."
 }
 
 type message struct {
@@ -330,6 +322,24 @@ func carregarVariavelDeAgente(nomeArquivo, chave string) (string, error) {
 	return strings.TrimSpace(strings.Join(resultado, "\n")), nil
 }
 
+func carregarArquivoAgente(nomeAgente string) (string, error) {
+	mu.RLock()
+	dir := agentsDir
+	mu.RUnlock()
+
+	filePath := filepath.Join(dir, strings.ToUpper(nomeAgente)+".md")
+	file, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+
+	content := strings.TrimSpace(string(file))
+	if content == "" {
+		return "", fmt.Errorf("AGENTS/%s.md vazio", nomeAgente)
+	}
+	return content, nil
+}
+
 // CarregarVariavel mantém compatibilidade com chamadas existentes.
 // Usa o próprio nome da chave como nome do arquivo (ex: "SYSTEM_PROMPT" → AGENTS/SYSTEM_PROMPT.md).
 func CarregarVariavel(chave string) (string, error) {
@@ -382,11 +392,10 @@ func CarregarConfigAgente(nomeAgente string) (modeloResolvido, systemPromptResol
 	// Lê AGENTS/{AGENTE}.md e extrai a chave SYSTEM_PROMPT
 	systemPromptResolvido, err = carregarVariavelDeAgente(nomeAgente, "SYSTEM_PROMPT")
 	if err != nil {
-		// Fallback para prompt genérico se o arquivo/chave não existir
-		systemPromptResolvido = fmt.Sprintf(
-			"Você é o agente %s. Responda com precisão e clareza, fornecendo respostas estruturadas.",
-			nomeAgente,
-		)
+		systemPromptResolvido, err = carregarArquivoAgente(nomeAgente)
+		if err != nil {
+			return "", "", err
+		}
 	}
 
 	return modeloResolvido, systemPromptResolvido, nil

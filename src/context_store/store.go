@@ -313,6 +313,62 @@ func (s *Store) QueryContextForHandoff(agentName, taskRef string, limit int) ([]
 	return result, rows.Err()
 }
 
+func (s *Store) ProjectStarted() (bool, error) {
+	rows, err := s.db.Query(
+		`SELECT ds.content
+		   FROM document_sections ds
+		   JOIN documents d ON d.id = ds.document_id
+		   JOIN document_imports di ON di.id = ds.import_id
+		  WHERE d.document_type = 'PROJECT'
+		    AND di.id = (
+				SELECT MAX(di2.id)
+				  FROM document_imports di2
+				  JOIN documents d2 ON d2.id = di2.document_id
+				 WHERE d2.document_type = 'PROJECT'
+			)
+		  ORDER BY ds.ordinal`,
+	)
+	if err != nil {
+		return false, fmt.Errorf("consultar PROJECT persistido: %w", err)
+	}
+	defer rows.Close()
+
+	var parts []string
+	for rows.Next() {
+		var content string
+		if err := rows.Scan(&content); err != nil {
+			return false, err
+		}
+		parts = append(parts, content)
+	}
+	if err := rows.Err(); err != nil {
+		return false, err
+	}
+	if len(parts) == 0 {
+		return false, nil
+	}
+
+	content := strings.ToLower(strings.Join(parts, "\n"))
+	placeholderSignals := []string{
+		"[project_name]",
+		"[nome do projeto]",
+		"[descrição",
+		"[descricao",
+		"[resumo",
+		"[quem usa",
+		"[placeholder",
+		"[preenchido",
+		"[filled",
+	}
+	for _, signal := range placeholderSignals {
+		if strings.Contains(content, signal) {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
 func (s *Store) projectContextItem(sourceTable string, sourceID int64, documentType, entryType, taskRef, agentName, title, heading, content string) error {
 	if strings.TrimSpace(content) == "" {
 		return nil

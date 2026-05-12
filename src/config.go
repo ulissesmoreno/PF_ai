@@ -3,7 +3,9 @@ package main
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -52,14 +54,14 @@ func loadConfig() Config {
 		ProcessedPython: env("PROCESSED_PYTHON_DIR", filepathJoin(handoffDir, "processed_python")),
 		Success:         env("SUCCESS_DIR", filepathJoin(handoffDir, "success")),
 		Failed:          env("FAILED_DIR", filepathJoin(handoffDir, "failed")),
-		VaultPath:       env("VAULT_PATH", filepathJoin(workspaceRoot, "vault")),
-		DBPath:          env("DB_PATH", filepathJoin(workspaceRoot, "data", "wiki.db")),
+		VaultPath:       workspacePath(workspaceRoot, env("VAULT_PATH", "vault")),
+		DBPath:          workspacePath(workspaceRoot, env("DB_PATH", filepathJoin("data", "wiki.db"))),
 		WorkspaceRoot:   workspaceRoot,
-		MigrationsDir:   env("MIGRATIONS_DIR", filepathJoin(workspaceRoot, "db", "migrations")),
+		MigrationsDir:   workspacePath(workspaceRoot, env("MIGRATIONS_DIR", filepathJoin("db", "migrations"))),
 
 		AgentHandoffDir: handoffDir,
-		AgentsConfigDir: env("AGENTS_CONFIG_DIR", filepathJoin(workspaceRoot, "AGENTS")),
-		AgentOutputDir:  env("AGENT_OUTPUT_DIR", filepathJoin(workspaceRoot, "output")),
+		AgentsConfigDir: workspacePath(workspaceRoot, env("AGENTS_CONFIG_DIR", "AGENTS")),
+		AgentOutputDir:  workspacePath(workspaceRoot, env("AGENT_OUTPUT_DIR", "output")),
 
 		WorkerCount:      envInt("WORKER_COUNT", 3),
 		EmbedWorkerCount: envInt("EMBED_WORKER_COUNT", 5),
@@ -167,4 +169,15 @@ func filepathJoin(parts ...string) string {
 		result += string(os.PathSeparator) + part
 	}
 	return result
+}
+
+func workspacePath(workspaceRoot, value string) string {
+	if value == "" || filepath.IsAbs(value) {
+		return value
+	}
+	clean := filepath.Clean(value)
+	if strings.HasPrefix(clean, ".."+string(os.PathSeparator)) || clean == ".." {
+		return clean
+	}
+	return filepath.Join(workspaceRoot, clean)
 }

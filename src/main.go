@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -19,7 +22,28 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func createCEOKickoff(cfg Config) error {
+type ceoKickoffPayload struct {
+	Mode                         string   `json:"mode"`
+	PhaseRef                     string   `json:"phase_ref"`
+	PlanRef                      string   `json:"plan_ref"`
+	SeniorityLevel               string   `json:"seniority_level"`
+	LLMTier                      int      `json:"llm_tier"`
+	SecurityCriteria             string   `json:"security_criteria"`
+	ApplicableSkills             []string `json:"applicable_skills"`
+	Constraints                  []string `json:"constraints"`
+	Priority                     string   `json:"priority"`
+	ExplicitConclusionAuthorized bool     `json:"explicit_conclusion_authorized"`
+	AuthorizedUntilStage         *string  `json:"authorized_until_stage"`
+	Instructions                 string   `json:"instructions"`
+	PersistedContext             []string `json:"persisted_context"`
+}
+
+func createCEOKickoff(cfg Config, store *context_store.Store) error {
+	projectStarted, err := store.ProjectStarted()
+	if err != nil {
+		return err
+	}
+
 	header := hand_off.HandoffHeader{
 		Sender:    "[SYSTEM_INIT]",
 		Recipient: "[CEO]",
@@ -27,7 +51,8 @@ func createCEOKickoff(cfg Config) error {
 		Intent:    "PHASE_KICKOFF",
 	}
 
-	payload := hand_off.PhaseKickoffPayload{
+	payload := ceoKickoffPayload{
+		Mode:             "CONTINUE_PLAN",
 		PhaseRef:         "DOC/ROADMAP.md#Phase-1",
 		PlanRef:          "DOC/PLAN.md#Stage-1",
 		SeniorityLevel:   "Senior",
@@ -44,6 +69,27 @@ func createCEOKickoff(cfg Config) error {
 		AuthorizedUntilStage:         nil,
 	}
 
+	if projectStarted {
+		payload.Instructions = "Projeto iniciado detectado na persistência. Continue o plano usando o contexto persistido. Gere handoffs estruturados para os agentes apropriados. Atualizações operacionais devem usar ações CQRS como update_context, update_plan e record_test. Wiki deve ser criada/atualizada como arquivo em wiki/. QUESTIONS.md continua append-only para perguntas ao humano."
+		payload.PersistedContext, err = store.QueryContextForHandoff("CEO", "", 20)
+		if err != nil {
+			return err
+		}
+	} else {
+		payload.Mode = "PROJECT_IGNITION"
+		header.TaskRef = "ONBOARDING-1"
+		payload.PhaseRef = "PERSISTENCE://PROJECT"
+		payload.PlanRef = "PERSISTENCE://PLAN"
+		payload.Instructions, err = buildInitialPromptFromREADME(cfg.WorkspaceRoot)
+		if err != nil {
+			return err
+		}
+		payload.PersistedContext, err = store.QueryContextForHandoff("CEO", "", 12)
+		if err != nil {
+			return err
+		}
+	}
+
 	path, err := hand_off.CreateHandoff(cfg.AgentHandoffDir, header, payload)
 	if err != nil {
 		return err
@@ -51,6 +97,55 @@ func createCEOKickoff(cfg Config) error {
 
 	log.Printf("Handoff de kickoff gerado: %s", path)
 	return nil
+}
+
+func buildInitialPromptFromREADME(workspaceRoot string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(workspaceRoot, "README.md"))
+	if err != nil {
+		return "", fmt.Errorf("ler README para ignition: %w", err)
+	}
+
+	readme := string(data)
+	prompt := extractReadmeIgnitionPrompt(readme)
+	if prompt == "" {
+		prompt = readme
+	}
+
+	adaptation := `
+
+[ADAPTAÇÃO PARA ORQUESTRAÇÃO COM PERSISTÊNCIA]
+- Não edite DOC/*.md diretamente para contexto, plano, estado, testes, decisões ou retrospectiva.
+- Use ações CQRS append-only: update_context, update_plan, update_state, record_test, record_decision e record_retrospective.
+- Use write_code apenas para código e arquivos reais exigidos pelo filesystem, incluindo wiki/*.md para Obsidian.
+- QUESTIONS.md permanece arquivo append-only para perguntas ao humano; NEW-INSTRUCTIONS.md permanece humano-only.
+- Monte próximos handoffs usando o contexto persistido recebido em persisted_context.
+- Se o PROJECT persistido ainda estiver em template/placeholders, conduza onboarding pelo CEO antes de delegar implementação.
+`
+
+	return strings.TrimSpace(prompt) + adaptation, nil
+}
+
+func extractReadmeIgnitionPrompt(readme string) string {
+	marker := "Prompt Inicial para IA"
+	idx := strings.Index(readme, marker)
+	if idx == -1 {
+		idx = strings.Index(readme, "Initial AI Prompt")
+	}
+	if idx == -1 {
+		return ""
+	}
+
+	rest := readme[idx:]
+	start := strings.Index(rest, "```text")
+	if start == -1 {
+		return ""
+	}
+	rest = rest[start+len("```text"):]
+	end := strings.Index(rest, "```")
+	if end == -1 {
+		return ""
+	}
+	return strings.TrimSpace(rest[:end])
 }
 
 func main() {
@@ -160,7 +255,7 @@ func main() {
 
 	time.Sleep(250 * time.Millisecond)
 	log.Println("Chamando CEO...")
-	if err := createCEOKickoff(cfg); err != nil {
+	if err := createCEOKickoff(cfg, contextStore); err != nil {
 		log.Printf("Erro ao criar CEO kickoff: %v", err)
 	}
 
