@@ -216,6 +216,9 @@ func main() {
 		AgentOutputDir:   cfg.AgentOutputDir,
 		WorkspaceRoot:    cfg.WorkspaceRoot,
 		ContextStore:     contextStore,
+		CEOProvider:      cfg.CEOProvider,
+		CodexCEOCLI:      cfg.CodexCEOCLI,
+		CodexCEOTimeout:  cfg.CodexCEOTimeout,
 	})
 	pl.Start(ctx)
 

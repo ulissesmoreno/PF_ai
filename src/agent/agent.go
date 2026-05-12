@@ -3,10 +3,12 @@ package agent
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -187,6 +189,67 @@ Handoff recebido:
 %s`, strings.ToUpper(nomeAgente), handoff)
 
 	return callChat(currentURL, modeloResolvido, promptResolvido, userPrompt)
+}
+
+func ChamarCEOComCodexCLI(handoff, cliCommand, workspaceRoot string, timeout time.Duration) (string, error) {
+	if strings.TrimSpace(cliCommand) == "" {
+		return "", fmt.Errorf("CODEX_CEO_CLI vazio")
+	}
+	if timeout <= 0 {
+		timeout = 10 * time.Minute
+	}
+
+	ceoPrompt, err := carregarArquivoAgente("CEO")
+	if err != nil {
+		return "", fmt.Errorf("carregar CEO para Codex CLI: %w", err)
+	}
+
+	prompt := fmt.Sprintf(`Você está atuando como o agente CEO deste orquestrador local.
+
+INSTRUÇÕES DO AGENTE CEO:
+%s
+
+CONTRATO DE RESPOSTA:
+- Responda exclusivamente com JSON válido.
+- Para chamar outro agente, use {"action":"handoff","handoffs":[{"header":{...},"payload":{...}}]}.
+- Para atualizar contexto/plano/estado/testes, use ações CQRS: update_context, update_plan, update_state, record_test, record_decision ou record_retrospective.
+- Para perguntas ao humano, gere uma ação ask_human com questions.
+- Para wiki/Obsidian ou código, use write_code com paths relativos ao workspace.
+
+HANDOFF RECEBIDO:
+%s`, ceoPrompt, handoff)
+
+	args := strings.Fields(cliCommand)
+	if len(args) == 0 {
+		return "", fmt.Errorf("CODEX_CEO_CLI inválido")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
+	if strings.TrimSpace(workspaceRoot) != "" {
+		cmd.Dir = workspaceRoot
+	}
+	cmd.Stdin = strings.NewReader(prompt)
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return "", fmt.Errorf("codex cli timeout após %s", timeout)
+		}
+		return "", fmt.Errorf("codex cli falhou: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+
+	output := strings.TrimSpace(stdout.String())
+	if output == "" {
+		return "", fmt.Errorf("codex cli retornou resposta vazia: %s", strings.TrimSpace(stderr.String()))
+	}
+	return output, nil
 }
 
 func callChat(url, modelName, prompt, userPrompt string) (string, error) {

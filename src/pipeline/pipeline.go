@@ -50,6 +50,9 @@ type Config struct {
 	AgentOutputDir   string
 	WorkspaceRoot    string
 	ContextStore     *context_store.Store
+	CEOProvider      string
+	CodexCEOCLI      string
+	CodexCEOTimeout  time.Duration
 }
 
 // Pipeline gerencia o worker pool.
@@ -187,7 +190,7 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 		}
 	}
 
-	response, err := agent.ChamarAgente(agentName, agentInput)
+	response, err := p.callAgent(agentName, agentInput)
 	if err != nil {
 		log.Printf("[%s] Agente %s falhou: %v", id, agentName, err)
 		writeError(p.cfg.Failed, id, filepath.Base(path), err)
@@ -204,6 +207,19 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 
 	moveFile(procPath, p.cfg.Success) //nolint
 	log.Printf("[%s] Agente %s concluido", id, agentName)
+}
+
+func (p *Pipeline) callAgent(agentName, input string) (string, error) {
+	if strings.EqualFold(agentName, "CEO") && strings.EqualFold(p.cfg.CEOProvider, "codex_cli") {
+		return agent.ChamarCEOComCodexCLI(
+			input,
+			p.cfg.CodexCEOCLI,
+			p.cfg.WorkspaceRoot,
+			p.cfg.CodexCEOTimeout,
+		)
+	}
+
+	return agent.ChamarAgente(agentName, input)
 }
 
 // ── Processamento de arquivo novo ─────────────────────────────────────────────

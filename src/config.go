@@ -37,10 +37,13 @@ type Config struct {
 	OllamaLLMModel   string
 	OllamaEmbedModel string
 	OllamaGemmaModel string
+	CEOProvider      string
+	CodexCEOCLI      string
 
 	// ── Timeouts ───────────────────────────────────────────────
-	PythonTimeout time.Duration
-	AgentTimeout  time.Duration
+	PythonTimeout   time.Duration
+	AgentTimeout    time.Duration
+	CodexCEOTimeout time.Duration
 }
 
 func loadConfig() Config {
@@ -70,9 +73,12 @@ func loadConfig() Config {
 		OllamaLLMModel:   env("OLLAMA_LLM_MODEL", "deepseek-r1:7b"),
 		OllamaEmbedModel: env("OLLAMA_EMBED_MODEL", "nomic-embed-text"),
 		OllamaGemmaModel: env("OLLAMA_GEMMA_MODEL", "gemma4:latest"),
+		CEOProvider:      env("CEO_PROVIDER", "ollama"),
+		CodexCEOCLI:      env("CODEX_CEO_CLI", "codex exec -"),
 
-		PythonTimeout: envDuration("PYTHON_TIMEOUT_MINUTES", 60) * time.Minute,
-		AgentTimeout:  envDuration("AGENT_TIMEOUT_SECONDS", 60) * time.Minute,
+		PythonTimeout:   envDuration("PYTHON_TIMEOUT_MINUTES", 60) * time.Minute,
+		AgentTimeout:    envDuration("AGENT_TIMEOUT_SECONDS", 60) * time.Second,
+		CodexCEOTimeout: envDuration("CODEX_CEO_TIMEOUT_SECONDS", 600) * time.Second,
 	}
 }
 
@@ -92,11 +98,16 @@ func (c Config) log() {
 	log.Printf("  modelo llm      : %s", c.OllamaLLMModel)
 	log.Printf("  modelo embed    : %s", c.OllamaEmbedModel)
 	log.Printf("  modelo gemma4   : %s", c.OllamaGemmaModel)
+	log.Printf("  ceo provider    : %s", c.CEOProvider)
+	if strings.EqualFold(c.CEOProvider, "codex_cli") {
+		log.Printf("  codex ceo cli   : %s", c.CodexCEOCLI)
+	}
 	log.Println("──")
 	log.Printf("  workers         : %d arquivo(s) paralelos", c.WorkerCount)
 	log.Printf("  embed workers   : %d chunk(s) paralelos", c.EmbedWorkerCount)
 	log.Printf("  python timeout  : %s", c.PythonTimeout)
 	log.Printf("  agent timeout   : %s", c.AgentTimeout)
+	log.Printf("  codex ceo timeout: %s", c.CodexCEOTimeout)
 	log.Println("──────────────────────────────────────────────")
 }
 
