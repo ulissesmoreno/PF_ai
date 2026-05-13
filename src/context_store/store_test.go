@@ -82,6 +82,85 @@ func TestImportEntryDocumentStoresEntriesOnly(t *testing.T) {
 	}
 }
 
+func TestImportTasksCreatesPlanningItems(t *testing.T) {
+	workspace := t.TempDir()
+	docPath := filepath.Join(workspace, "DOC")
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "# TASKS\n\n## Active\n\n### Task [TASK-42]: Build API\n- **Status:** Doing\n- **Assigned to:** DEV_BACKEND:Senior\n- **Priority:** High\n- **Deadline:** 2026-05-14\n"
+	if err := os.WriteFile(filepath.Join(docPath, "TASKS.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "DOC/TASKS.md", DocumentType: "TASKS", Owner: "Technical agents"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var count int
+	var status string
+	if err := store.db.QueryRow("SELECT COUNT(*), MAX(status) FROM planning_items WHERE task_ref = 'TASK-42'").Scan(&count, &status); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 || status != "Doing" {
+		t.Fatalf("count=%d status=%q, want 1/Doing", count, status)
+	}
+}
+
+func TestImportRoadmapCreatesPlanningItems(t *testing.T) {
+	workspace := t.TempDir()
+	docPath := filepath.Join(workspace, "DOC")
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "# ROADMAP\n\n## Phase 1\n- [ ] **Build API:** ship endpoints\n- [x] **Setup:** done\n"
+	if err := os.WriteFile(filepath.Join(docPath, "ROADMAP.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "DOC/ROADMAP.md", DocumentType: "ROADMAP", Owner: "CEO/PM"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var count int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM planning_items WHERE item_type = 'roadmap_item'").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Fatalf("roadmap planning items = %d, want 2", count)
+	}
+}
+
+func TestImportPlanCreatesContextEntries(t *testing.T) {
+	workspace := t.TempDir()
+	docPath := filepath.Join(workspace, "DOC")
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "# PLAN\n\n## 1. Stage Objective\n- Deliver value\n\n## 2. Risks\n- Risk one\n"
+	if err := os.WriteFile(filepath.Join(docPath, "PLAN.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "DOC/PLAN.md", DocumentType: "PLAN", Owner: "BA/CTO"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var count int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM context_entries WHERE document_type = 'PLAN' AND entry_type = 'plan_section'").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Fatalf("plan context entries = %d, want 2", count)
+	}
+}
+
 func TestSaveContextEntryProjectsReadModel(t *testing.T) {
 	workspace := t.TempDir()
 	store := openTestStore(t, workspace)

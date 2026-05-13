@@ -181,6 +181,10 @@ func (s *Store) ImportDocument(seed DocumentSeed) error {
 		}
 	}
 
+	if err := s.importPlanningCQRS(tx, seed.DocumentType, content, timestamp); err != nil {
+		return err
+	}
+
 	return tx.Commit()
 }
 
@@ -228,6 +232,10 @@ func (s *Store) importDocumentEntries(tx *sql.Tx, documentID, importID int64, se
 		); err != nil {
 			return fmt.Errorf("projetar entrada %s[%d]: %w", seed.Path, i, err)
 		}
+	}
+
+	if err := s.importPlanningCQRS(tx, seed.DocumentType, content, timestamp); err != nil {
+		return err
 	}
 
 	return tx.Commit()
@@ -359,6 +367,216 @@ func splitMarkdownEntryBlocks(documentType, content string) []documentEntry {
 	flush()
 
 	return entries
+}
+
+func (s *Store) importPlanningCQRS(tx *sql.Tx, documentType, content, timestamp string) error {
+	switch documentType {
+	case "TASKS":
+		for _, item := range parseTaskPlanningItems(content) {
+			if err := s.insertPlanningItemTx(tx, item, timestamp); err != nil {
+				return err
+			}
+		}
+	case "ROADMAP":
+		for _, item := range parseRoadmapPlanningItems(content) {
+			if err := s.insertPlanningItemTx(tx, item, timestamp); err != nil {
+				return err
+			}
+		}
+	case "PLAN":
+		for _, entry := range parsePlanContextEntries(content) {
+			if err := s.insertContextEntryTx(tx, entry, timestamp); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func parseTaskPlanningItems(content string) []PlanningItem {
+	blocks := splitHeadingBlocks(content, 3)
+	items := make([]PlanningItem, 0, len(blocks))
+	for _, block := range blocks {
+		if !strings.Contains(block.heading, "Task [") && !strings.Contains(block.heading, "Task ") {
+			continue
+		}
+		item := PlanningItem{
+			ItemType:  "task",
+			Reference: block.heading,
+			Title:     block.heading,
+			Status:    fieldValue(block.content, "Status"),
+			Priority:  fieldValue(block.content, "Priority"),
+			Content:   strings.TrimSpace(block.content),
+			TaskRef:   taskRefFromHeading(block.heading),
+		}
+		if assigned := fieldValue(block.content, "Assigned to"); assigned != "" {
+			item.SourceAgent = assigned
+		}
+		items = append(items, item)
+	}
+	return items
+}
+
+func parseRoadmapPlanningItems(content string) []PlanningItem {
+	var items []PlanningItem
+	currentSection := ""
+	for _, line := range strings.Split(content, "\n") {
+		if matches := headingRE.FindStringSubmatch(line); len(matches) == 3 {
+			currentSection = strings.TrimSpace(matches[2])
+			continue
+		}
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmed, "- [ ]") && !strings.HasPrefix(trimmed, "- [x]") {
+			continue
+		}
+		status := "todo"
+		if strings.HasPrefix(trimmed, "- [x]") {
+			status = "done"
+		}
+		title := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(trimmed, "- [ ]"), "- [x]"))
+		items = append(items, PlanningItem{
+			ItemType:  "roadmap_item",
+			Reference: currentSection,
+			Title:     stripMarkdownTitle(title),
+			Status:    status,
+			Content:   trimmed,
+			TaskRef:   currentSection,
+		})
+	}
+	return items
+}
+
+func parsePlanContextEntries(content string) []ContextEntry {
+	blocks := splitHeadingBlocks(content, 2)
+	entries := make([]ContextEntry, 0, len(blocks))
+	for _, block := range blocks {
+		if strings.TrimSpace(block.content) == "" {
+			continue
+		}
+		entries = append(entries, ContextEntry{
+			EntryType:    "plan_section",
+			DocumentType: "PLAN",
+			Section:      block.heading,
+			Title:        block.heading,
+			Content:      strings.TrimSpace(block.content),
+			SourceAgent:  "IMPORTER",
+			TaskRef:      "PLAN",
+		})
+	}
+	return entries
+}
+
+type headingBlock struct {
+	heading string
+	content string
+}
+
+func splitHeadingBlocks(content string, level int) []headingBlock {
+	var blocks []headingBlock
+	var current *headingBlock
+	prefix := strings.Repeat("#", level) + " "
+	for _, line := range strings.Split(content, "\n") {
+		if strings.HasPrefix(line, prefix) {
+			if current != nil && strings.TrimSpace(current.content) != "" {
+				blocks = append(blocks, *current)
+			}
+			current = &headingBlock{heading: strings.TrimSpace(strings.TrimPrefix(line, prefix))}
+			continue
+		}
+		if current != nil {
+			current.content += line + "\n"
+		}
+	}
+	if current != nil && strings.TrimSpace(current.content) != "" {
+		blocks = append(blocks, *current)
+	}
+	return blocks
+}
+
+func fieldValue(content, field string) string {
+	re := regexp.MustCompile(`(?m)^-\s+\*\*` + regexp.QuoteMeta(field) + `:\*\*\s*(.+?)\s*$`)
+	matches := re.FindStringSubmatch(content)
+	if len(matches) < 2 {
+		return ""
+	}
+	return strings.TrimSpace(matches[1])
+}
+
+func taskRefFromHeading(heading string) string {
+	re := regexp.MustCompile(`Task\s+\[?([A-Za-z0-9._-]+)\]?`)
+	matches := re.FindStringSubmatch(heading)
+	if len(matches) < 2 {
+		return ""
+	}
+	return matches[1]
+}
+
+func stripMarkdownTitle(value string) string {
+	value = strings.ReplaceAll(value, "**", "")
+	if idx := strings.Index(value, ":"); idx >= 0 {
+		return strings.TrimSpace(value[:idx])
+	}
+	return strings.TrimSpace(value)
+}
+
+func (s *Store) insertPlanningItemTx(tx *sql.Tx, item PlanningItem, timestamp string) error {
+	if strings.TrimSpace(item.Content) == "" {
+		return nil
+	}
+	if item.ItemType == "" {
+		item.ItemType = "plan"
+	}
+	res, err := tx.Exec(
+		`INSERT INTO planning_items(
+			project_id, item_type, reference, title, status, priority, content, source_agent, task_ref, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		s.projectIDOrNil(), item.ItemType, item.Reference, item.Title, item.Status, item.Priority,
+		item.Content, item.SourceAgent, item.TaskRef, timestamp, timestamp,
+	)
+	if err != nil {
+		return fmt.Errorf("salvar planejamento importado: %w", err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("obter id de planejamento importado: %w", err)
+	}
+	return s.projectContextItemTx(tx, "planning_items", id, "PLAN", item.ItemType, item.TaskRef, item.SourceAgent, item.Title, item.Reference, item.Content, timestamp)
+}
+
+func (s *Store) insertContextEntryTx(tx *sql.Tx, entry ContextEntry, timestamp string) error {
+	res, err := tx.Exec(
+		`INSERT INTO context_entries(
+			project_id, entry_type, document_type, section, title, content, source_agent, task_ref, tags, created_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		s.projectIDOrNil(), entry.EntryType, strings.ToUpper(entry.DocumentType), entry.Section,
+		entry.Title, entry.Content, entry.SourceAgent, entry.TaskRef, "[]", timestamp,
+	)
+	if err != nil {
+		return fmt.Errorf("salvar contexto importado: %w", err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("obter id de contexto importado: %w", err)
+	}
+	return s.projectContextItemTx(tx, "context_entries", id, strings.ToUpper(entry.DocumentType), entry.EntryType, entry.TaskRef, entry.SourceAgent, entry.Title, entry.Section, entry.Content, timestamp)
+}
+
+func (s *Store) projectContextItemTx(tx *sql.Tx, sourceTable string, sourceID int64, documentType, entryType, taskRef, agentName, title, heading, content, timestamp string) error {
+	if strings.TrimSpace(content) == "" {
+		return nil
+	}
+	_, err := tx.Exec(
+		`INSERT INTO read_context_items(
+			project_id, source_table, source_id, document_type, entry_type, task_ref, agent_name,
+			title, heading, content, content_hash, projected_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		s.projectIDOrNil(), sourceTable, sourceID, documentType, entryType, taskRef,
+		strings.ToUpper(agentName), title, heading, content, sha(content), timestamp,
+	)
+	if err != nil {
+		return fmt.Errorf("projetar read model importado: %w", err)
+	}
+	return nil
 }
 
 func startsBulletEntry(line string) bool {
