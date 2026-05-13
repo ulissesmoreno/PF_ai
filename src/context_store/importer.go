@@ -74,6 +74,8 @@ func (s *Store) ImportDocument(seed DocumentSeed) error {
 	title := titleFromPath(seed.Path)
 	hash := sha(content)
 	timestamp := now()
+	inserted := 0
+	skipped := 0
 
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -125,6 +127,10 @@ func (s *Store) ImportDocument(seed DocumentSeed) error {
 
 	sections := splitMarkdownSections(content)
 	for i, section := range sections {
+		if s.sectionHashExists(tx, documentID, sha(section.Content)) {
+			skipped++
+			continue
+		}
 		res, err := tx.Exec(
 			`INSERT INTO document_sections(
 				document_id, import_id, project_id, heading, level, ordinal, content, content_hash, created_at
@@ -142,6 +148,7 @@ func (s *Store) ImportDocument(seed DocumentSeed) error {
 		if err != nil {
 			return fmt.Errorf("inserir seção %s[%d]: %w", seed.Path, i, err)
 		}
+		inserted++
 
 		sectionID, err := res.LastInsertId()
 		if err != nil {
@@ -187,13 +194,20 @@ func (s *Store) ImportDocument(seed DocumentSeed) error {
 		return err
 	}
 
+	fmt.Printf("import %s: inserted=%d skipped=%d\n", seed.Path, inserted, skipped)
 	return tx.Commit()
 }
 
 func (s *Store) importDocumentEntries(tx *sql.Tx, documentID, importID int64, seed DocumentSeed, title, content, timestamp string) error {
 	entries := splitDocumentEntries(seed.DocumentType, content)
+	inserted := 0
+	skipped := 0
 	for i, entry := range entries {
 		if strings.TrimSpace(entry.Content) == "" {
+			continue
+		}
+		if s.entryHashExists(tx, documentID, sha(entry.Content)) {
+			skipped++
 			continue
 		}
 		res, err := tx.Exec(
@@ -213,6 +227,7 @@ func (s *Store) importDocumentEntries(tx *sql.Tx, documentID, importID int64, se
 		if err != nil {
 			return fmt.Errorf("inserir entrada %s[%d]: %w", seed.Path, i, err)
 		}
+		inserted++
 		entryID, err := res.LastInsertId()
 		if err != nil {
 			return fmt.Errorf("obter id da entrada: %w", err)
@@ -240,6 +255,7 @@ func (s *Store) importDocumentEntries(tx *sql.Tx, documentID, importID int64, se
 		return err
 	}
 
+	fmt.Printf("import %s: inserted=%d skipped=%d\n", seed.Path, inserted, skipped)
 	return tx.Commit()
 }
 
@@ -249,6 +265,32 @@ func documentID(tx *sql.Tx, path string) (int64, error) {
 		return 0, fmt.Errorf("buscar documento %s: %w", path, err)
 	}
 	return id, nil
+}
+
+func (s *Store) sectionHashExists(tx *sql.Tx, documentID int64, contentHash string) bool {
+	var exists int
+	err := tx.QueryRow(
+		`SELECT COUNT(1)
+		   FROM document_sections
+		  WHERE document_id = ?
+		    AND content_hash = ?
+		    AND (? IS NULL OR project_id = ?)`,
+		documentID, contentHash, s.projectIDOrNil(), s.projectIDOrNil(),
+	).Scan(&exists)
+	return err == nil && exists > 0
+}
+
+func (s *Store) entryHashExists(tx *sql.Tx, documentID int64, contentHash string) bool {
+	var exists int
+	err := tx.QueryRow(
+		`SELECT COUNT(1)
+		   FROM document_entries
+		  WHERE document_id = ?
+		    AND content_hash = ?
+		    AND (? IS NULL OR project_id = ?)`,
+		documentID, contentHash, s.projectIDOrNil(), s.projectIDOrNil(),
+	).Scan(&exists)
+	return err == nil && exists > 0
 }
 
 func splitMarkdownSections(content string) []markdownSection {

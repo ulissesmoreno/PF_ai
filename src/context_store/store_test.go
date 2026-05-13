@@ -42,8 +42,38 @@ func TestImportDocumentIsAppendOnly(t *testing.T) {
 	if err := store.db.QueryRow("SELECT COUNT(*) FROM document_sections").Scan(&sections); err != nil {
 		t.Fatal(err)
 	}
-	if sections < 4 {
-		t.Fatalf("sections = %d, want append-only history from both imports", sections)
+	if sections != 3 {
+		t.Fatalf("sections = %d, want unchanged root skipped and changed section appended", sections)
+	}
+}
+
+func TestImportDocumentSkipsUnchangedSections(t *testing.T) {
+	workspace := t.TempDir()
+	docPath := filepath.Join(workspace, "DOC")
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "# Plan\n\nsame"
+	if err := os.WriteFile(filepath.Join(docPath, "PLAN.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	store := openTestStore(t, workspace)
+	defer store.Close()
+	seed := DocumentSeed{Path: "DOC/PLAN.md", DocumentType: "PLAN", Owner: "BA/CTO"}
+	if err := store.ImportDocument(seed); err != nil {
+		t.Fatalf("first import: %v", err)
+	}
+	if err := store.ImportDocument(seed); err != nil {
+		t.Fatalf("second import: %v", err)
+	}
+
+	var sections int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM document_sections").Scan(&sections); err != nil {
+		t.Fatal(err)
+	}
+	if sections != 2 {
+		t.Fatalf("sections = %d, want 2 after unchanged reimport", sections)
 	}
 }
 
