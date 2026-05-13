@@ -389,6 +389,30 @@ func (s *Store) importPlanningCQRS(tx *sql.Tx, documentType, content, timestamp 
 				return err
 			}
 		}
+	case "STATE":
+		for _, entry := range parseStateContextEntries(content) {
+			if err := s.insertContextEntryTx(tx, entry, timestamp); err != nil {
+				return err
+			}
+		}
+	case "CONTEXT":
+		for _, entry := range parseContextDecisionEntries(content) {
+			if err := s.insertContextEntryTx(tx, entry, timestamp); err != nil {
+				return err
+			}
+		}
+	case "RETROSPECTIVE":
+		for _, entry := range parseRetrospectiveContextEntries(content) {
+			if err := s.insertContextEntryTx(tx, entry, timestamp); err != nil {
+				return err
+			}
+		}
+	case "VERSIONS":
+		for _, item := range parseVersionPlanningItems(content) {
+			if err := s.insertPlanningItemTx(tx, item, timestamp); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -466,6 +490,104 @@ func parsePlanContextEntries(content string) []ContextEntry {
 	return entries
 }
 
+func parseStateContextEntries(content string) []ContextEntry {
+	var entries []ContextEntry
+	currentSection := ""
+	for _, block := range splitMarkdownEntryBlocks("STATE", content) {
+		if block.Heading != "" {
+			currentSection = block.Heading
+		}
+		entryType := "delivery"
+		sectionLower := strings.ToLower(currentSection)
+		contentLower := strings.ToLower(block.Content)
+		switch {
+		case strings.Contains(sectionLower, "blocker"):
+			entryType = "blocker"
+		case strings.Contains(sectionLower, "metric") || strings.Contains(contentLower, "metrics:"):
+			entryType = "metric"
+		}
+		entries = append(entries, ContextEntry{
+			EntryType:    entryType,
+			DocumentType: "STATE",
+			Section:      currentSection,
+			Title:        firstLine(block.Content),
+			Content:      block.Content,
+			SourceAgent:  agentFromText(block.Content, "IMPORTER"),
+			TaskRef:      "STATE",
+		})
+	}
+	return entries
+}
+
+func parseContextDecisionEntries(content string) []ContextEntry {
+	var entries []ContextEntry
+	for _, block := range splitHeadingBlocks(content, 3) {
+		if !strings.Contains(block.heading, "—") && !strings.Contains(block.heading, "-") {
+			continue
+		}
+		entries = append(entries, ContextEntry{
+			EntryType:    "decision",
+			DocumentType: "CONTEXT",
+			Section:      "Decisions Made",
+			Title:        block.heading,
+			Content:      strings.TrimSpace(block.content),
+			SourceAgent:  agentFromText(block.heading, "IMPORTER"),
+			TaskRef:      "CONTEXT",
+		})
+	}
+	return entries
+}
+
+func parseRetrospectiveContextEntries(content string) []ContextEntry {
+	var entries []ContextEntry
+	for _, block := range splitHeadingBlocks(content, 3) {
+		if strings.TrimSpace(block.content) == "" {
+			continue
+		}
+		entries = append(entries, ContextEntry{
+			EntryType:    "retrospective",
+			DocumentType: "RETROSPECTIVE",
+			Section:      block.heading,
+			Title:        block.heading,
+			Content:      strings.TrimSpace(block.content),
+			SourceAgent:  agentFromText(block.content, "CEO"),
+			TaskRef:      "RETROSPECTIVE",
+		})
+	}
+	return entries
+}
+
+func parseVersionPlanningItems(content string) []PlanningItem {
+	blocks := splitHeadingBlocks(content, 3)
+	items := make([]PlanningItem, 0, len(blocks))
+	for _, block := range blocks {
+		if strings.TrimSpace(block.content) == "" {
+			continue
+		}
+		itemType := strings.ToLower(fieldValue(block.content, "Type"))
+		if itemType == "" {
+			switch {
+			case strings.Contains(strings.ToUpper(block.heading), "ROLLBACK"):
+				itemType = "rollback"
+			case strings.Contains(strings.ToUpper(block.heading), "BUGFIX"):
+				itemType = "bugfix"
+			default:
+				itemType = "release"
+			}
+		}
+		items = append(items, PlanningItem{
+			ItemType:    itemType,
+			Reference:   block.heading,
+			Title:       block.heading,
+			Status:      "recorded",
+			Content:     strings.TrimSpace(block.content),
+			SourceAgent: agentFromText(block.heading, "IMPORTER"),
+			TaskRef:     "VERSIONS",
+		})
+	}
+	return items
+}
+
 type headingBlock struct {
 	heading string
 	content string
@@ -517,6 +639,24 @@ func stripMarkdownTitle(value string) string {
 		return strings.TrimSpace(value[:idx])
 	}
 	return strings.TrimSpace(value)
+}
+
+func firstLine(value string) string {
+	for _, line := range strings.Split(value, "\n") {
+		if strings.TrimSpace(line) != "" {
+			return strings.TrimSpace(line)
+		}
+	}
+	return ""
+}
+
+func agentFromText(value, fallback string) string {
+	re := regexp.MustCompile(`\[([A-Za-z_/-]+)(?::[^\]]+)?\]`)
+	matches := re.FindStringSubmatch(value)
+	if len(matches) < 2 {
+		return fallback
+	}
+	return strings.ToUpper(strings.TrimSpace(matches[1]))
 }
 
 func (s *Store) insertPlanningItemTx(tx *sql.Tx, item PlanningItem, timestamp string) error {

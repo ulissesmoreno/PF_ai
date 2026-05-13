@@ -161,6 +161,113 @@ func TestImportPlanCreatesContextEntries(t *testing.T) {
 	}
 }
 
+func TestImportStateCreatesContextEntries(t *testing.T) {
+	workspace := t.TempDir()
+	docPath := filepath.Join(workspace, "DOC")
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "# STATE\n\n## What Was Completed\n\n- **[2026-05-12 10:00] — [DEV_BACKEND:Senior]:** API delivered\n  - Tests Performed: go test ./...\n\n## Blockers\n\n- **[2026-05-12 11:00] — [QA:Senior]:** Need fixture\n"
+	if err := os.WriteFile(filepath.Join(docPath, "STATE.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "DOC/STATE.md", DocumentType: "STATE", Owner: "Technical agents"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var deliveries, blockers int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM context_entries WHERE document_type = 'STATE' AND entry_type = 'delivery'").Scan(&deliveries); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM context_entries WHERE document_type = 'STATE' AND entry_type = 'blocker'").Scan(&blockers); err != nil {
+		t.Fatal(err)
+	}
+	if deliveries != 1 || blockers != 1 {
+		t.Fatalf("deliveries=%d blockers=%d, want 1/1", deliveries, blockers)
+	}
+}
+
+func TestImportContextCreatesDecisionEntries(t *testing.T) {
+	workspace := t.TempDir()
+	docPath := filepath.Join(workspace, "DOC")
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "# CONTEXT\n\n## Decisions\n\n### [2026-05-12 10:00] — [CTO]: Use SQLite\n- **Decision:** Keep local DB\n- **Why:** Simple MVP\n"
+	if err := os.WriteFile(filepath.Join(docPath, "CONTEXT.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "DOC/CONTEXT.md", DocumentType: "CONTEXT", Owner: "Management agents"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var count int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM context_entries WHERE document_type = 'CONTEXT' AND entry_type = 'decision'").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("decisions = %d, want 1", count)
+	}
+}
+
+func TestImportRetrospectiveCreatesContextEntries(t *testing.T) {
+	workspace := t.TempDir()
+	docPath := filepath.Join(workspace, "DOC")
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "# RETRO\n\n### [2026-05-12 10:00] — Phase 1: MVP\n- **Consolidated by:** [CEO]\n#### What Worked\n- Fast loop\n"
+	if err := os.WriteFile(filepath.Join(docPath, "RETROSPECTIVE.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "DOC/RETROSPECTIVE.md", DocumentType: "RETROSPECTIVE", Owner: "CEO"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var count int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM context_entries WHERE document_type = 'RETROSPECTIVE' AND entry_type = 'retrospective'").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("retrospectives = %d, want 1", count)
+	}
+}
+
+func TestImportVersionsCreatesPlanningItems(t *testing.T) {
+	workspace := t.TempDir()
+	docPath := filepath.Join(workspace, "DOC")
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "# VERSIONS\n\n### 1.1.0 — 2026-05-12 — [CEO]\n- **Type:** Release\n- **Description:** shipped\n\n### [BUGFIX] v1.1.1-fix.1 — 2026-05-13 — [QA]\n- **Severity:** High\n"
+	if err := os.WriteFile(filepath.Join(docPath, "VERSIONS.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "DOC/VERSIONS.md", DocumentType: "VERSIONS", Owner: "Phase-closing agent"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var count int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM planning_items WHERE task_ref = 'VERSIONS'").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Fatalf("version planning items = %d, want 2", count)
+	}
+}
+
 func TestSaveContextEntryProjectsReadModel(t *testing.T) {
 	workspace := t.TempDir()
 	store := openTestStore(t, workspace)
