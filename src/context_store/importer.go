@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,6 +33,7 @@ var OperationalDocuments = []DocumentSeed{
 	{Path: "DOC/TESTS.md", DocumentType: "TESTS", Owner: "QA/SECURITY/Technical agents"},
 	{Path: "DOC/VERSIONS.md", DocumentType: "VERSIONS", Owner: "Phase-closing agent"},
 	{Path: "DOC/WIKI.md", DocumentType: "WIKI_PROTOCOL", Owner: "DOCUMENTATION"},
+	{Path: "QUESTIONS.md", DocumentType: "QUESTIONS", Owner: "Management agents"},
 	{Path: "PLAYBOOK.md", DocumentType: "PLAYBOOK", Owner: "CEO"},
 }
 
@@ -413,6 +415,24 @@ func (s *Store) importPlanningCQRS(tx *sql.Tx, documentType, content, timestamp 
 				return err
 			}
 		}
+	case "TESTS":
+		for _, record := range parseTestRecords(content) {
+			if err := s.insertTestRecordTx(tx, record, timestamp); err != nil {
+				return err
+			}
+		}
+	case "QUESTIONS":
+		for _, entry := range parseQuestionContextEntries(content) {
+			if err := s.insertContextEntryTx(tx, entry, timestamp); err != nil {
+				return err
+			}
+		}
+	case "PLAYBOOK":
+		for _, entry := range parsePlaybookContextEntries(content) {
+			if err := s.insertContextEntryTx(tx, entry, timestamp); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -588,6 +608,66 @@ func parseVersionPlanningItems(content string) []PlanningItem {
 	return items
 }
 
+func parseTestRecords(content string) []TestRecord {
+	var records []TestRecord
+	for _, block := range splitHeadingBlocks(content, 3) {
+		if !strings.Contains(strings.ToLower(block.heading), "test") {
+			continue
+		}
+		status := fieldValuePlain(block.content, "Status")
+		records = append(records, TestRecord{
+			TestName:    block.heading,
+			Status:      normalizeTestStatus(status),
+			Command:     fieldValuePlain(block.content, "Command"),
+			Output:      strings.TrimSpace(block.content),
+			SourceAgent: "IMPORTER",
+			TaskRef:     testRefFromHeading(block.heading),
+		})
+	}
+	return records
+}
+
+func parseQuestionContextEntries(content string) []ContextEntry {
+	var entries []ContextEntry
+	for _, block := range splitHeadingBlocks(content, 3) {
+		if !strings.Contains(strings.ToLower(block.heading), "question") {
+			continue
+		}
+		status := strings.ToLower(fieldValuePlain(block.content, "Status"))
+		entryType := "question"
+		if strings.Contains(block.content, "**Response:**") && !strings.Contains(block.content, "[HUMAN fills here]") {
+			entryType = "answer"
+		}
+		entries = append(entries, ContextEntry{
+			EntryType:    entryType,
+			DocumentType: "QUESTIONS",
+			Section:      status,
+			Title:        block.heading,
+			Content:      strings.TrimSpace(block.content),
+			SourceAgent:  agentFromText(block.content, "IMPORTER"),
+			TaskRef:      "QUESTIONS",
+		})
+	}
+	return entries
+}
+
+func parsePlaybookContextEntries(content string) []ContextEntry {
+	var entries []ContextEntry
+	for _, entry := range splitPlaybookEntries(content) {
+		entries = append(entries, ContextEntry{
+			EntryType:    "playbook_entry",
+			DocumentType: "PLAYBOOK",
+			Section:      entry.Heading,
+			Title:        firstTableColumn(entry.Content, 2),
+			Content:      entry.Content,
+			SourceAgent:  "IMPORTER",
+			TaskRef:      "PLAYBOOK",
+			Tags:         []string{firstTableColumn(entry.Content, 3)},
+		})
+	}
+	return entries
+}
+
 type headingBlock struct {
 	heading string
 	content string
@@ -622,6 +702,49 @@ func fieldValue(content, field string) string {
 		return ""
 	}
 	return strings.TrimSpace(matches[1])
+}
+
+func fieldValuePlain(content, field string) string {
+	if value := fieldValue(content, field); value != "" {
+		return value
+	}
+	re := regexp.MustCompile(`(?m)^-\s+` + regexp.QuoteMeta(field) + `:\s*(.+?)\s*$`)
+	matches := re.FindStringSubmatch(content)
+	if len(matches) < 2 {
+		return ""
+	}
+	return strings.TrimSpace(matches[1])
+}
+
+func normalizeTestStatus(status string) string {
+	status = strings.ToLower(strings.TrimSpace(status))
+	switch status {
+	case "passed", "pass":
+		return "passed"
+	case "failed", "fail":
+		return "failed"
+	case "pending":
+		return "pending"
+	default:
+		return "pending"
+	}
+}
+
+func testRefFromHeading(heading string) string {
+	re := regexp.MustCompile(`(?i)test\s+([A-Za-z0-9._-]+|\[[^\]]+\])`)
+	matches := re.FindStringSubmatch(heading)
+	if len(matches) < 2 {
+		return ""
+	}
+	return strings.Trim(matches[1], "[]")
+}
+
+func firstTableColumn(row string, index int) string {
+	cols := strings.Split(row, "|")
+	if index >= len(cols) {
+		return ""
+	}
+	return strings.TrimSpace(cols[index])
 }
 
 func taskRefFromHeading(heading string) string {
@@ -684,12 +807,16 @@ func (s *Store) insertPlanningItemTx(tx *sql.Tx, item PlanningItem, timestamp st
 }
 
 func (s *Store) insertContextEntryTx(tx *sql.Tx, entry ContextEntry, timestamp string) error {
+	tags, err := json.Marshal(entry.Tags)
+	if err != nil {
+		return fmt.Errorf("serializar tags importadas: %w", err)
+	}
 	res, err := tx.Exec(
 		`INSERT INTO context_entries(
 			project_id, entry_type, document_type, section, title, content, source_agent, task_ref, tags, created_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		s.projectIDOrNil(), entry.EntryType, strings.ToUpper(entry.DocumentType), entry.Section,
-		entry.Title, entry.Content, entry.SourceAgent, entry.TaskRef, "[]", timestamp,
+		entry.Title, entry.Content, entry.SourceAgent, entry.TaskRef, string(tags), timestamp,
 	)
 	if err != nil {
 		return fmt.Errorf("salvar contexto importado: %w", err)
@@ -699,6 +826,28 @@ func (s *Store) insertContextEntryTx(tx *sql.Tx, entry ContextEntry, timestamp s
 		return fmt.Errorf("obter id de contexto importado: %w", err)
 	}
 	return s.projectContextItemTx(tx, "context_entries", id, strings.ToUpper(entry.DocumentType), entry.EntryType, entry.TaskRef, entry.SourceAgent, entry.Title, entry.Section, entry.Content, timestamp)
+}
+
+func (s *Store) insertTestRecordTx(tx *sql.Tx, record TestRecord, timestamp string) error {
+	if strings.TrimSpace(record.Status) == "" {
+		record.Status = "pending"
+	}
+	res, err := tx.Exec(
+		`INSERT INTO test_records(
+			project_id, test_name, status, command, output, source_agent, task_ref, created_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		s.projectIDOrNil(), record.TestName, record.Status, record.Command,
+		record.Output, record.SourceAgent, record.TaskRef, timestamp,
+	)
+	if err != nil {
+		return fmt.Errorf("salvar teste importado: %w", err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("obter id de teste importado: %w", err)
+	}
+	content := strings.TrimSpace(record.Status + "\n" + record.Command + "\n" + record.Output)
+	return s.projectContextItemTx(tx, "test_records", id, "TESTS", "record_test", record.TaskRef, record.SourceAgent, record.TestName, "", content, timestamp)
 }
 
 func (s *Store) projectContextItemTx(tx *sql.Tx, sourceTable string, sourceID int64, documentType, entryType, taskRef, agentName, title, heading, content, timestamp string) error {
@@ -730,7 +879,7 @@ func startsBulletEntry(line string) bool {
 
 func isEntryDocument(documentType string) bool {
 	switch documentType {
-	case "TASKS", "STATE", "CONTEXT", "PLAYBOOK", "TESTS", "VERSIONS", "RETROSPECTIVE":
+	case "TASKS", "STATE", "CONTEXT", "PLAYBOOK", "TESTS", "VERSIONS", "RETROSPECTIVE", "QUESTIONS":
 		return true
 	default:
 		return false

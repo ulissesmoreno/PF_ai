@@ -268,6 +268,76 @@ func TestImportVersionsCreatesPlanningItems(t *testing.T) {
 	}
 }
 
+func TestImportTestsCreatesTestRecords(t *testing.T) {
+	workspace := t.TempDir()
+	docPath := filepath.Join(workspace, "DOC")
+	if err := os.MkdirAll(docPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := "# TESTS\n\n### Test T-1 - Unit\n- Status: Passed\n- Command: go test ./...\n- Obtained result: ok\n"
+	if err := os.WriteFile(filepath.Join(docPath, "TESTS.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "DOC/TESTS.md", DocumentType: "TESTS", Owner: "QA"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var count int
+	var status string
+	if err := store.db.QueryRow("SELECT COUNT(*), MAX(status) FROM test_records WHERE task_ref = 'T-1'").Scan(&count, &status); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 || status != "passed" {
+		t.Fatalf("count=%d status=%q, want 1/passed", count, status)
+	}
+}
+
+func TestImportQuestionsCreatesContextEntries(t *testing.T) {
+	workspace := t.TempDir()
+	if err := os.WriteFile(filepath.Join(workspace, "QUESTIONS.md"), []byte("# QUESTIONS\n\n### [2026-05-12 10:00] Question: Choose DB\n- **Status:** Open\n- **Author:** [CTO]\n- **Question:** SQLite or Postgres?\n  > **Response:** [HUMAN fills here]\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "QUESTIONS.md", DocumentType: "QUESTIONS", Owner: "Management agents"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var count int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM context_entries WHERE document_type = 'QUESTIONS' AND entry_type = 'question'").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("questions = %d, want 1", count)
+	}
+}
+
+func TestImportPlaybookCreatesContextEntries(t *testing.T) {
+	workspace := t.TempDir()
+	content := "# PLAYBOOK\n\n## Preferences\n\n| Timestamp | Principle | Rationale |\n| :--- | :--- | :--- |\n| [2026-05-12 10:00] | Concise chat | Saves tokens |\n"
+	if err := os.WriteFile(filepath.Join(workspace, "PLAYBOOK.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	if err := store.ImportDocument(DocumentSeed{Path: "PLAYBOOK.md", DocumentType: "PLAYBOOK", Owner: "CEO"}); err != nil {
+		t.Fatalf("ImportDocument: %v", err)
+	}
+
+	var count int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM context_entries WHERE document_type = 'PLAYBOOK' AND entry_type = 'playbook_entry'").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("playbook entries = %d, want 1", count)
+	}
+}
+
 func TestSaveContextEntryProjectsReadModel(t *testing.T) {
 	workspace := t.TempDir()
 	store := openTestStore(t, workspace)
