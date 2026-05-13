@@ -150,6 +150,83 @@ func TestApplyAgentResponseWritesCodeFile(t *testing.T) {
 	}
 }
 
+func TestApplyAgentResponseUsesReplyToCardIDForHumanHandoff(t *testing.T) {
+	workspace := t.TempDir()
+	store := openPipelineTestStore(t, workspace)
+	defer store.Close()
+	if _, err := store.SaveCardHandoff(context_store.CardHandoff{
+		CardID:    "card-1",
+		Title:     "Need clarification",
+		TaskRef:   "TASK-1",
+		Sender:    "[CEO]",
+		Recipient: "[DEV_BACKEND]",
+		Intent:    "IMPLEMENT",
+		RawJSON:   `{}`,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	handoffDir := filepath.Join(workspace, ".agent_handoff")
+	p := New(Config{WorkspaceRoot: workspace, HandoffDir: handoffDir, ContextStore: store})
+	response := `{
+		"action": "ask_human",
+		"reply_to_card_id": "card-1",
+		"question": "Qual endpoint?",
+		"blocking": true
+	}`
+
+	result, err := p.applyAgentResponse("DEV_BACKEND", "TASK-1", "", response)
+	if err != nil {
+		t.Fatalf("applyAgentResponse: %v", err)
+	}
+	if !result.Blocked || result.CardID != "card-1" {
+		t.Fatalf("result = %#v", result)
+	}
+
+	thread, err := store.GetCardThread("card-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if thread.Card.Status != "blocked" || len(thread.Comments) != 2 {
+		t.Fatalf("thread = %#v", thread)
+	}
+	handoff := readOnlyPipelineHandoff(t, handoffDir)
+	if handoff.Header.CardID != "card-1" {
+		t.Fatalf("card_id = %q, want card-1", handoff.Header.CardID)
+	}
+}
+
+func TestApplyAgentResponseInjectsReplyToCardIDIntoOutgoingHandoff(t *testing.T) {
+	workspace := t.TempDir()
+	handoffDir := filepath.Join(workspace, ".agent_handoff")
+	p := New(Config{WorkspaceRoot: workspace, HandoffDir: handoffDir})
+	response := `{
+		"action": "handoff",
+		"reply_to_card_id": "card-1",
+		"handoff": {
+			"header": {
+				"sender": "[DEV_BACKEND]",
+				"recipient": "[QA]",
+				"task_ref": "TASK-1",
+				"intent": "TEST_REQUEST"
+			},
+			"payload": {"target": "api"}
+		}
+	}`
+
+	result, err := p.applyAgentResponse("DEV_BACKEND", "TASK-1", "", response)
+	if err != nil {
+		t.Fatalf("applyAgentResponse: %v", err)
+	}
+	if result.CardID != "card-1" {
+		t.Fatalf("cardID = %q, want card-1", result.CardID)
+	}
+	handoff := readOnlyPipelineHandoff(t, handoffDir)
+	if handoff.Header.CardID != "card-1" {
+		t.Fatalf("card_id = %q, want card-1", handoff.Header.CardID)
+	}
+}
+
 func TestApplyProjectOnboardingResponseCreatesProject(t *testing.T) {
 	workspace := t.TempDir()
 	store := openPipelineTestStore(t, workspace)
@@ -236,4 +313,24 @@ func openPipelineTestStore(t *testing.T, workspace string) *context_store.Store 
 		t.Fatalf("Open: %v", err)
 	}
 	return store
+}
+
+func readOnlyPipelineHandoff(t *testing.T, dir string) hand_off.HandoffSchema[json.RawMessage] {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("handoffs = %d, want 1", len(entries))
+	}
+	data, err := os.ReadFile(filepath.Join(dir, entries[0].Name()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var handoff hand_off.HandoffSchema[json.RawMessage]
+	if err := json.Unmarshal(data, &handoff); err != nil {
+		t.Fatal(err)
+	}
+	return handoff
 }
