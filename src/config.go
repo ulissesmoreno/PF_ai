@@ -37,17 +37,12 @@ type Config struct {
 	OllamaLLMModel   string
 	OllamaEmbedModel string
 	OllamaGemmaModel string
-	CEOProvider      string
-	CodexCEOCLI      string
-	AuditProvider    string
-	AuditAgents      []string
-	CodexAuditCLI    string
+	CodexCLI         string
 
 	// ── Timeouts ───────────────────────────────────────────────
-	PythonTimeout     time.Duration
-	AgentTimeout      time.Duration
-	CodexCEOTimeout   time.Duration
-	CodexAuditTimeout time.Duration
+	PythonTimeout time.Duration
+	AgentTimeout  time.Duration
+	CodexTimeout  time.Duration
 }
 
 func loadConfig() Config {
@@ -77,16 +72,11 @@ func loadConfig() Config {
 		OllamaLLMModel:   env("OLLAMA_LLM_MODEL", "deepseek-r1:7b"),
 		OllamaEmbedModel: env("OLLAMA_EMBED_MODEL", "nomic-embed-text"),
 		OllamaGemmaModel: env("OLLAMA_GEMMA_MODEL", "gemma4:latest"),
-		CEOProvider:      env("CEO_PROVIDER", "codex_cli"),
-		CodexCEOCLI:      env("CODEX_CEO_CLI", "codex exec -"),
-		AuditProvider:    env("AUDIT_AGENT_PROVIDER", "codex_cli"),
-		AuditAgents:      envList("AUDIT_AGENTS", []string{"SECURITY", "QA", "CODE_REVIEWER"}),
-		CodexAuditCLI:    env("CODEX_AUDIT_CLI", "codex exec -"),
+		CodexCLI:         env("CODEX_CLI", "codex exec -"),
 
-		PythonTimeout:     envDuration("PYTHON_TIMEOUT_MINUTES", 60) * time.Minute,
-		AgentTimeout:      envDuration("AGENT_TIMEOUT_SECONDS", 60) * time.Second,
-		CodexCEOTimeout:   envDuration("CODEX_CEO_TIMEOUT_SECONDS", 600) * time.Second,
-		CodexAuditTimeout: envDuration("CODEX_AUDIT_TIMEOUT_SECONDS", 600) * time.Second,
+		PythonTimeout: envDuration("PYTHON_TIMEOUT_MINUTES", 60) * time.Minute,
+		AgentTimeout:  envDuration("AGENT_TIMEOUT_SECONDS", 60) * time.Second,
+		CodexTimeout:  envDuration("CODEX_TIMEOUT_SECONDS", 600) * time.Second,
 	}
 }
 
@@ -106,22 +96,13 @@ func (c Config) log() {
 	log.Printf("  modelo llm      : %s", c.OllamaLLMModel)
 	log.Printf("  modelo embed    : %s", c.OllamaEmbedModel)
 	log.Printf("  modelo gemma4   : %s", c.OllamaGemmaModel)
-	log.Printf("  ceo provider    : %s", c.CEOProvider)
-	if strings.EqualFold(c.CEOProvider, "codex_cli") {
-		log.Printf("  codex ceo cli   : %s", c.CodexCEOCLI)
-	}
-	log.Printf("  audit provider  : %s", c.AuditProvider)
-	log.Printf("  audit agents    : %s", strings.Join(c.AuditAgents, ","))
-	if strings.EqualFold(c.AuditProvider, "codex_cli") {
-		log.Printf("  codex audit cli : %s", c.CodexAuditCLI)
-	}
+	log.Printf("  codex cli       : %s", c.CodexCLI)
 	log.Println("──")
 	log.Printf("  workers         : %d arquivo(s) paralelos", c.WorkerCount)
 	log.Printf("  embed workers   : %d chunk(s) paralelos", c.EmbedWorkerCount)
 	log.Printf("  python timeout  : %s", c.PythonTimeout)
 	log.Printf("  agent timeout   : %s", c.AgentTimeout)
-	log.Printf("  codex ceo timeout: %s", c.CodexCEOTimeout)
-	log.Printf("  codex audit timeout: %s", c.CodexAuditTimeout)
+	log.Printf("  codex timeout   : %s", c.CodexTimeout)
 	log.Println("──────────────────────────────────────────────")
 }
 
@@ -142,25 +123,6 @@ func envInt(key string, fallback int) int {
 		log.Printf("⚠️  %s inválido, usando padrão %d", key, fallback)
 	}
 	return fallback
-}
-
-func envList(key string, fallback []string) []string {
-	v := os.Getenv(key)
-	if strings.TrimSpace(v) == "" {
-		return fallback
-	}
-	raw := strings.Split(v, ",")
-	result := make([]string, 0, len(raw))
-	for _, item := range raw {
-		item = strings.ToUpper(strings.TrimSpace(item))
-		if item != "" {
-			result = append(result, item)
-		}
-	}
-	if len(result) == 0 {
-		return fallback
-	}
-	return result
 }
 
 func envDuration(key string, fallbackMinutes int) time.Duration {

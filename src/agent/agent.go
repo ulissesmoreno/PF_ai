@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -99,7 +100,8 @@ func GerarArquivo(tema string, chunks []string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("ollama api error: status %d", resp.StatusCode)
+		detail, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return "", fmt.Errorf("ollama api error: status %d model=%s body=%s", resp.StatusCode, currentModel, strings.TrimSpace(string(detail)))
 	}
 
 	var sb strings.Builder
@@ -169,6 +171,8 @@ Quando precisar criar ou atualizar arquivos de código, use este formato:
   ]
 }
 
+O content de write_code deve ser codigo puro, sem markdown, sem crases triplas e sem explicacao.
+
 Quando precisar chamar outro agente, use um handoff estruturado com "header" e "payload" ou:
 {
   "action": "handoff",
@@ -203,6 +207,11 @@ func ChamarAgenteComCodexCLI(nomeAgente, handoff, cliCommand, workspaceRoot stri
 	if agentName == "" {
 		return "", fmt.Errorf("nome do agente vazio para Codex CLI")
 	}
+	agentModel, err := ResolverModeloAgente(agentName)
+	if err != nil {
+		return "", err
+	}
+	cliCommand = expandCLICommand(cliCommand, agentModel)
 	if strings.TrimSpace(cliCommand) == "" {
 		return "", fmt.Errorf("comando Codex CLI vazio para agente %s", agentName)
 	}
@@ -216,6 +225,7 @@ func ChamarAgenteComCodexCLI(nomeAgente, handoff, cliCommand, workspaceRoot stri
 	}
 
 	prompt := fmt.Sprintf(`Voce esta atuando como o agente %s deste orquestrador local.
+Modelo configurado: %s
 
 INSTRUCOES DO AGENTE %s:
 %s
@@ -226,9 +236,10 @@ CONTRATO DE RESPOSTA:
 - Para atualizar contexto/plano/estado/testes, use acoes CQRS: update_context, update_plan, update_state, record_test, record_decision ou record_retrospective.
 - Para perguntas ao humano, gere uma acao ask_human com questions. O sistema criara um handoff _TO_HUMAN que nao passa pela pipeline ate o humano responder e renomear para o agente destinatario.
 - Para wiki/Obsidian ou codigo, use write_code com paths relativos ao workspace.
+- Para codigo, files[].content deve conter apenas o conteudo bruto do arquivo, sem markdown, sem crases triplas e sem explicacao.
 
 HANDOFF RECEBIDO:
-%s`, agentName, agentName, agentPrompt, handoff)
+%s`, agentName, agentModel, agentName, agentPrompt, handoff)
 
 	args, err := shellquote.Split(cliCommand)
 	if err != nil {
@@ -266,6 +277,13 @@ HANDOFF RECEBIDO:
 	return output, nil
 }
 
+func expandCLICommand(cliCommand, modelName string) string {
+	if strings.Contains(cliCommand, "{{MODEL}}") {
+		return strings.ReplaceAll(cliCommand, "{{MODEL}}", modelName)
+	}
+	return cliCommand
+}
+
 func callChat(url, modelName, prompt, userPrompt string) (string, error) {
 	body, err := json.Marshal(chatRequest{
 		Model: modelName,
@@ -290,7 +308,8 @@ func callChat(url, modelName, prompt, userPrompt string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("ollama api error: status %d", resp.StatusCode)
+		detail, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return "", fmt.Errorf("ollama api error: status %d model=%s body=%s", resp.StatusCode, modelName, strings.TrimSpace(string(detail)))
 	}
 
 	var sb strings.Builder
@@ -452,14 +471,58 @@ func ResolverModeloAgente(nomeAgente string) (string, error) {
 	}
 
 	agentUpper := strings.ToUpper(nomeAgente)
+	if modelFromEnv := strings.TrimSpace(os.Getenv(agentEnvKey(agentUpper, "MODEL"))); modelFromEnv != "" {
+		return modelFromEnv, nil
+	}
 	if m, exists := agentModelMap[agentUpper]; exists {
 		return m, nil
 	}
 	return "", fmt.Errorf("agente %q não mapeado em ENV_SETUP.md", nomeAgente)
 }
 
-// CarregarConfigAgente carrega modelo e system prompt para um agente específico.
-// Lê AGENTS/{nomeAgente}.md e busca a chave SYSTEM_PROMPT dentro do arquivo.
+// ResolverProviderAgente retorna "cli" ou "ollama" para o agente informado.
+// A configuracao vem de <AGENTE>_AGENT_PROVIDER; CEO usa CLI por padrao.
+func ResolverProviderAgente(nomeAgente string) string {
+	agentUpper := strings.ToUpper(strings.TrimSpace(nomeAgente))
+	if provider := strings.TrimSpace(os.Getenv(agentEnvKey(agentUpper, "PROVIDER"))); provider != "" {
+		return strings.ToLower(provider)
+	}
+	if agentUpper == "CEO" {
+		return "cli"
+	}
+	return "ollama"
+}
+
+func agentEnvKey(agentUpper, suffix string) string {
+	envNames := map[string]string{
+		"CEO":           "CEO",
+		"BA":            "BA",
+		"CTO":           "CTO",
+		"DEV_FRONTEND":  "DEV_FRONT",
+		"DEV_BACKEND":   "DEV_BACK",
+		"DBA":           "DBA",
+		"DS_ML":         "DS_ML",
+		"SECURITY":      "SECURITY",
+		"QA":            "QA",
+		"DATA_ENGINEER": "DATA_ENGINEER",
+		"PM":            "PM",
+		"UX_RESEARCHER": "UX_RESEARCHER",
+		"WRITER":        "WRITER",
+		"DOCUMENTATION": "DOCUMENTATION",
+		"ARTIST":        "ARTIST",
+		"DEVOPS":        "DEVOPS",
+		"CODE_REVIEWER": "CODE_REVIEWER",
+		"CMO":           "CMO",
+	}
+	prefix, ok := envNames[agentUpper]
+	if !ok {
+		prefix = strings.ReplaceAll(agentUpper, "-", "_")
+	}
+	return prefix + "_AGENT_" + suffix
+}
+
+// CarregarConfigAgente carrega modelo e instrucoes para um agente.
+// Primeiro tenta extrair SYSTEM_PROMPT; se nao houver chave, usa o arquivo inteiro.
 func CarregarConfigAgente(nomeAgente string) (modeloResolvido, systemPromptResolvido string, err error) {
 	modeloResolvido, err = ResolverModeloAgente(nomeAgente)
 	if err != nil {

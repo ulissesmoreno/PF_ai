@@ -194,35 +194,29 @@ func main() {
 		log.Fatalf("Importar documentos operacionais: %v", err)
 	}
 
-	log.Println("Inicializando agente CEO...")
-	if err := agent.InitComAgente(cfg.OllamaURL, "CEO"); err != nil {
-		log.Printf("Aviso ao inicializar CEO: %v", err)
+	if _, _, err := agent.CarregarConfigAgente("CEO"); err != nil {
+		log.Printf("Aviso ao carregar configuracao do CEO: %v", err)
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	pl := pipeline.New(pipeline.Config{
-		WorkerCount:       cfg.WorkerCount,
-		EmbedWorkerCount:  cfg.EmbedWorkerCount,
-		PendingPython:     cfg.PendingPython,
-		Extracted:         cfg.Extracted,
-		Processing:        cfg.Processing,
-		ProcessedPython:   cfg.ProcessedPython,
-		Success:           cfg.Success,
-		Failed:            cfg.Failed,
-		PythonTimeout:     cfg.PythonTimeout,
-		HandoffDir:        cfg.AgentHandoffDir,
-		AgentOutputDir:    cfg.AgentOutputDir,
-		WorkspaceRoot:     cfg.WorkspaceRoot,
-		ContextStore:      contextStore,
-		CEOProvider:       cfg.CEOProvider,
-		CodexCEOCLI:       cfg.CodexCEOCLI,
-		CodexCEOTimeout:   cfg.CodexCEOTimeout,
-		AuditProvider:     cfg.AuditProvider,
-		AuditAgents:       cfg.AuditAgents,
-		CodexAuditCLI:     cfg.CodexAuditCLI,
-		CodexAuditTimeout: cfg.CodexAuditTimeout,
+		WorkerCount:      cfg.WorkerCount,
+		EmbedWorkerCount: cfg.EmbedWorkerCount,
+		PendingPython:    cfg.PendingPython,
+		Extracted:        cfg.Extracted,
+		Processing:       cfg.Processing,
+		ProcessedPython:  cfg.ProcessedPython,
+		Success:          cfg.Success,
+		Failed:           cfg.Failed,
+		PythonTimeout:    cfg.PythonTimeout,
+		HandoffDir:       cfg.AgentHandoffDir,
+		AgentOutputDir:   cfg.AgentOutputDir,
+		WorkspaceRoot:    cfg.WorkspaceRoot,
+		ContextStore:     contextStore,
+		CodexCLI:         cfg.CodexCLI,
+		CodexTimeout:     cfg.CodexTimeout,
 	})
 	pl.Start(ctx)
 
@@ -261,10 +255,10 @@ func main() {
 	}()
 
 	time.Sleep(250 * time.Millisecond)
-	log.Println("Chamando CEO...")
-	if err := createCEOKickoff(cfg, contextStore); err != nil {
-		log.Printf("Erro ao criar CEO kickoff: %v", err)
-	}
+	// log.Println("Chamando CEO...")
+	// if err := createCEOKickoff(cfg, contextStore); err != nil {
+	// 	log.Printf("Erro ao criar CEO kickoff: %v", err)
+	// }
 
 	<-ctx.Done()
 	log.Println("Encerrando; aguardando jobs em andamento...")

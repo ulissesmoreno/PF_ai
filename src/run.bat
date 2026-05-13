@@ -69,11 +69,41 @@ for /f "usebackq tokens=1,* delims==" %%a in (".env") do (
 curl -sf --max-time 3 "%OLLAMA_URL%/api/tags" >nul 2>&1
 if errorlevel 1 (
     echo.
-    echo  AVISO: Ollama nao respondeu em %OLLAMA_URL%
-    echo  Certifique-se de que o Ollama esta rodando antes de continuar.
-    echo.
-    choice /c SN /m "Continuar mesmo assim? (S/N)"
-    if errorlevel 2 exit /b 1
+    echo  Ollama nao respondeu em %OLLAMA_URL%
+    echo  Tentando iniciar Ollama...
+
+    where ollama >nul 2>&1
+    if errorlevel 1 (
+        echo.
+        echo  AVISO: ollama nao encontrado no PATH.
+        echo  Instale em: https://ollama.com/download
+        echo.
+        choice /c SN /m "Continuar mesmo assim? (S/N)"
+        if errorlevel 2 exit /b 1
+    ) else (
+        start "Ollama" /min ollama serve
+        set OLLAMA_READY=0
+        for /l %%i in (1,1,20) do (
+            if "!OLLAMA_READY!"=="0" (
+                curl -sf --max-time 2 "%OLLAMA_URL%/api/tags" >nul 2>&1
+                if errorlevel 1 (
+                    timeout /t 1 /nobreak >nul
+                ) else (
+                    set OLLAMA_READY=1
+                )
+            )
+        )
+
+        if "!OLLAMA_READY!"=="0" (
+            echo.
+            echo  AVISO: Ollama foi iniciado, mas ainda nao respondeu em %OLLAMA_URL%
+            echo.
+            choice /c SN /m "Continuar mesmo assim? (S/N)"
+            if errorlevel 2 exit /b 1
+        ) else (
+            echo        Ollama iniciado e acessivel em %OLLAMA_URL%
+        )
+    )
 ) else (
     echo        Ollama acessivel em %OLLAMA_URL%
 )
