@@ -168,7 +168,15 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 		return
 	}
 
+	currentCardID := cardIDFromHandoff(data)
 	if p.cfg.ContextStore != nil {
+		cardID, err := p.recordCardHandoff(procPath, data)
+		if cardID != "" {
+			currentCardID = cardID
+		}
+		if err != nil {
+			log.Printf("[%s] Registrar card: %v", id, err)
+		}
 		if err := p.recordHandoffEvent(procPath, data); err != nil {
 			log.Printf("[%s] Registrar handoff: %v", id, err)
 		}
@@ -180,10 +188,12 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 			return
 		}
 		if handled {
+			p.updateCardStatus(currentCardID, "done")
 			p.moveFile(procPath, p.cfg.Success) //nolint
 			log.Printf("[%s] Projeto criado via onboarding", id)
 			return
 		}
+		p.updateCardStatus(currentCardID, "in_progress")
 	}
 
 	select {
@@ -206,17 +216,24 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 	if err != nil {
 		log.Printf("[%s] Agente %s falhou: %v", id, agentName, err)
 		writeError(p.cfg.Failed, id, filepath.Base(path), err)
+		p.recordCardError(currentCardID, err)
 		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
 
-	if err := p.applyAgentResponse(agentName, id, response); err != nil {
+	blocked, err := p.applyAgentResponse(agentName, id, currentCardID, response)
+	if err != nil {
 		log.Printf("[%s] Aplicar resposta do agente %s: %v", id, agentName, err)
 		writeError(p.cfg.Failed, id, filepath.Base(path), err)
+		p.recordCardError(currentCardID, err)
 		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
 
+	p.recordCardResponse(currentCardID, agentName, response)
+	if !blocked {
+		p.updateCardStatus(currentCardID, "done")
+	}
 	p.moveFile(procPath, p.cfg.Success) //nolint
 	log.Printf("[%s] Agente %s concluido", id, agentName)
 }
@@ -540,26 +557,27 @@ type projectOnboardingPayload struct {
 	StackNotes     string                 `json:"stack_notes"`
 }
 
-func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error {
+func (p *Pipeline) applyAgentResponse(agentName, taskID, cardID, response string) (bool, error) {
 	raw, err := extractJSONPayload(response)
 	if err != nil {
-		return fmt.Errorf("resposta do agente sem JSON valido: %w", err)
+		return false, fmt.Errorf("resposta do agente sem JSON valido: %w", err)
 	}
 
 	items, err := splitAgentActions(raw)
 	if err != nil {
-		return fmt.Errorf("resposta do agente nao e uma acao JSON valida: %w", err)
+		return false, fmt.Errorf("resposta do agente nao e uma acao JSON valida: %w", err)
 	}
 
+	blocked := false
 	for _, item := range items {
 		var action agentAction
 		if err := json.Unmarshal(item, &action); err != nil {
-			return fmt.Errorf("parsear ação do agente: %w", err)
+			return false, fmt.Errorf("parsear ação do agente: %w", err)
 		}
 
 		if action.Header != nil {
 			if _, err := hand_off.SaveRawHandoff(p.cfg.HandoffDir, item); err != nil {
-				return err
+				return false, err
 			}
 			continue
 		}
@@ -572,14 +590,14 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error 
 		case "write_code", "create_file", "write_files":
 			files, err := normalizeCodeFiles(action.Files)
 			if err != nil {
-				return err
+				return false, err
 			}
 			if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, files); err != nil {
-				return err
+				return false, err
 			}
 		case "update_context", "record_context", "record_decision", "record_retrospective":
 			if p.cfg.ContextStore == nil {
-				return p.saveAgentOutput(agentName, taskID, response)
+				return false, p.saveAgentOutput(agentName, taskID, response)
 			}
 			entry := action.ContextEntry
 			entry.SourceAgent = defaultString(entry.SourceAgent, agentName)
@@ -588,11 +606,11 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error 
 				entry.EntryType = strings.ToLower(action.Action)
 			}
 			if err := p.cfg.ContextStore.SaveContextEntry(entry); err != nil {
-				return err
+				return false, err
 			}
 		case "update_plan", "record_plan", "update_state", "record_task":
 			if p.cfg.ContextStore == nil {
-				return p.saveAgentOutput(agentName, taskID, response)
+				return false, p.saveAgentOutput(agentName, taskID, response)
 			}
 			item := action.PlanningItem
 			item.SourceAgent = defaultString(item.SourceAgent, agentName)
@@ -601,61 +619,63 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error 
 				item.ItemType = strings.ToLower(action.Action)
 			}
 			if err := p.cfg.ContextStore.SavePlanningItem(item); err != nil {
-				return err
+				return false, err
 			}
 		case "record_test":
 			if p.cfg.ContextStore == nil {
-				return p.saveAgentOutput(agentName, taskID, response)
+				return false, p.saveAgentOutput(agentName, taskID, response)
 			}
 			record := action.TestRecord
 			record.SourceAgent = defaultString(record.SourceAgent, agentName)
 			record.TaskRef = defaultString(record.TaskRef, taskID)
 			if err := p.cfg.ContextStore.SaveTestRecord(record); err != nil {
-				return err
+				return false, err
 			}
 		case "ask_human", "question", "clarification_for_human":
-			if err := p.createHumanHandoff(agentName, taskID, action); err != nil {
-				return err
+			if err := p.createHumanHandoff(agentName, taskID, cardID, action); err != nil {
+				return false, err
 			}
+			p.updateCardStatus(cardID, "blocked")
+			blocked = true
 		case "handoff":
 			if len(action.Handoff) > 0 {
 				action.Handoffs = append(action.Handoffs, action.Handoff)
 			}
 			for _, handoff := range action.Handoffs {
 				if _, err := hand_off.SaveRawHandoff(p.cfg.HandoffDir, handoff); err != nil {
-					return err
+					return false, err
 				}
 			}
 		case "note", "":
 			if len(action.Files) > 0 {
 				files, err := normalizeCodeFiles(action.Files)
 				if err != nil {
-					return err
+					return false, err
 				}
 				if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, files); err != nil {
-					return err
+					return false, err
 				}
 				continue
 			}
 			if len(action.Handoffs) > 0 {
 				for _, handoff := range action.Handoffs {
 					if _, err := hand_off.SaveRawHandoff(p.cfg.HandoffDir, handoff); err != nil {
-						return err
+						return false, err
 					}
 				}
 				continue
 			}
 			if action.Message != "" {
 				if err := p.saveAgentOutput(agentName, taskID, action.Message); err != nil {
-					return err
+					return false, err
 				}
 			}
 		default:
-			return fmt.Errorf("acao de agente desconhecida: %q", action.Action)
+			return false, fmt.Errorf("acao de agente desconhecida: %q", action.Action)
 		}
 	}
 
-	return nil
+	return blocked, nil
 }
 
 func detectHandoffRecipient(path string) (string, bool) {
@@ -795,7 +815,7 @@ func (p *Pipeline) saveAgentOutput(agentName, taskID, content string) error {
 	return os.WriteFile(filepath.Join(dir, name), []byte(content), 0644)
 }
 
-func (p *Pipeline) createHumanHandoff(agentName, taskID string, action agentAction) error {
+func (p *Pipeline) createHumanHandoff(agentName, taskID, cardID string, action agentAction) error {
 	questions := action.Questions
 	if strings.TrimSpace(action.Question) != "" {
 		questions = append(questions, humanQuestion{
@@ -834,14 +854,26 @@ func (p *Pipeline) createHumanHandoff(agentName, taskID string, action agentActi
 	}
 
 	header := hand_off.HandoffHeader{
+		CardID:    cardID,
 		Sender:    fmt.Sprintf("[%s]", strings.ToUpper(agentName)),
 		Recipient: "[HUMAN]",
 		TaskRef:   taskID,
 		Intent:    "HUMAN_CLARIFICATION_REQUEST",
 	}
 
-	_, err := hand_off.CreateHandoff(p.cfg.HandoffDir, header, payload)
-	return err
+	if _, err := hand_off.CreateHandoff(p.cfg.HandoffDir, header, payload); err != nil {
+		return err
+	}
+	if p.cfg.ContextStore != nil && strings.TrimSpace(cardID) != "" {
+		rawPayload, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+		if err := p.cfg.ContextStore.AddCardComment(cardID, strings.ToUpper(agentName), "handoff", string(rawPayload)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func sanitizeKey(value string) string {
@@ -878,6 +910,72 @@ func (p *Pipeline) recordHandoffEvent(path string, data []byte) error {
 		Payload:   string(parsed.Payload),
 		RawJSON:   string(data),
 	})
+}
+
+func (p *Pipeline) recordCardHandoff(path string, data []byte) (string, error) {
+	var parsed struct {
+		Header  hand_off.HandoffHeader `json:"header"`
+		Payload json.RawMessage        `json:"payload"`
+	}
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		return "", err
+	}
+	hand_off.EnsureCardID(&parsed.Header)
+	card, err := p.cfg.ContextStore.SaveCardHandoff(context_store.CardHandoff{
+		CardID:    parsed.Header.CardID,
+		Title:     parsed.Header.Intent,
+		TaskRef:   parsed.Header.TaskRef,
+		Sender:    parsed.Header.Sender,
+		Recipient: parsed.Header.Recipient,
+		Intent:    parsed.Header.Intent,
+		Payload:   string(parsed.Payload),
+		RawJSON:   string(data),
+	})
+	if err != nil {
+		return parsed.Header.CardID, err
+	}
+	return card.ID, nil
+}
+
+func (p *Pipeline) recordCardResponse(cardID, agentName, response string) {
+	if p.cfg.ContextStore == nil || strings.TrimSpace(cardID) == "" {
+		return
+	}
+	if err := p.cfg.ContextStore.AddCardComment(cardID, strings.ToUpper(agentName), "response", response); err != nil {
+		log.Printf("Registrar resposta do card %s: %v", cardID, err)
+	}
+}
+
+func (p *Pipeline) recordCardError(cardID string, err error) {
+	if p.cfg.ContextStore == nil {
+		return
+	}
+	if strings.TrimSpace(cardID) == "" {
+		return
+	}
+	if commentErr := p.cfg.ContextStore.AddCardComment(cardID, "SYSTEM", "error", err.Error()); commentErr != nil {
+		log.Printf("Registrar erro do card %s: %v", cardID, commentErr)
+	}
+	p.updateCardStatus(cardID, "failed")
+}
+
+func (p *Pipeline) updateCardStatus(cardID, status string) {
+	if p.cfg.ContextStore == nil || strings.TrimSpace(cardID) == "" {
+		return
+	}
+	if err := p.cfg.ContextStore.UpdateCardStatus(cardID, status); err != nil {
+		log.Printf("Atualizar status do card %s: %v", cardID, err)
+	}
+}
+
+func cardIDFromHandoff(data []byte) string {
+	var parsed struct {
+		Header hand_off.HandoffHeader `json:"header"`
+	}
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		return ""
+	}
+	return parsed.Header.CardID
 }
 
 func (p *Pipeline) applyProjectOnboardingResponse(taskID string, data []byte) (bool, error) {

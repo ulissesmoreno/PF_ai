@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type PhaseKickoffPayload struct {
@@ -25,6 +27,7 @@ type PhaseKickoffPayload struct {
 // HandoffHeader representa o cabeçalho obrigatório (§4.2.1)
 type HandoffHeader struct {
 	Timestamp string `json:"timestamp"`
+	CardID    string `json:"card_id,omitempty"`
 	Sender    string `json:"sender"`
 	Recipient string `json:"recipient"`
 	TaskRef   string `json:"task_ref"`
@@ -55,6 +58,7 @@ func CreateHandoff[T any](dir string, header HandoffHeader, payload T) (string, 
 	if handoff.Header.Timestamp == "" {
 		handoff.Header.Timestamp = time.Now().Format("2006-01-02 15:04")
 	}
+	EnsureCardID(&handoff.Header)
 
 	// Define o nome do arquivo: INTENT_SENDER_TASK_TIMESTAMP.json
 	fileName := fmt.Sprintf("%s_TO_%s_%s_%s.json",
@@ -90,6 +94,7 @@ func SaveRawHandoff(dir string, data []byte) (string, error) {
 	if handoff.Header.Timestamp == "" {
 		handoff.Header.Timestamp = time.Now().Format("2006-01-02 15:04")
 	}
+	EnsureCardID(&handoff.Header)
 
 	normalized, err := json.MarshalIndent(handoff, "", "  ")
 	if err != nil {
@@ -112,4 +117,10 @@ func SaveRawHandoff(dir string, data []byte) (string, error) {
 	}
 
 	return filePath, nil
+}
+
+func EnsureCardID(header *HandoffHeader) {
+	if header != nil && strings.TrimSpace(header.CardID) == "" {
+		header.CardID = uuid.NewString()
+	}
 }

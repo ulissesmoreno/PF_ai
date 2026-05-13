@@ -137,7 +137,7 @@ func TestApplyAgentResponseWritesCodeFile(t *testing.T) {
 		]
 	}`
 
-	if err := p.applyAgentResponse("DEV_BACKEND", "TASK-1", response); err != nil {
+	if _, err := p.applyAgentResponse("DEV_BACKEND", "TASK-1", "", response); err != nil {
 		t.Fatalf("applyAgentResponse returned error: %v", err)
 	}
 
@@ -215,7 +215,7 @@ func TestNormalizeCodeFilesRejectsMarkdownOutsideWiki(t *testing.T) {
 func TestApplyAgentResponseRejectsTextResponse(t *testing.T) {
 	p := New(Config{WorkspaceRoot: t.TempDir()})
 
-	err := p.applyAgentResponse("DEV_BACKEND", "TASK-1", "Claro, aqui esta o codigo:\n```python\nprint(30)\n```")
+	_, err := p.applyAgentResponse("DEV_BACKEND", "TASK-1", "", "Claro, aqui esta o codigo:\n```python\nprint(30)\n```")
 	if err == nil {
 		t.Fatal("expected text response to be rejected")
 	}
