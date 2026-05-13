@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"pf_ai/agent"
+	"pf_ai/api"
 	"pf_ai/code_writer"
 	"pf_ai/context_store"
 	"pf_ai/embeddings"
@@ -230,6 +232,18 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	apiServer := &http.Server{
+		Addr:    cfg.APIAddr,
+		Handler: api.NewHandler(contextStore),
+	}
+	go func() {
+		log.Printf("API cards em http://%s/api/cards", cfg.APIAddr)
+		if err := apiServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("API cards: %v", err)
+			cancel()
+		}
+	}()
+
 	pl := pipeline.New(pipeline.Config{
 		WorkerCount:      cfg.WorkerCount,
 		EmbedWorkerCount: cfg.EmbedWorkerCount,
@@ -290,6 +304,11 @@ func main() {
 	}
 
 	<-ctx.Done()
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	if err := apiServer.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Encerrar API cards: %v", err)
+	}
 	log.Println("Encerrando; aguardando jobs em andamento...")
 	pl.Wait()
 	log.Println("Agent encerrado")

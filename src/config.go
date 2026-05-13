@@ -38,6 +38,7 @@ type Config struct {
 	OllamaEmbedModel string
 	OllamaGemmaModel string
 	CodexCLI         string
+	APIAddr          string
 
 	// ── Timeouts ───────────────────────────────────────────────
 	PythonTimeout time.Duration
@@ -73,6 +74,7 @@ func loadConfig() Config {
 		OllamaEmbedModel: env("OLLAMA_EMBED_MODEL", "nomic-embed-text"),
 		OllamaGemmaModel: env("OLLAMA_GEMMA_MODEL", "gemma4:latest"),
 		CodexCLI:         env("CODEX_CLI", "codex exec -"),
+		APIAddr:          env("API_ADDR", "127.0.0.1:8080"),
 
 		PythonTimeout: envDuration("PYTHON_TIMEOUT_MINUTES", 60) * time.Minute,
 		AgentTimeout:  envDuration("AGENT_TIMEOUT_SECONDS", 60) * time.Second,
@@ -97,6 +99,7 @@ func (c Config) log() {
 	log.Printf("  modelo embed    : %s", c.OllamaEmbedModel)
 	log.Printf("  modelo gemma4   : %s", c.OllamaGemmaModel)
 	log.Printf("  codex cli       : %s", c.CodexCLI)
+	log.Printf("  api addr        : %s", c.APIAddr)
 	log.Println("──")
 	log.Printf("  workers         : %d arquivo(s) paralelos", c.WorkerCount)
 	log.Printf("  embed workers   : %d chunk(s) paralelos", c.EmbedWorkerCount)
