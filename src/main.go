@@ -23,19 +23,31 @@ import (
 )
 
 type ceoKickoffPayload struct {
-	Mode                         string   `json:"mode"`
-	PhaseRef                     string   `json:"phase_ref"`
-	PlanRef                      string   `json:"plan_ref"`
-	SeniorityLevel               string   `json:"seniority_level"`
-	LLMTier                      int      `json:"llm_tier"`
-	SecurityCriteria             string   `json:"security_criteria"`
-	ApplicableSkills             []string `json:"applicable_skills"`
-	Constraints                  []string `json:"constraints"`
-	Priority                     string   `json:"priority"`
-	ExplicitConclusionAuthorized bool     `json:"explicit_conclusion_authorized"`
-	AuthorizedUntilStage         *string  `json:"authorized_until_stage"`
-	Instructions                 string   `json:"instructions"`
-	PersistedContext             []string `json:"persisted_context"`
+	Mode                         string               `json:"mode"`
+	PhaseRef                     string               `json:"phase_ref"`
+	PlanRef                      string               `json:"plan_ref"`
+	SeniorityLevel               string               `json:"seniority_level"`
+	LLMTier                      int                  `json:"llm_tier"`
+	SecurityCriteria             string               `json:"security_criteria"`
+	ApplicableSkills             []string             `json:"applicable_skills"`
+	Constraints                  []string             `json:"constraints"`
+	Priority                     string               `json:"priority"`
+	ExplicitConclusionAuthorized bool                 `json:"explicit_conclusion_authorized"`
+	AuthorizedUntilStage         *string              `json:"authorized_until_stage"`
+	Instructions                 string               `json:"instructions"`
+	PersistedContext             []string             `json:"persisted_context"`
+	Action                       string               `json:"action,omitempty"`
+	CardTitle                    string               `json:"card_title,omitempty"`
+	Questions                    []onboardingQuestion `json:"questions,omitempty"`
+}
+
+type onboardingQuestion struct {
+	ID       string   `json:"id"`
+	Label    string   `json:"label"`
+	Type     string   `json:"type"`
+	Required bool     `json:"required,omitempty"`
+	Hint     string   `json:"hint,omitempty"`
+	Options  []string `json:"options,omitempty"`
 }
 
 func createCEOKickoff(cfg Config, store *context_store.Store) error {
@@ -76,14 +88,15 @@ func createCEOKickoff(cfg Config, store *context_store.Store) error {
 			return err
 		}
 	} else {
-		payload.Mode = "PROJECT_IGNITION"
+		payload.Mode = "PROJECT_ONBOARDING"
 		header.TaskRef = "ONBOARDING-1"
+		header.Intent = "PROJECT_ONBOARDING"
 		payload.PhaseRef = "PERSISTENCE://PROJECT"
 		payload.PlanRef = "PERSISTENCE://PLAN"
-		payload.Instructions, err = buildInitialPromptFromREADME(cfg.WorkspaceRoot)
-		if err != nil {
-			return err
-		}
+		payload.Action = "ask_human"
+		payload.CardTitle = "Configuracao do novo projeto"
+		payload.Questions = projectOnboardingQuestions()
+		payload.Instructions = "Crie um card bloqueado para o humano preencher o onboarding estruturado. Quando a resposta voltar, ela deve usar intent PROJECT_ONBOARDING_RESPONSE ou action create_project para persistir o projeto."
 		payload.PersistedContext, err = store.QueryContextForHandoff("CEO", "", 12)
 		if err != nil {
 			return err
@@ -97,6 +110,22 @@ func createCEOKickoff(cfg Config, store *context_store.Store) error {
 
 	log.Printf("Handoff de kickoff gerado: %s", path)
 	return nil
+}
+
+func projectOnboardingQuestions() []onboardingQuestion {
+	return []onboardingQuestion{
+		{ID: "name", Label: "Nome do projeto", Type: "text", Required: true},
+		{ID: "slug", Label: "Identificador curto (slug)", Type: "text", Required: true, Hint: "ex: pf-ai, crm-v2"},
+		{ID: "domain", Label: "Dominio", Type: "select", Options: []string{"financeiro", "saude", "logistica", "produtividade", "educacao", "outro"}},
+		{ID: "description", Label: "Descricao em uma frase", Type: "text", Required: true},
+		{ID: "target_audience", Label: "Publico-alvo", Type: "text", Required: true},
+		{ID: "main_objective", Label: "Objetivo principal", Type: "textarea"},
+		{ID: "stack_backend", Label: "Backend", Type: "text", Hint: "ex: Go 1.22, Java 21"},
+		{ID: "stack_frontend", Label: "Frontend", Type: "text", Hint: "ex: React 18, Angular 18"},
+		{ID: "stack_database", Label: "Banco de dados", Type: "text", Hint: "ex: SQLite, PostgreSQL 16"},
+		{ID: "stack_infra", Label: "Infraestrutura", Type: "text", Hint: "ex: Docker, k8s, serverless"},
+		{ID: "stack_notes", Label: "Outras tecnologias", Type: "textarea"},
+	}
 }
 
 func buildInitialPromptFromREADME(workspaceRoot string) (string, error) {
@@ -255,10 +284,10 @@ func main() {
 	}()
 
 	time.Sleep(250 * time.Millisecond)
-	// log.Println("Chamando CEO...")
-	// if err := createCEOKickoff(cfg, contextStore); err != nil {
-	// 	log.Printf("Erro ao criar CEO kickoff: %v", err)
-	// }
+	log.Println("Chamando CEO...")
+	if err := createCEOKickoff(cfg, contextStore); err != nil {
+		log.Printf("Erro ao criar CEO kickoff: %v", err)
+	}
 
 	<-ctx.Done()
 	log.Println("Encerrando; aguardando jobs em andamento...")
