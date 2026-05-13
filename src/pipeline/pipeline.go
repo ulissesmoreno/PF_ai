@@ -37,26 +37,21 @@ type Job struct {
 
 // Config agrupa parâmetros do pipeline.
 type Config struct {
-	WorkerCount       int
-	EmbedWorkerCount  int
-	PendingPython     string
-	Extracted         string
-	Processing        string
-	ProcessedPython   string
-	Success           string
-	Failed            string
-	PythonTimeout     time.Duration
-	HandoffDir        string
-	AgentOutputDir    string
-	WorkspaceRoot     string
-	ContextStore      *context_store.Store
-	CEOProvider       string
-	CodexCEOCLI       string
-	CodexCEOTimeout   time.Duration
-	AuditProvider     string
-	AuditAgents       []string
-	CodexAuditCLI     string
-	CodexAuditTimeout time.Duration
+	WorkerCount      int
+	EmbedWorkerCount int
+	PendingPython    string
+	Extracted        string
+	Processing       string
+	ProcessedPython  string
+	Success          string
+	Failed           string
+	PythonTimeout    time.Duration
+	HandoffDir       string
+	AgentOutputDir   string
+	WorkspaceRoot    string
+	ContextStore     *context_store.Store
+	CodexCLI         string
+	CodexTimeout     time.Duration
 }
 
 // Pipeline gerencia o worker pool.
@@ -64,6 +59,7 @@ type Pipeline struct {
 	cfg       Config
 	jobs      chan Job
 	wg        sync.WaitGroup
+	fileMu    sync.Mutex
 	pendingMu sync.Mutex
 	pending   map[string]chan string // id → path do .chunks.json
 }
@@ -155,7 +151,7 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 	id := fileID(path)
 	log.Printf("[%s] Chamando agente %s", id, agentName)
 
-	procPath, err := moveFile(path, p.cfg.Processing)
+	procPath, err := p.moveFile(path, p.cfg.Processing)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return
@@ -168,7 +164,7 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 	if err != nil {
 		log.Printf("[%s] Ler handoff: %v", id, err)
 		writeError(p.cfg.Failed, id, filepath.Base(path), err)
-		moveFile(procPath, p.cfg.Failed) //nolint
+		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
 
@@ -180,7 +176,7 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 
 	select {
 	case <-ctx.Done():
-		moveFile(procPath, p.cfg.Failed) //nolint
+		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	default:
 	}
@@ -198,52 +194,36 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 	if err != nil {
 		log.Printf("[%s] Agente %s falhou: %v", id, agentName, err)
 		writeError(p.cfg.Failed, id, filepath.Base(path), err)
-		moveFile(procPath, p.cfg.Failed) //nolint
+		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
 
 	if err := p.applyAgentResponse(agentName, id, response); err != nil {
 		log.Printf("[%s] Aplicar resposta do agente %s: %v", id, agentName, err)
 		writeError(p.cfg.Failed, id, filepath.Base(path), err)
-		moveFile(procPath, p.cfg.Failed) //nolint
+		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
 
-	moveFile(procPath, p.cfg.Success) //nolint
+	p.moveFile(procPath, p.cfg.Success) //nolint
 	log.Printf("[%s] Agente %s concluido", id, agentName)
 }
 
 func (p *Pipeline) callAgent(agentName, input string) (string, error) {
-	if strings.EqualFold(agentName, "CEO") && strings.EqualFold(p.cfg.CEOProvider, "codex_cli") {
+	provider := agent.ResolverProviderAgente(agentName)
+	if strings.EqualFold(provider, "cli") ||
+		strings.EqualFold(provider, "codex") ||
+		strings.EqualFold(provider, "codex_cli") {
 		return agent.ChamarAgenteComCodexCLI(
 			agentName,
 			input,
-			p.cfg.CodexCEOCLI,
+			p.cfg.CodexCLI,
 			p.cfg.WorkspaceRoot,
-			p.cfg.CodexCEOTimeout,
-		)
-	}
-
-	if p.isAuditAgent(agentName) && strings.EqualFold(p.cfg.AuditProvider, "codex_cli") {
-		return agent.ChamarAgenteComCodexCLI(
-			agentName,
-			input,
-			p.cfg.CodexAuditCLI,
-			p.cfg.WorkspaceRoot,
-			p.cfg.CodexAuditTimeout,
+			p.cfg.CodexTimeout,
 		)
 	}
 
 	return agent.ChamarAgente(agentName, input)
-}
-
-func (p *Pipeline) isAuditAgent(agentName string) bool {
-	for _, auditAgent := range p.cfg.AuditAgents {
-		if strings.EqualFold(auditAgent, agentName) {
-			return true
-		}
-	}
-	return false
 }
 
 // ── Processamento de arquivo novo ─────────────────────────────────────────────
@@ -252,11 +232,18 @@ func (p *Pipeline) handleRaw(ctx context.Context, path string) {
 	ext := strings.ToLower(filepath.Ext(path))
 	id := fileID(path)
 	nome := filepath.Base(path)
+	if ext == ".json" {
+		if agentName, ok := detectHandoffRecipient(path); ok {
+			log.Printf("[%s] JSON de handoff detectado em raw; redirecionando para agente %s", id, agentName)
+			p.handleHandoff(ctx, path, agentName)
+			return
+		}
+	}
 
 	log.Printf("⚙️  [%s] Iniciando", id)
 
 	// Mover para processing/
-	procPath, err := moveFile(path, p.cfg.Processing)
+	procPath, err := p.moveFile(path, p.cfg.Processing)
 	if err != nil {
 		log.Printf("❌ [%s] Mover para processing: %v", id, err)
 		return
@@ -269,14 +256,14 @@ func (p *Pipeline) handleRaw(ctx context.Context, path string) {
 		chunks, err = p.processNative(ctx, procPath, id, extractor.ExtractJSON)
 	default:
 		log.Printf("⚠️  [%s] Extensão não suportada: %s", id, ext)
-		moveFile(procPath, p.cfg.Failed) //nolint
+		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
 
 	if err != nil {
 		log.Printf("❌ [%s] Extração: %v", id, err)
 		writeError(p.cfg.Failed, id, nome, err)
-		moveFile(procPath, p.cfg.Failed) //nolint
+		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
 
@@ -284,11 +271,11 @@ func (p *Pipeline) handleRaw(ctx context.Context, path string) {
 	if err := p.indexAndGenerate(ctx, id, nome, chunks); err != nil {
 		log.Printf("❌ [%s] Pipeline: %v", id, err)
 		writeError(p.cfg.Failed, id, nome, err)
-		moveFile(procPath, p.cfg.Failed) //nolint
+		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
 
-	moveFile(procPath, p.cfg.Success) //nolint
+	p.moveFile(procPath, p.cfg.Success) //nolint
 	log.Printf("✅ [%s] Concluído", id)
 }
 
@@ -528,12 +515,12 @@ type humanHandoffPayload struct {
 func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error {
 	raw, err := extractJSONPayload(response)
 	if err != nil {
-		return p.saveAgentOutput(agentName, taskID, response)
+		return fmt.Errorf("resposta do agente sem JSON valido: %w", err)
 	}
 
 	items, err := splitAgentActions(raw)
 	if err != nil {
-		return p.saveAgentOutput(agentName, taskID, response)
+		return fmt.Errorf("resposta do agente nao e uma acao JSON valida: %w", err)
 	}
 
 	for _, item := range items {
@@ -555,7 +542,11 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error 
 
 		switch strings.ToLower(action.Action) {
 		case "write_code", "create_file", "write_files":
-			if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, action.Files); err != nil {
+			files, err := normalizeCodeFiles(action.Files)
+			if err != nil {
+				return err
+			}
+			if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, files); err != nil {
 				return err
 			}
 		case "update_context", "record_context", "record_decision", "record_retrospective":
@@ -609,7 +600,11 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error 
 			}
 		case "note", "":
 			if len(action.Files) > 0 {
-				if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, action.Files); err != nil {
+				files, err := normalizeCodeFiles(action.Files)
+				if err != nil {
+					return err
+				}
+				if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, files); err != nil {
 					return err
 				}
 				continue
@@ -628,11 +623,89 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error 
 				}
 			}
 		default:
-			return p.saveAgentOutput(agentName, taskID, response)
+			return fmt.Errorf("acao de agente desconhecida: %q", action.Action)
 		}
 	}
 
 	return nil
+}
+
+func detectHandoffRecipient(path string) (string, bool) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", false
+	}
+
+	var parsed struct {
+		Header hand_off.HandoffHeader `json:"header"`
+	}
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		return "", false
+	}
+
+	recipient := strings.TrimSpace(parsed.Header.Recipient)
+	if recipient == "" {
+		return "", false
+	}
+	recipient = strings.Trim(recipient, "[]")
+	if idx := strings.Index(recipient, ":"); idx >= 0 {
+		recipient = recipient[:idx]
+	}
+	if strings.EqualFold(recipient, "HUMAN") {
+		return "", false
+	}
+	return strings.ToUpper(recipient), true
+}
+
+func normalizeCodeFiles(files []code_writer.CodeFile) ([]code_writer.CodeFile, error) {
+	if len(files) == 0 {
+		return nil, fmt.Errorf("write_code sem arquivos")
+	}
+
+	normalized := make([]code_writer.CodeFile, 0, len(files))
+	for _, file := range files {
+		path := filepath.Clean(strings.TrimSpace(file.Path))
+		if path == "." || path == "" {
+			return nil, fmt.Errorf("write_code com arquivo sem path")
+		}
+		if filepath.Ext(path) == "" {
+			return nil, fmt.Errorf("write_code path sem extensao: %s", file.Path)
+		}
+
+		slashPath := filepath.ToSlash(path)
+		if strings.EqualFold(filepath.Ext(path), ".md") && !strings.HasPrefix(slashPath, "wiki/") {
+			return nil, fmt.Errorf("write_code para .md fora de wiki/ nao permitido: %s", file.Path)
+		}
+
+		content := strings.TrimSpace(file.Content)
+		content = stripSingleMarkdownFence(content)
+		if strings.Contains(content, "```") {
+			return nil, fmt.Errorf("write_code contem bloco markdown em %s", file.Path)
+		}
+		if content == "" {
+			return nil, fmt.Errorf("write_code com conteudo vazio em %s", file.Path)
+		}
+
+		normalized = append(normalized, code_writer.CodeFile{
+			Path:    path,
+			Content: content,
+		})
+	}
+	return normalized, nil
+}
+
+func stripSingleMarkdownFence(content string) string {
+	lines := strings.Split(strings.TrimSpace(content), "\n")
+	if len(lines) < 3 {
+		return strings.TrimSpace(content)
+	}
+	if !strings.HasPrefix(strings.TrimSpace(lines[0]), "```") {
+		return strings.TrimSpace(content)
+	}
+	if strings.TrimSpace(lines[len(lines)-1]) != "```" {
+		return strings.TrimSpace(content)
+	}
+	return strings.TrimSpace(strings.Join(lines[1:len(lines)-1], "\n"))
 }
 
 func extractJSONPayload(response string) ([]byte, error) {
@@ -844,19 +917,37 @@ func fileID(path string) string {
 	return strings.TrimSuffix(base, filepath.Ext(base))
 }
 
+func (p *Pipeline) moveFile(src, destDir string) (string, error) {
+	p.fileMu.Lock()
+	defer p.fileMu.Unlock()
+	return moveFile(src, destDir)
+}
+
 func moveFile(src, destDir string) (string, error) {
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return "", err
 	}
-	dest := filepath.Join(destDir, filepath.Base(src))
-	// Evitar colisão de nomes
-	if _, err := os.Stat(dest); err == nil {
-		ts := time.Now().Format("20060102_150405")
-		ext := filepath.Ext(dest)
-		stem := strings.TrimSuffix(filepath.Base(dest), ext)
-		dest = filepath.Join(destDir, fmt.Sprintf("%s_%s%s", stem, ts, ext))
+	base := filepath.Base(src)
+	ext := filepath.Ext(base)
+	stem := strings.TrimSuffix(base, ext)
+	for attempt := 0; ; attempt++ {
+		dest := filepath.Join(destDir, base)
+		if attempt > 0 {
+			dest = filepath.Join(destDir, fmt.Sprintf("%s_%s_%02d%s", stem, time.Now().UTC().Format("20060102_150405.000000000"), attempt, ext))
+		}
+		if _, err := os.Stat(dest); err == nil {
+			continue
+		} else if !os.IsNotExist(err) {
+			return "", err
+		}
+		if err := os.Rename(src, dest); err != nil {
+			if os.IsExist(err) {
+				continue
+			}
+			return "", err
+		}
+		return dest, nil
 	}
-	return dest, os.Rename(src, dest)
 }
 
 func writeError(failedDir, id, nome string, err error) {
