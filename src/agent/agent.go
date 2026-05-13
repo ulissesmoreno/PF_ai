@@ -481,14 +481,11 @@ func ResolverModeloAgente(nomeAgente string) (string, error) {
 }
 
 // ResolverProviderAgente retorna "cli" ou "ollama" para o agente informado.
-// A configuracao vem de <AGENTE>_AGENT_PROVIDER; CEO usa CLI por padrao.
+// A configuracao vem de <AGENTE>_AGENT_PROVIDER; por padrao todos usam Ollama.
 func ResolverProviderAgente(nomeAgente string) string {
 	agentUpper := strings.ToUpper(strings.TrimSpace(nomeAgente))
 	if provider := strings.TrimSpace(os.Getenv(agentEnvKey(agentUpper, "PROVIDER"))); provider != "" {
 		return strings.ToLower(provider)
-	}
-	if agentUpper == "CEO" {
-		return "cli"
 	}
 	return "ollama"
 }

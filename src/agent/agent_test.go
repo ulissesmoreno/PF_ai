@@ -6,8 +6,8 @@ func TestResolverProviderAgenteDefaults(t *testing.T) {
 	t.Setenv("CEO_AGENT_PROVIDER", "")
 	t.Setenv("DEV_BACK_AGENT_PROVIDER", "")
 
-	if got := ResolverProviderAgente("CEO"); got != "cli" {
-		t.Fatalf("CEO provider = %q, want cli", got)
+	if got := ResolverProviderAgente("CEO"); got != "ollama" {
+		t.Fatalf("CEO provider = %q, want ollama", got)
 	}
 
 	if got := ResolverProviderAgente("DEV_BACKEND"); got != "ollama" {
