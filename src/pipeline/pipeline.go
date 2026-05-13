@@ -172,6 +172,18 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 		if err := p.recordHandoffEvent(procPath, data); err != nil {
 			log.Printf("[%s] Registrar handoff: %v", id, err)
 		}
+		handled, err := p.applyProjectOnboardingResponse(id, data)
+		if err != nil {
+			log.Printf("[%s] Aplicar onboarding de projeto: %v", id, err)
+			writeError(p.cfg.Failed, id, filepath.Base(path), err)
+			p.moveFile(procPath, p.cfg.Failed) //nolint
+			return
+		}
+		if handled {
+			p.moveFile(procPath, p.cfg.Success) //nolint
+			log.Printf("[%s] Projeto criado via onboarding", id)
+			return
+		}
 	}
 
 	select {
@@ -512,6 +524,22 @@ type humanHandoffPayload struct {
 	Response     string          `json:"response"`
 }
 
+type projectOnboardingPayload struct {
+	Action         string                 `json:"action"`
+	Project        *context_store.Project `json:"project"`
+	Name           string                 `json:"name"`
+	Slug           string                 `json:"slug"`
+	Domain         string                 `json:"domain"`
+	Description    string                 `json:"description"`
+	TargetAudience string                 `json:"target_audience"`
+	MainObjective  string                 `json:"main_objective"`
+	StackBackend   string                 `json:"stack_backend"`
+	StackFrontend  string                 `json:"stack_frontend"`
+	StackDatabase  string                 `json:"stack_database"`
+	StackInfra     string                 `json:"stack_infra"`
+	StackNotes     string                 `json:"stack_notes"`
+}
+
 func (p *Pipeline) applyAgentResponse(agentName, taskID, response string) error {
 	raw, err := extractJSONPayload(response)
 	if err != nil {
@@ -850,6 +878,51 @@ func (p *Pipeline) recordHandoffEvent(path string, data []byte) error {
 		Payload:   string(parsed.Payload),
 		RawJSON:   string(data),
 	})
+}
+
+func (p *Pipeline) applyProjectOnboardingResponse(taskID string, data []byte) (bool, error) {
+	var parsed struct {
+		Header  hand_off.HandoffHeader   `json:"header"`
+		Payload projectOnboardingPayload `json:"payload"`
+	}
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		return false, err
+	}
+
+	intent := strings.ToUpper(strings.TrimSpace(parsed.Header.Intent))
+	action := strings.ToLower(strings.TrimSpace(parsed.Payload.Action))
+	if intent != "PROJECT_ONBOARDING_RESPONSE" && action != "create_project" {
+		return false, nil
+	}
+
+	project := context_store.Project{}
+	if parsed.Payload.Project != nil {
+		project = *parsed.Payload.Project
+	} else {
+		project = context_store.Project{
+			Name:           parsed.Payload.Name,
+			Slug:           parsed.Payload.Slug,
+			Domain:         parsed.Payload.Domain,
+			Description:    parsed.Payload.Description,
+			TargetAudience: parsed.Payload.TargetAudience,
+			MainObjective:  parsed.Payload.MainObjective,
+			StackBackend:   parsed.Payload.StackBackend,
+			StackFrontend:  parsed.Payload.StackFrontend,
+			StackDatabase:  parsed.Payload.StackDatabase,
+			StackInfra:     parsed.Payload.StackInfra,
+			StackNotes:     parsed.Payload.StackNotes,
+		}
+	}
+
+	created, err := p.cfg.ContextStore.CreateProject(project)
+	if err != nil {
+		return true, err
+	}
+	msg := fmt.Sprintf("[PROJECT_CREATED] id=%s slug=%s", created.ID, created.Slug)
+	if err := p.cfg.ContextStore.SaveAgentOutput("SYSTEM", taskID, "project_created", msg); err != nil {
+		return true, err
+	}
+	return true, nil
 }
 
 func (p *Pipeline) enrichHandoffWithContext(agentName string, data []byte) (string, error) {

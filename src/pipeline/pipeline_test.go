@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"pf_ai/code_writer"
+	"pf_ai/context_store"
 	"pf_ai/hand_off"
 )
 
@@ -149,6 +150,47 @@ func TestApplyAgentResponseWritesCodeFile(t *testing.T) {
 	}
 }
 
+func TestApplyProjectOnboardingResponseCreatesProject(t *testing.T) {
+	workspace := t.TempDir()
+	store := openPipelineTestStore(t, workspace)
+	defer store.Close()
+
+	p := New(Config{ContextStore: store})
+	data, err := json.Marshal(hand_off.HandoffSchema[map[string]string]{
+		Header: hand_off.HandoffHeader{
+			Sender:    "[HUMAN]",
+			Recipient: "[CEO]",
+			TaskRef:   "ONBOARDING-1",
+			Intent:    "PROJECT_ONBOARDING_RESPONSE",
+		},
+		Payload: map[string]string{
+			"name":            "PF AI",
+			"slug":            "PF AI",
+			"description":     "Agent orchestration",
+			"target_audience": "developers",
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal handoff: %v", err)
+	}
+
+	handled, err := p.applyProjectOnboardingResponse("ONBOARDING-1", data)
+	if err != nil {
+		t.Fatalf("applyProjectOnboardingResponse: %v", err)
+	}
+	if !handled {
+		t.Fatal("handled = false, want true")
+	}
+
+	project, err := store.GetActiveProject()
+	if err != nil {
+		t.Fatalf("GetActiveProject: %v", err)
+	}
+	if project.Slug != "pf-ai" {
+		t.Fatalf("slug = %q, want pf-ai", project.Slug)
+	}
+}
+
 func TestNormalizeCodeFilesStripsSingleFence(t *testing.T) {
 	files, err := normalizeCodeFiles([]code_writer.CodeFile{
 		{Path: "src/sum_code.py", Content: "```python\nprint(30)\n```"},
@@ -180,4 +222,18 @@ func TestApplyAgentResponseRejectsTextResponse(t *testing.T) {
 	if !strings.Contains(err.Error(), "sem JSON") {
 		t.Fatalf("unexpected error: %v", err)
 	}
+}
+
+func openPipelineTestStore(t *testing.T, workspace string) *context_store.Store {
+	t.Helper()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	migrationsDir := filepath.Clean(filepath.Join(wd, "..", "..", "db", "migrations"))
+	store, err := context_store.Open(filepath.Join(workspace, "data", "test.db"), migrationsDir, workspace)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	return store
 }
