@@ -107,6 +107,98 @@ func TestSaveContextEntryProjectsReadModel(t *testing.T) {
 	}
 }
 
+func TestProjectLifecycleAndStartedFlag(t *testing.T) {
+	workspace := t.TempDir()
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	started, err := store.ProjectStarted()
+	if err != nil {
+		t.Fatalf("ProjectStarted before project: %v", err)
+	}
+	if started {
+		t.Fatal("ProjectStarted = true, want false without active project")
+	}
+
+	project, err := store.CreateProject(Project{Name: "PF AI", Slug: "PF AI"})
+	if err != nil {
+		t.Fatalf("CreateProject: %v", err)
+	}
+	if project.ID == "" || project.Slug != "pf-ai" {
+		t.Fatalf("project = %#v", project)
+	}
+
+	started, err = store.ProjectStarted()
+	if err != nil {
+		t.Fatalf("ProjectStarted after project: %v", err)
+	}
+	if !started {
+		t.Fatal("ProjectStarted = false, want true with active project")
+	}
+
+	active, err := store.GetActiveProject()
+	if err != nil {
+		t.Fatalf("GetActiveProject: %v", err)
+	}
+	if active.ID != project.ID {
+		t.Fatalf("active project = %s, want %s", active.ID, project.ID)
+	}
+}
+
+func TestQueryContextForHandoffFiltersByActiveProject(t *testing.T) {
+	workspace := t.TempDir()
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	projectA, err := store.CreateProject(Project{Name: "Project A", Slug: "project-a"})
+	if err != nil {
+		t.Fatalf("CreateProject A: %v", err)
+	}
+	if err := store.SaveContextEntry(ContextEntry{
+		EntryType:    "decision",
+		DocumentType: "CONTEXT",
+		Title:        "A",
+		Content:      "context from project A",
+		SourceAgent:  "CTO",
+		TaskRef:      "TASK-1",
+	}); err != nil {
+		t.Fatalf("SaveContextEntry A: %v", err)
+	}
+
+	projectB, err := store.CreateProject(Project{Name: "Project B", Slug: "project-b"})
+	if err != nil {
+		t.Fatalf("CreateProject B: %v", err)
+	}
+	if err := store.SaveContextEntry(ContextEntry{
+		EntryType:    "decision",
+		DocumentType: "CONTEXT",
+		Title:        "B",
+		Content:      "context from project B",
+		SourceAgent:  "CTO",
+		TaskRef:      "TASK-1",
+	}); err != nil {
+		t.Fatalf("SaveContextEntry B: %v", err)
+	}
+
+	store.ActiveProjectID = projectA.ID
+	items, err := store.QueryContextForHandoff("CEO", "TASK-1", 10)
+	if err != nil {
+		t.Fatalf("QueryContextForHandoff A: %v", err)
+	}
+	if len(items) != 1 || items[0] != "context from project A" {
+		t.Fatalf("items for A = %#v", items)
+	}
+
+	store.ActiveProjectID = projectB.ID
+	items, err = store.QueryContextForHandoff("CEO", "TASK-1", 10)
+	if err != nil {
+		t.Fatalf("QueryContextForHandoff B: %v", err)
+	}
+	if len(items) != 1 || items[0] != "context from project B" {
+		t.Fatalf("items for B = %#v", items)
+	}
+}
+
 func openTestStore(t *testing.T, workspace string) *Store {
 	t.Helper()
 	wd, err := os.Getwd()

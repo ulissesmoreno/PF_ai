@@ -80,16 +80,18 @@ func (s *Store) ImportDocument(seed DocumentSeed) error {
 	defer tx.Rollback() //nolint
 
 	if _, err := tx.Exec(
-		`INSERT INTO documents(path, title, document_type, owner, created_at)
-		 VALUES (?, ?, ?, ?, ?)
+		`INSERT INTO documents(path, title, document_type, owner, project_id, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?)
 		 ON CONFLICT(path) DO UPDATE SET
 			title = excluded.title,
 			document_type = excluded.document_type,
-			owner = excluded.owner`,
+			owner = excluded.owner,
+			project_id = excluded.project_id`,
 		seed.Path,
 		title,
 		seed.DocumentType,
 		seed.Owner,
+		s.projectIDOrNil(),
 		timestamp,
 	); err != nil {
 		return fmt.Errorf("upsert documento %s: %w", seed.Path, err)
@@ -101,8 +103,9 @@ func (s *Store) ImportDocument(seed DocumentSeed) error {
 	}
 
 	res, err := tx.Exec(
-		"INSERT INTO document_imports(document_id, content_hash, imported_at) VALUES (?, ?, ?)",
+		"INSERT INTO document_imports(document_id, project_id, content_hash, imported_at) VALUES (?, ?, ?, ?)",
 		documentID,
+		s.projectIDOrNil(),
 		hash,
 		timestamp,
 	)
@@ -122,10 +125,11 @@ func (s *Store) ImportDocument(seed DocumentSeed) error {
 	for i, section := range sections {
 		res, err := tx.Exec(
 			`INSERT INTO document_sections(
-				document_id, import_id, heading, level, ordinal, content, content_hash, created_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+				document_id, import_id, project_id, heading, level, ordinal, content, content_hash, created_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			documentID,
 			importID,
+			s.projectIDOrNil(),
 			section.Heading,
 			section.Level,
 			i,
@@ -144,10 +148,11 @@ func (s *Store) ImportDocument(seed DocumentSeed) error {
 		if strings.TrimSpace(section.Content) != "" {
 			if _, err := tx.Exec(
 				`INSERT INTO knowledge_chunks(
-					source_type, source_id, document_type, heading, content, content_hash, created_at
-				) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+					source_type, source_id, project_id, document_type, heading, content, content_hash, created_at
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 				"document_section",
 				sectionID,
+				s.projectIDOrNil(),
 				seed.DocumentType,
 				section.Heading,
 				section.Content,
@@ -158,8 +163,9 @@ func (s *Store) ImportDocument(seed DocumentSeed) error {
 			}
 			if _, err := tx.Exec(
 				`INSERT INTO read_context_items(
-					source_table, source_id, document_type, entry_type, title, heading, content, content_hash, projected_at
-				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+					project_id, source_table, source_id, document_type, entry_type, title, heading, content, content_hash, projected_at
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				s.projectIDOrNil(),
 				"document_sections",
 				sectionID,
 				seed.DocumentType,
@@ -186,10 +192,11 @@ func (s *Store) importDocumentEntries(tx *sql.Tx, documentID, importID int64, se
 		}
 		res, err := tx.Exec(
 			`INSERT INTO document_entries(
-				document_id, import_id, entry_type, heading, ordinal, content, content_hash, created_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+				document_id, import_id, project_id, entry_type, heading, ordinal, content, content_hash, created_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			documentID,
 			importID,
+			s.projectIDOrNil(),
 			entry.EntryType,
 			entry.Heading,
 			i,
@@ -206,8 +213,9 @@ func (s *Store) importDocumentEntries(tx *sql.Tx, documentID, importID int64, se
 		}
 		if _, err := tx.Exec(
 			`INSERT INTO read_context_items(
-				source_table, source_id, document_type, entry_type, title, heading, content, content_hash, projected_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				project_id, source_table, source_id, document_type, entry_type, title, heading, content, content_hash, projected_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			s.projectIDOrNil(),
 			"document_entries",
 			entryID,
 			seed.DocumentType,

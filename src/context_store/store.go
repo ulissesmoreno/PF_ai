@@ -10,12 +10,33 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
 
 type Store struct {
-	db            *sql.DB
-	workspaceRoot string
+	db              *sql.DB
+	workspaceRoot   string
+	ActiveProjectID string
+}
+
+type Project struct {
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Slug           string `json:"slug"`
+	Domain         string `json:"domain"`
+	Description    string `json:"description"`
+	TargetAudience string `json:"target_audience"`
+	MainObjective  string `json:"main_objective"`
+	StackBackend   string `json:"stack_backend"`
+	StackFrontend  string `json:"stack_frontend"`
+	StackDatabase  string `json:"stack_database"`
+	StackInfra     string `json:"stack_infra"`
+	StackNotes     string `json:"stack_notes"`
+	Status         string `json:"status"`
+	WorkspaceRoot  string `json:"workspace_root"`
+	CreatedAt      string `json:"created_at"`
+	UpdatedAt      string `json:"updated_at"`
 }
 
 type ContextEntry struct {
@@ -71,6 +92,10 @@ func Open(dbPath, migrationsDir, workspaceRoot string) (*Store, error) {
 
 	store := &Store{db: db, workspaceRoot: workspaceRoot}
 	if err := store.applyMigrations(migrationsDir); err != nil {
+		db.Close()
+		return nil, err
+	}
+	if err := store.loadActiveProjectID(); err != nil {
 		db.Close()
 		return nil, err
 	}
@@ -134,6 +159,142 @@ func (s *Store) applyMigrations(migrationsDir string) error {
 	return nil
 }
 
+func (s *Store) loadActiveProjectID() error {
+	var id string
+	err := s.db.QueryRow(
+		`SELECT id FROM projects WHERE status = 'active' ORDER BY updated_at DESC, created_at DESC LIMIT 1`,
+	).Scan(&id)
+	if err == sql.ErrNoRows {
+		s.ActiveProjectID = ""
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("carregar projeto ativo: %w", err)
+	}
+	s.ActiveProjectID = id
+	return nil
+}
+
+func (s *Store) CreateProject(project Project) (*Project, error) {
+	project.ID = strings.TrimSpace(project.ID)
+	if project.ID == "" {
+		project.ID = uuid.NewString()
+	}
+	project.Name = strings.TrimSpace(project.Name)
+	if project.Name == "" {
+		return nil, fmt.Errorf("projeto sem nome")
+	}
+	project.Slug = slugify(defaultString(project.Slug, project.Name))
+	if project.Slug == "" {
+		return nil, fmt.Errorf("projeto sem slug")
+	}
+	if project.Status == "" {
+		project.Status = "active"
+	}
+	if project.WorkspaceRoot == "" {
+		project.WorkspaceRoot = s.workspaceRoot
+	}
+	timestamp := now()
+	project.CreatedAt = timestamp
+	project.UpdatedAt = timestamp
+
+	_, err := s.db.Exec(
+		`INSERT INTO projects(
+			id, name, slug, domain, description, target_audience, main_objective,
+			stack_backend, stack_frontend, stack_database, stack_infra, stack_notes,
+			status, workspace_root, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		project.ID, project.Name, project.Slug, project.Domain, project.Description,
+		project.TargetAudience, project.MainObjective, project.StackBackend,
+		project.StackFrontend, project.StackDatabase, project.StackInfra, project.StackNotes,
+		project.Status, project.WorkspaceRoot, project.CreatedAt, project.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("criar projeto: %w", err)
+	}
+	if project.Status == "active" {
+		s.ActiveProjectID = project.ID
+	}
+	return &project, nil
+}
+
+func (s *Store) GetActiveProject() (*Project, error) {
+	row := s.db.QueryRow(
+		`SELECT id, name, slug, domain, description, target_audience, main_objective,
+		        stack_backend, stack_frontend, stack_database, stack_infra, stack_notes,
+		        status, workspace_root, created_at, updated_at
+		   FROM projects
+		  WHERE status = 'active'
+		  ORDER BY updated_at DESC, created_at DESC
+		  LIMIT 1`,
+	)
+	return scanProject(row)
+}
+
+func (s *Store) ListProjects() ([]Project, error) {
+	rows, err := s.db.Query(
+		`SELECT id, name, slug, domain, description, target_audience, main_objective,
+		        stack_backend, stack_frontend, stack_database, stack_infra, stack_notes,
+		        status, workspace_root, created_at, updated_at
+		   FROM projects
+		  ORDER BY status, updated_at DESC, created_at DESC`,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("listar projetos: %w", err)
+	}
+	defer rows.Close()
+
+	var projects []Project
+	for rows.Next() {
+		project, err := scanProject(rows)
+		if err != nil {
+			return nil, err
+		}
+		projects = append(projects, *project)
+	}
+	return projects, rows.Err()
+}
+
+func (s *Store) ActivateProject(id string) error {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return fmt.Errorf("id de projeto vazio")
+	}
+	res, err := s.db.Exec("UPDATE projects SET status = 'active', updated_at = ? WHERE id = ?", now(), id)
+	if err != nil {
+		return fmt.Errorf("ativar projeto: %w", err)
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("validar projeto ativado: %w", err)
+	}
+	if affected == 0 {
+		return sql.ErrNoRows
+	}
+	s.ActiveProjectID = id
+	return nil
+}
+
+func (s *Store) ArchiveProject(id string) error {
+	id = strings.TrimSpace(id)
+	res, err := s.db.Exec("UPDATE projects SET status = 'archived', updated_at = ? WHERE id = ?", now(), id)
+	if err != nil {
+		return fmt.Errorf("arquivar projeto: %w", err)
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("validar projeto arquivado: %w", err)
+	}
+	if affected == 0 {
+		return sql.ErrNoRows
+	}
+	if s.ActiveProjectID == id {
+		s.ActiveProjectID = ""
+		return s.loadActiveProjectID()
+	}
+	return nil
+}
+
 func (s *Store) SaveContextEntry(entry ContextEntry) error {
 	if strings.TrimSpace(entry.Content) == "" {
 		return fmt.Errorf("context entry sem conteúdo")
@@ -152,8 +313,9 @@ func (s *Store) SaveContextEntry(entry ContextEntry) error {
 
 	res, err := s.db.Exec(
 		`INSERT INTO context_entries(
-			entry_type, document_type, section, title, content, source_agent, task_ref, tags, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			project_id, entry_type, document_type, section, title, content, source_agent, task_ref, tags, created_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		s.projectIDOrNil(),
 		entry.EntryType,
 		strings.ToUpper(entry.DocumentType),
 		entry.Section,
@@ -184,8 +346,9 @@ func (s *Store) SavePlanningItem(item PlanningItem) error {
 
 	res, err := s.db.Exec(
 		`INSERT INTO planning_items(
-			item_type, reference, title, status, priority, content, source_agent, task_ref, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			project_id, item_type, reference, title, status, priority, content, source_agent, task_ref, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		s.projectIDOrNil(),
 		item.ItemType,
 		item.Reference,
 		item.Title,
@@ -214,8 +377,9 @@ func (s *Store) SaveTestRecord(record TestRecord) error {
 
 	res, err := s.db.Exec(
 		`INSERT INTO test_records(
-			test_name, status, command, output, source_agent, task_ref, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			project_id, test_name, status, command, output, source_agent, task_ref, created_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		s.projectIDOrNil(),
 		record.TestName,
 		record.Status,
 		record.Command,
@@ -244,8 +408,9 @@ func (s *Store) SaveAgentOutput(agentName, taskID, action, content string) error
 	}
 
 	res, err := s.db.Exec(
-		`INSERT INTO agent_outputs(agent_name, task_id, action, content, created_at)
-		 VALUES (?, ?, ?, ?, ?)`,
+		`INSERT INTO agent_outputs(project_id, agent_name, task_id, action, content, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?)`,
+		s.projectIDOrNil(),
 		strings.ToUpper(agentName),
 		taskID,
 		action,
@@ -265,8 +430,9 @@ func (s *Store) SaveAgentOutput(agentName, taskID, action, content string) error
 func (s *Store) SaveHandoffEvent(event HandoffEvent) error {
 	_, err := s.db.Exec(
 		`INSERT INTO handoff_events(
-			path, sender, recipient, task_ref, intent, payload, raw_json, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			project_id, path, sender, recipient, task_ref, intent, payload, raw_json, created_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		s.projectIDOrNil(),
 		event.Path,
 		event.Sender,
 		event.Recipient,
@@ -290,13 +456,16 @@ func (s *Store) QueryContextForHandoff(agentName, taskRef string, limit int) ([]
 	rows, err := s.db.Query(
 		`SELECT content
 		   FROM read_context_items
-		  WHERE (? = '' OR task_ref = ? OR task_ref = '' OR task_ref IS NULL)
+		  WHERE (? IS NULL OR project_id = ?)
+		    AND (? = '' OR task_ref = ? OR task_ref = '' OR task_ref IS NULL)
 		    AND NOT (
 				source_table = 'document_sections'
 				AND document_type IN ('TASKS', 'STATE', 'CONTEXT', 'PLAYBOOK', 'TESTS', 'VERSIONS', 'RETROSPECTIVE')
 			)
 		  ORDER BY projected_at DESC
 		  LIMIT ?`,
+		s.projectIDOrNil(),
+		s.projectIDOrNil(),
 		taskRef,
 		taskRef,
 		limit,
@@ -318,59 +487,11 @@ func (s *Store) QueryContextForHandoff(agentName, taskRef string, limit int) ([]
 }
 
 func (s *Store) ProjectStarted() (bool, error) {
-	rows, err := s.db.Query(
-		`SELECT ds.content
-		   FROM document_sections ds
-		   JOIN documents d ON d.id = ds.document_id
-		   JOIN document_imports di ON di.id = ds.import_id
-		  WHERE d.document_type = 'PROJECT'
-		    AND di.id = (
-				SELECT MAX(di2.id)
-				  FROM document_imports di2
-				  JOIN documents d2 ON d2.id = di2.document_id
-				 WHERE d2.document_type = 'PROJECT'
-			)
-		  ORDER BY ds.ordinal`,
-	)
-	if err != nil {
-		return false, fmt.Errorf("consultar PROJECT persistido: %w", err)
+	var count int
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM projects WHERE status = 'active'").Scan(&count); err != nil {
+		return false, fmt.Errorf("consultar projetos ativos: %w", err)
 	}
-	defer rows.Close()
-
-	var parts []string
-	for rows.Next() {
-		var content string
-		if err := rows.Scan(&content); err != nil {
-			return false, err
-		}
-		parts = append(parts, content)
-	}
-	if err := rows.Err(); err != nil {
-		return false, err
-	}
-	if len(parts) == 0 {
-		return false, nil
-	}
-
-	content := strings.ToLower(strings.Join(parts, "\n"))
-	placeholderSignals := []string{
-		"[project_name]",
-		"[nome do projeto]",
-		"[descrição",
-		"[descricao",
-		"[resumo",
-		"[quem usa",
-		"[placeholder",
-		"[preenchido",
-		"[filled",
-	}
-	for _, signal := range placeholderSignals {
-		if strings.Contains(content, signal) {
-			return false, nil
-		}
-	}
-
-	return true, nil
+	return count > 0, nil
 }
 
 func (s *Store) projectContextItem(sourceTable string, sourceID int64, documentType, entryType, taskRef, agentName, title, heading, content string) error {
@@ -379,9 +500,10 @@ func (s *Store) projectContextItem(sourceTable string, sourceID int64, documentT
 	}
 	_, err := s.db.Exec(
 		`INSERT INTO read_context_items(
-			source_table, source_id, document_type, entry_type, task_ref, agent_name,
+			project_id, source_table, source_id, document_type, entry_type, task_ref, agent_name,
 			title, heading, content, content_hash, projected_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		s.projectIDOrNil(),
 		sourceTable,
 		sourceID,
 		documentType,
@@ -398,6 +520,80 @@ func (s *Store) projectContextItem(sourceTable string, sourceID int64, documentT
 		return fmt.Errorf("projetar read model: %w", err)
 	}
 	return nil
+}
+
+func (s *Store) projectIDOrNil() any {
+	if strings.TrimSpace(s.ActiveProjectID) == "" {
+		return nil
+	}
+	return s.ActiveProjectID
+}
+
+type scanner interface {
+	Scan(dest ...any) error
+}
+
+func scanProject(row scanner) (*Project, error) {
+	var project Project
+	var domain, description, targetAudience, mainObjective sql.NullString
+	var stackBackend, stackFrontend, stackDatabase, stackInfra, stackNotes sql.NullString
+	var workspaceRoot sql.NullString
+	if err := row.Scan(
+		&project.ID,
+		&project.Name,
+		&project.Slug,
+		&domain,
+		&description,
+		&targetAudience,
+		&mainObjective,
+		&stackBackend,
+		&stackFrontend,
+		&stackDatabase,
+		&stackInfra,
+		&stackNotes,
+		&project.Status,
+		&workspaceRoot,
+		&project.CreatedAt,
+		&project.UpdatedAt,
+	); err != nil {
+		return nil, err
+	}
+	project.Domain = domain.String
+	project.Description = description.String
+	project.TargetAudience = targetAudience.String
+	project.MainObjective = mainObjective.String
+	project.StackBackend = stackBackend.String
+	project.StackFrontend = stackFrontend.String
+	project.StackDatabase = stackDatabase.String
+	project.StackInfra = stackInfra.String
+	project.StackNotes = stackNotes.String
+	project.WorkspaceRoot = workspaceRoot.String
+	return &project, nil
+}
+
+func defaultString(value, fallback string) string {
+	if strings.TrimSpace(value) != "" {
+		return value
+	}
+	return fallback
+}
+
+func slugify(value string) string {
+	var sb strings.Builder
+	lastDash := false
+	for _, r := range strings.ToLower(strings.TrimSpace(value)) {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			sb.WriteRune(r)
+			lastDash = false
+		default:
+			if !lastDash && sb.Len() > 0 {
+				sb.WriteRune('-')
+				lastDash = true
+			}
+		}
+	}
+	return strings.Trim(sb.String(), "-")
 }
 
 func now() string {
