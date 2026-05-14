@@ -4,4 +4,6 @@ TODO.md
 .gocache/
 bin/
 src/.bin/
+src/.runtime/
 data/
+logs/
