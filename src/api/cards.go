@@ -21,6 +21,11 @@ func NewHandler(store *context_store.Store, handoffDir ...string) http.Handler {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", h.health)
+	mux.HandleFunc("GET /api/health", h.health)
+	mux.HandleFunc("GET /api/projects", h.listProjects)
+	mux.HandleFunc("POST /api/projects", h.createProject)
+	mux.HandleFunc("POST /api/projects/", h.projectAction)
+	mux.HandleFunc("PATCH /api/projects/", h.updateProject)
 	mux.HandleFunc("GET /api/cards", h.listCards)
 	mux.HandleFunc("PUT /api/cards/", h.respondCard)
 	mux.HandleFunc("GET /api/cards/", h.getCard)
@@ -28,7 +33,21 @@ func NewHandler(store *context_store.Store, handoffDir ...string) http.Handler {
 }
 
 func (h *Handler) health(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	active, err := h.store.GetActiveProject()
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status":            "ok",
+			"active_project_id": "",
+			"project_started":   false,
+		})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":            "ok",
+		"active_project_id": active.ID,
+		"active_project":    active,
+		"project_started":   true,
+	})
 }
 
 func (h *Handler) listCards(w http.ResponseWriter, r *http.Request) {

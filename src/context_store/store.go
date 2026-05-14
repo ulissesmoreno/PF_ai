@@ -231,6 +231,18 @@ func (s *Store) GetActiveProject() (*Project, error) {
 	return scanProject(row)
 }
 
+func (s *Store) GetProject(id string) (*Project, error) {
+	row := s.db.QueryRow(
+		`SELECT id, name, slug, domain, description, target_audience, main_objective,
+		        stack_backend, stack_frontend, stack_database, stack_infra, stack_notes,
+		        status, workspace_root, created_at, updated_at
+		   FROM projects
+		  WHERE id = ?`,
+		strings.TrimSpace(id),
+	)
+	return scanProject(row)
+}
+
 func (s *Store) ListProjects() ([]Project, error) {
 	rows, err := s.db.Query(
 		`SELECT id, name, slug, domain, description, target_audience, main_objective,
@@ -253,6 +265,48 @@ func (s *Store) ListProjects() ([]Project, error) {
 		projects = append(projects, *project)
 	}
 	return projects, rows.Err()
+}
+
+func (s *Store) UpdateProject(id string, project Project) (*Project, error) {
+	current, err := s.GetProject(id)
+	if err != nil {
+		return nil, err
+	}
+	project.ID = current.ID
+	project.Name = defaultString(project.Name, current.Name)
+	project.Slug = slugify(defaultString(project.Slug, current.Slug))
+	project.Domain = defaultString(project.Domain, current.Domain)
+	project.Description = defaultString(project.Description, current.Description)
+	project.TargetAudience = defaultString(project.TargetAudience, current.TargetAudience)
+	project.MainObjective = defaultString(project.MainObjective, current.MainObjective)
+	project.StackBackend = defaultString(project.StackBackend, current.StackBackend)
+	project.StackFrontend = defaultString(project.StackFrontend, current.StackFrontend)
+	project.StackDatabase = defaultString(project.StackDatabase, current.StackDatabase)
+	project.StackInfra = defaultString(project.StackInfra, current.StackInfra)
+	project.StackNotes = defaultString(project.StackNotes, current.StackNotes)
+	project.Status = defaultString(project.Status, current.Status)
+	project.WorkspaceRoot = defaultString(project.WorkspaceRoot, current.WorkspaceRoot)
+
+	_, err = s.db.Exec(
+		`UPDATE projects
+		    SET name = ?, slug = ?, domain = ?, description = ?, target_audience = ?,
+		        main_objective = ?, stack_backend = ?, stack_frontend = ?, stack_database = ?,
+		        stack_infra = ?, stack_notes = ?, status = ?, workspace_root = ?, updated_at = ?
+		  WHERE id = ?`,
+		project.Name, project.Slug, project.Domain, project.Description, project.TargetAudience,
+		project.MainObjective, project.StackBackend, project.StackFrontend, project.StackDatabase,
+		project.StackInfra, project.StackNotes, project.Status, project.WorkspaceRoot, now(), project.ID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("atualizar projeto: %w", err)
+	}
+	if project.Status == "active" {
+		s.ActiveProjectID = project.ID
+	} else if s.ActiveProjectID == project.ID {
+		s.ActiveProjectID = ""
+		_ = s.loadActiveProjectID()
+	}
+	return s.GetProject(project.ID)
 }
 
 func (s *Store) ActivateProject(id string) error {
