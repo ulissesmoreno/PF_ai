@@ -485,6 +485,53 @@ func TestQueryContextForHandoffFiltersByActiveProject(t *testing.T) {
 	}
 }
 
+func TestQueryContextForHandoffRanksTaskAndAgent(t *testing.T) {
+	workspace := t.TempDir()
+	store := openTestStore(t, workspace)
+	defer store.Close()
+	if _, err := store.CreateProject(Project{Name: "PF AI", Slug: "pf-ai"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SaveContextEntry(ContextEntry{
+		EntryType:    "decision",
+		DocumentType: "CONTEXT",
+		Title:        "generic",
+		Content:      "generic context",
+		SourceAgent:  "CEO",
+		TaskRef:      "TASK-0",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SaveContextEntry(ContextEntry{
+		EntryType:    "decision",
+		DocumentType: "CONTEXT",
+		Title:        "agent",
+		Content:      "agent context",
+		SourceAgent:  "QA",
+		TaskRef:      "TASK-0",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SaveContextEntry(ContextEntry{
+		EntryType:    "decision",
+		DocumentType: "CONTEXT",
+		Title:        "task",
+		Content:      "task context",
+		SourceAgent:  "CEO",
+		TaskRef:      "TASK-42",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	items, err := store.QueryContextForHandoff("QA", "TASK-42", 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) < 2 || items[0] != "task context" || items[1] != "agent context" {
+		t.Fatalf("items = %#v", items)
+	}
+}
+
 func openTestStore(t *testing.T, workspace string) *Store {
 	t.Helper()
 	wd, err := os.Getwd()

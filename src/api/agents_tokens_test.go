@@ -66,3 +66,18 @@ func TestTokenUsageAPI(t *testing.T) {
 		t.Fatalf("usage = %#v", usage)
 	}
 }
+
+func TestDashboardRoute(t *testing.T) {
+	store := openAPITestStore(t)
+	defer store.Close()
+
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	rec := httptest.NewRecorder()
+	NewHandler(store).ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d", rec.Code)
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("PF AI Cards")) {
+		t.Fatalf("dashboard body missing title")
+	}
+}

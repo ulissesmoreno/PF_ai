@@ -506,21 +506,32 @@ func (s *Store) QueryContextForHandoff(agentName, taskRef string, limit int) ([]
 	if limit <= 0 {
 		limit = 12
 	}
+	agentName = strings.ToUpper(strings.TrimSpace(agentName))
+	taskRef = strings.TrimSpace(taskRef)
 
 	rows, err := s.db.Query(
 		`SELECT content
 		   FROM read_context_items
 		  WHERE (? IS NULL OR project_id = ?)
-		    AND (? = '' OR task_ref = ? OR task_ref = '' OR task_ref IS NULL)
 		    AND NOT (
 				source_table = 'document_sections'
 				AND document_type IN ('TASKS', 'STATE', 'CONTEXT', 'PLAYBOOK', 'TESTS', 'VERSIONS', 'RETROSPECTIVE')
 			)
-		  ORDER BY projected_at DESC
+		  ORDER BY
+			CASE
+				WHEN ? <> '' AND task_ref = ? THEN 100
+				WHEN agent_name = ? THEN 70
+				WHEN document_type IN ('TESTS', 'PLAN') AND ? <> '' THEN 50
+				WHEN task_ref = '' OR task_ref IS NULL THEN 10
+				ELSE 0
+			END DESC,
+			projected_at DESC
 		  LIMIT ?`,
 		s.projectIDOrNil(),
 		s.projectIDOrNil(),
 		taskRef,
+		taskRef,
+		agentName,
 		taskRef,
 		limit,
 	)

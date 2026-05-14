@@ -20,6 +20,8 @@ func NewHandler(store *context_store.Store, handoffDir ...string) http.Handler {
 		h.handoffDir = handoffDir[0]
 	}
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", h.dashboard)
+	mux.HandleFunc("GET /dashboard", h.dashboard)
 	mux.HandleFunc("GET /health", h.health)
 	mux.HandleFunc("GET /api/health", h.health)
 	mux.HandleFunc("GET /api/projects", h.listProjects)

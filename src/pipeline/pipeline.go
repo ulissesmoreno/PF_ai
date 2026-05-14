@@ -1209,7 +1209,8 @@ func (p *Pipeline) enrichHandoffWithContext(agentName string, data []byte) (stri
 		return string(data), err
 	}
 
-	contextItems, err := p.cfg.ContextStore.QueryContextForHandoff(agentName, parsed.Header.TaskRef, 8)
+	limit := contextLimitForAgent(agentName)
+	contextItems, err := p.cfg.ContextStore.QueryContextForHandoff(agentName, parsed.Header.TaskRef, limit)
 	if err != nil {
 		return string(data), err
 	}
@@ -1224,7 +1225,19 @@ func (p *Pipeline) enrichHandoffWithContext(agentName string, data []byte) (stri
 	for i, item := range contextItems {
 		sb.WriteString(fmt.Sprintf("\n--- contexto %d ---\n%s\n", i+1, item))
 	}
+	log.Printf("Contexto injetado: agente=%s task_ref=%s itens=%d limite=%d", agentName, parsed.Header.TaskRef, len(contextItems), limit)
 	return sb.String(), nil
+}
+
+func contextLimitForAgent(agentName string) int {
+	switch strings.ToUpper(strings.TrimSpace(agentName)) {
+	case "CEO", "CTO", "BA", "PM", "TECH_LEAD", "CODE_REVIEWER", "SECURITY":
+		return 20
+	case "QA", "WRITER", "DOCUMENTATION", "ARTIST", "CMO":
+		return 3
+	default:
+		return 5
+	}
 }
 
 func defaultString(value, fallback string) string {
