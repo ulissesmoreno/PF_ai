@@ -70,3 +70,42 @@ func TestHumanCardStartsBlocked(t *testing.T) {
 		t.Fatalf("status = %q, want blocked", card.Status)
 	}
 }
+
+func TestRecordCardFailureRetriesUntilLimit(t *testing.T) {
+	store := openTestStore(t, t.TempDir())
+	defer store.Close()
+	if _, err := store.SaveCardHandoff(CardHandoff{
+		CardID:    "card-retry",
+		Title:     "Retry me",
+		Sender:    "[CEO]",
+		Recipient: "[DEV_BACKEND]",
+		Intent:    "IMPLEMENT",
+		RawJSON:   `{}`,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < 3; i++ {
+		retry, err := store.RecordCardFailure("card-retry", "temporary error")
+		if err != nil {
+			t.Fatalf("RecordCardFailure %d: %v", i, err)
+		}
+		if !retry {
+			t.Fatalf("retry %d = false, want true", i)
+		}
+	}
+	retry, err := store.RecordCardFailure("card-retry", "final error")
+	if err != nil {
+		t.Fatalf("RecordCardFailure final: %v", err)
+	}
+	if retry {
+		t.Fatal("retry after limit = true, want false")
+	}
+	card, err := store.GetCard("card-retry")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if card.Status != "failed" || card.RetryCount != 3 {
+		t.Fatalf("card = %#v", card)
+	}
+}

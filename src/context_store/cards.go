@@ -132,6 +132,30 @@ func (s *Store) CancelCard(cardID string) error {
 	return s.UpdateCardStatus(cardID, "canceled")
 }
 
+func (s *Store) RecordCardFailure(cardID, content string) (bool, error) {
+	card, err := s.GetCard(cardID)
+	if err != nil {
+		return false, err
+	}
+	if err := s.AddCardComment(cardID, "SYSTEM", "error", content); err != nil {
+		return false, err
+	}
+	if card.RetryCount >= card.MaxRetries {
+		if err := s.UpdateCardStatus(cardID, "failed"); err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+	_, err = s.db.Exec(
+		"UPDATE cards SET retry_count = retry_count + 1, status = ?, updated_at = ? WHERE id = ?",
+		"open", now(), cardID,
+	)
+	if err != nil {
+		return false, fmt.Errorf("incrementar retry do card: %w", err)
+	}
+	return true, nil
+}
+
 func (s *Store) GetCard(id string) (*Card, error) {
 	row := s.db.QueryRow(
 		`SELECT id, project_id, title, task_ref, sender, recipient, intent, status, priority,

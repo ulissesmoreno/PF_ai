@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -56,6 +57,54 @@ func TestGetCardThread(t *testing.T) {
 	}
 	if thread.Card.ID != "card-2" || len(thread.Comments) != 2 {
 		t.Fatalf("thread = %#v", thread)
+	}
+}
+
+func TestRespondCardCreatesHumanResponseHandoff(t *testing.T) {
+	store := openAPITestStore(t)
+	defer store.Close()
+	seedCard(t, store, "card-3")
+	handoffDir := t.TempDir()
+
+	body := bytes.NewBufferString(`{"response":{"answer":"Use /api/cards"},"author":"[HUMAN]"}`)
+	req := httptest.NewRequest(http.MethodPut, "/api/cards/card-3/respond", body)
+	rec := httptest.NewRecorder()
+	NewHandler(store, handoffDir).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("status = %d body=%s", rec.Code, rec.Body.String())
+	}
+	thread, err := store.GetCardThread("card-3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if thread.Card.Status != "in_progress" || len(thread.Comments) != 2 {
+		t.Fatalf("thread = %#v", thread)
+	}
+	entries, err := os.ReadDir(handoffDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("handoffs = %d, want 1", len(entries))
+	}
+	data, err := os.ReadFile(filepath.Join(handoffDir, entries[0].Name()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var handoff struct {
+		Header struct {
+			CardID    string `json:"card_id"`
+			Sender    string `json:"sender"`
+			Recipient string `json:"recipient"`
+			Intent    string `json:"intent"`
+		} `json:"header"`
+	}
+	if err := json.Unmarshal(data, &handoff); err != nil {
+		t.Fatal(err)
+	}
+	if handoff.Header.CardID != "card-3" || handoff.Header.Sender != "[HUMAN]" || handoff.Header.Recipient != "[DEV_BACKEND]" {
+		t.Fatalf("handoff = %#v", handoff)
 	}
 }
 

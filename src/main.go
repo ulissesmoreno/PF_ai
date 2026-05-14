@@ -234,7 +234,7 @@ func main() {
 
 	apiServer := &http.Server{
 		Addr:    cfg.APIAddr,
-		Handler: api.NewHandler(contextStore),
+		Handler: api.NewHandler(contextStore, cfg.AgentHandoffDir),
 	}
 	go func() {
 		log.Printf("API cards em http://%s/api/cards", cfg.APIAddr)

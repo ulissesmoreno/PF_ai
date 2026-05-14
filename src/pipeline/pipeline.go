@@ -215,8 +215,9 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 	response, err := p.callAgent(agentName, agentInput)
 	if err != nil {
 		log.Printf("[%s] Agente %s falhou: %v", id, agentName, err)
-		writeError(p.cfg.Failed, id, filepath.Base(path), err)
-		p.recordCardError(currentCardID, err)
+		if p.retryCardHandoff(procPath, currentCardID, err) {
+			return
+		}
 		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
@@ -224,8 +225,9 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 	result, err := p.applyAgentResponse(agentName, id, currentCardID, response)
 	if err != nil {
 		log.Printf("[%s] Aplicar resposta do agente %s: %v", id, agentName, err)
-		writeError(p.cfg.Failed, id, filepath.Base(path), err)
-		p.recordCardError(currentCardID, err)
+		if p.retryCardHandoff(procPath, currentCardID, err) {
+			return
+		}
 		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
@@ -950,7 +952,7 @@ func (p *Pipeline) createHumanHandoff(agentName, taskID, cardID string, action a
 		if err != nil {
 			return err
 		}
-		if err := p.cfg.ContextStore.AddCardComment(cardID, strings.ToUpper(agentName), "handoff", string(rawPayload)); err != nil {
+		if err := p.cfg.ContextStore.AddCardComment(cardID, strings.ToUpper(agentName), "form", string(rawPayload)); err != nil {
 			return err
 		}
 	}
@@ -1042,6 +1044,38 @@ func (p *Pipeline) recordCardError(cardID string, err error) {
 		log.Printf("Registrar erro do card %s: %v", cardID, commentErr)
 	}
 	p.updateCardStatus(cardID, "failed")
+}
+
+func (p *Pipeline) retryCardHandoff(path, cardID string, err error) bool {
+	if p.cfg.ContextStore == nil || strings.TrimSpace(cardID) == "" {
+		writeError(p.cfg.Failed, fileID(path), filepath.Base(path), err)
+		p.recordCardError(cardID, err)
+		return false
+	}
+	retry, recordErr := p.cfg.ContextStore.RecordCardFailure(cardID, err.Error())
+	if recordErr != nil {
+		log.Printf("Registrar retry do card %s: %v", cardID, recordErr)
+		writeError(p.cfg.Failed, fileID(path), filepath.Base(path), err)
+		p.recordCardError(cardID, err)
+		return false
+	}
+	if !retry {
+		writeError(p.cfg.Failed, fileID(path), filepath.Base(path), err)
+		return false
+	}
+	card, getErr := p.cfg.ContextStore.GetCard(cardID)
+	backoff := time.Second
+	if getErr == nil && card.RetryCount > 0 {
+		backoff = time.Duration(1<<(card.RetryCount-1)) * time.Second
+	}
+	time.Sleep(backoff)
+	if _, moveErr := p.moveFile(path, p.cfg.HandoffDir); moveErr != nil {
+		log.Printf("Reenfileirar card %s: %v", cardID, moveErr)
+		writeError(p.cfg.Failed, fileID(path), filepath.Base(path), moveErr)
+		return false
+	}
+	log.Printf("Card %s reenfileirado apos erro: %v", cardID, err)
+	return true
 }
 
 func (p *Pipeline) updateCardStatus(cardID, status string) {

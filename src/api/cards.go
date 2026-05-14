@@ -6,17 +6,23 @@ import (
 	"strings"
 
 	"pf_ai/context_store"
+	"pf_ai/hand_off"
 )
 
 type Handler struct {
-	store *context_store.Store
+	store      *context_store.Store
+	handoffDir string
 }
 
-func NewHandler(store *context_store.Store) http.Handler {
+func NewHandler(store *context_store.Store, handoffDir ...string) http.Handler {
 	h := &Handler{store: store}
+	if len(handoffDir) > 0 {
+		h.handoffDir = handoffDir[0]
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", h.health)
 	mux.HandleFunc("GET /api/cards", h.listCards)
+	mux.HandleFunc("PUT /api/cards/", h.respondCard)
 	mux.HandleFunc("GET /api/cards/", h.getCard)
 	return mux
 }
@@ -43,7 +49,7 @@ func (h *Handler) listCards(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getCard(w http.ResponseWriter, r *http.Request) {
-	id := strings.TrimPrefix(r.URL.Path, "/api/cards/")
+	id := cardPathID(r.URL.Path, "")
 	id = strings.TrimSpace(id)
 	if id == "" || strings.Contains(id, "/") {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "card not found"})
@@ -55,6 +61,80 @@ func (h *Handler) getCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, thread)
+}
+
+type cardRespondRequest struct {
+	Author    string          `json:"author"`
+	Response  json.RawMessage `json:"response"`
+	Questions json.RawMessage `json:"questions"`
+}
+
+func (h *Handler) respondCard(w http.ResponseWriter, r *http.Request) {
+	if !strings.HasSuffix(r.URL.Path, "/respond") {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "card not found"})
+		return
+	}
+	id := cardPathID(r.URL.Path, "/respond")
+	if id == "" {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "card not found"})
+		return
+	}
+	card, err := h.store.GetCard(id)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "card not found"})
+		return
+	}
+	var req cardRespondRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	content, err := json.Marshal(req)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	author := strings.TrimSpace(req.Author)
+	if author == "" {
+		author = "[HUMAN]"
+	}
+	if err := h.store.AddCardComment(id, author, "response", string(content)); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if err := h.store.UpdateCardStatus(id, "in_progress"); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if h.handoffDir != "" {
+		payload := map[string]any{
+			"reply_to_card_id": id,
+			"response":         req.Response,
+			"questions":        req.Questions,
+		}
+		path, err := hand_off.CreateHandoff(h.handoffDir, hand_off.HandoffHeader{
+			CardID:    id,
+			Sender:    "[HUMAN]",
+			Recipient: card.Recipient,
+			TaskRef:   card.TaskRef,
+			Intent:    "HUMAN_RESPONSE",
+		}, payload)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+		writeJSON(w, http.StatusAccepted, map[string]any{"card": card, "handoff_path": path})
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]any{"card": card})
+}
+
+func cardPathID(path, suffix string) string {
+	id := strings.TrimPrefix(path, "/api/cards/")
+	if suffix != "" {
+		id = strings.TrimSuffix(id, suffix)
+	}
+	return strings.Trim(id, "/")
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
