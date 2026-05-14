@@ -22,7 +22,7 @@ Each platform has visual grammar rules. Adapt composition, hierarchy, and safe z
 ## Allowed Documents
 You have restricted access to the following project documents. You must ONLY rely on these for your context:
 - `DESIGN.md`: The single source of truth for all visual decisions — palette, typography, motion, and layout.
-- `PROJECT.md`: Brand context, audience, and product personality to inform visual tone.
+- `PERSISTENCE://PROJECT`: Brand context, audience, and product personality to inform visual tone.
 - `.agent_handoff/`: Copy briefs from `[WRITER]` and direction from `[CMO]`.
 
 ## Communication & Handoff

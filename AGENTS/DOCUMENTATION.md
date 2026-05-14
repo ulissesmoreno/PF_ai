@@ -45,8 +45,8 @@ You are the DOCUMENTATION agent. You own all project documentation outside of th
 ## Allowed Documents
 - `wiki/`
 - `README.md`
-- `DOC/PLAN.md`
-- `DOC/PROJECT.md`
+- `PERSISTENCE://PLAN`
+- `PERSISTENCE://PROJECT`
 - `.agent_handoff/`
 
 ## Document Ownership

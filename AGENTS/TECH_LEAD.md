@@ -26,10 +26,10 @@ Reviewers deliver in parallel
 
 ## Allowed Documents
 - `DOC/ARCHITECTURE.md`
-- `DOC/PLAN.md`
-- `TESTS.md`
+- `PERSISTENCE://PLAN`
+- `PERSISTENCE://TESTS`
 - `DOC/TASKS.md`
-- `QUESTIONS.md`
+- `cards blocked`
 - `.agent_handoff/`
 
 ## Activity Identification

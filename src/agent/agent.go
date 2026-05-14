@@ -184,9 +184,9 @@ Quando precisar chamar outro agente, use um handoff estruturado com "header" e "
 Se não houver arquivo ou handoff a gerar, use:
 {"action":"note","message":"resumo objetivo da execução"}
 
-Quando a resposta for atualização operacional, não escreva DOC/*.md. Use uma ação de banco:
+Quando a resposta for atualização operacional, não escreva arquivos operacionais legados. Use uma ação de banco:
 {"action":"update_context","document_type":"CONTEXT","section":"...","title":"...","content":"...","tags":["..."]}
-{"action":"update_plan","item_type":"plan","reference":"DOC/PLAN.md#...","title":"...","status":"...","priority":"...","content":"..."}
+{"action":"update_plan","item_type":"plan","reference":"PERSISTENCE://PLAN/...","title":"...","status":"...","priority":"...","content":"..."}
 {"action":"record_test","test_name":"...","status":"PASSED|FAILED|SKIPPED","command":"...","output":"..."}
 {"action":"ask_human","questions":[{"question":"...","priority":"High|Medium|Low","blocking":true}]}
 
@@ -443,11 +443,11 @@ func CarregarVariavel(chave string) (string, error) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Resolução de Modelos por Agente (baseado em ENV_SETUP.md)
+// Resolução de Modelos por Agente.
 // ────────────────────────────────────────────────────────────────────
 
 // ResolverModeloAgente retorna o modelo LLM para o agente especificado.
-// Mapeia agentes a seus respectivos modelos conforme ENV_SETUP.md seção 3.1.
+// Mapeia agentes aos seus respectivos modelos padrão.
 func ResolverModeloAgente(nomeAgente string) (string, error) {
 	agentModelMap := map[string]string{
 		"CEO":           "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
@@ -477,7 +477,7 @@ func ResolverModeloAgente(nomeAgente string) (string, error) {
 	if m, exists := agentModelMap[agentUpper]; exists {
 		return m, nil
 	}
-	return "", fmt.Errorf("agente %q não mapeado em ENV_SETUP.md", nomeAgente)
+	return "", fmt.Errorf("agente %q não mapeado", nomeAgente)
 }
 
 // ResolverProviderAgente retorna "cli" ou "ollama" para o agente informado.

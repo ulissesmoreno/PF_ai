@@ -67,8 +67,8 @@ func createCEOKickoff(cfg Config, store *context_store.Store) error {
 
 	payload := ceoKickoffPayload{
 		Mode:             "CONTINUE_PLAN",
-		PhaseRef:         "DOC/ROADMAP.md#Phase-1",
-		PlanRef:          "DOC/PLAN.md#Stage-1",
+		PhaseRef:         "PERSISTENCE://ROADMAP/Phase-1",
+		PlanRef:          "PERSISTENCE://PLAN/Stage-1",
 		SeniorityLevel:   "Senior",
 		LLMTier:          3,
 		SecurityCriteria: "Initial threat model: JWT isolation and input sanitization.",
@@ -84,7 +84,7 @@ func createCEOKickoff(cfg Config, store *context_store.Store) error {
 	}
 
 	if projectStarted {
-		payload.Instructions = "Projeto iniciado detectado na persistencia. Continue o plano usando o contexto persistido. Gere handoffs estruturados para os agentes apropriados. Atualizacoes operacionais devem usar acoes CQRS como update_context, update_plan e record_test. Wiki deve ser criada/atualizada como arquivo em wiki/. Perguntas ao humano devem usar ask_human para gerar handoff JSON _TO_HUMAN_."
+		payload.Instructions = "Projeto iniciado detectado na persistencia. Continue o plano usando o contexto persistido. Gere handoffs estruturados para os agentes apropriados. Atualizacoes operacionais devem usar acoes CQRS como update_context, update_plan e record_test. Wiki pode ser criada/atualizada como arquivo em wiki/ quando for documentacao de produto. Perguntas ao humano devem usar ask_human para gerar card bloqueado."
 		payload.PersistedContext, err = store.QueryContextForHandoff("CEO", "", 20)
 		if err != nil {
 			return err
@@ -145,12 +145,12 @@ func buildInitialPromptFromREADME(workspaceRoot string) (string, error) {
 	adaptation := `
 
 [ADAPTAÇÃO PARA ORQUESTRAÇÃO COM PERSISTÊNCIA]
-- Não edite DOC/*.md diretamente para contexto, plano, estado, testes, decisões ou retrospectiva.
+- Não edite arquivos operacionais legados para contexto, plano, estado, testes, decisões ou retrospectiva.
 - Use ações CQRS append-only: update_context, update_plan, update_state, record_test, record_decision e record_retrospective.
 - Use write_code apenas para código e arquivos reais exigidos pelo filesystem, incluindo wiki/*.md para Obsidian.
-- Perguntas ao humano devem usar ask_human para gerar handoff JSON _TO_HUMAN_; o humano responde e renomeia para _TO_CEO_ ou para o agente de destino.
+- Perguntas ao humano devem usar ask_human para gerar card bloqueado; o humano responde via API/cards.
 - Monte próximos handoffs usando o contexto persistido recebido em persisted_context.
-- Se o PROJECT persistido ainda estiver em template/placeholders, conduza onboarding pelo CEO antes de delegar implementação.
+- Se não houver projeto ativo persistido, conduza onboarding pelo CEO antes de delegar implementação.
 `
 
 	return strings.TrimSpace(prompt) + adaptation, nil
