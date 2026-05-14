@@ -220,6 +220,7 @@ func main() {
 		log.Fatalf("Context store: %v", err)
 	}
 	defer contextStore.Close()
+	agent.SetConfigStore(contextStore)
 
 	if err := contextStore.ImportOperationalDocuments(); err != nil {
 		log.Fatalf("Importar documentos operacionais: %v", err)

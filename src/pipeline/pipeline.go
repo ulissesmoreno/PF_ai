@@ -212,7 +212,7 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 		}
 	}
 
-	response, err := p.callAgent(agentName, agentInput)
+	response, err := p.callAgent(agentName, agentInput, currentCardID)
 	if err != nil {
 		log.Printf("[%s] Agente %s falhou: %v", id, agentName, err)
 		if p.retryCardHandoff(procPath, currentCardID, err) {
@@ -240,21 +240,37 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 	log.Printf("[%s] Agente %s concluido", id, agentName)
 }
 
-func (p *Pipeline) callAgent(agentName, input string) (string, error) {
+func (p *Pipeline) callAgent(agentName, input, cardID string) (string, error) {
 	provider := agent.ResolverProviderAgente(agentName)
 	if strings.EqualFold(provider, "cli") ||
 		strings.EqualFold(provider, "codex") ||
 		strings.EqualFold(provider, "codex_cli") {
-		return agent.ChamarAgenteComCodexCLI(
+		start := time.Now()
+		response, err := agent.ChamarAgenteComCodexCLI(
 			agentName,
 			input,
 			p.cfg.CodexCLI,
 			p.cfg.WorkspaceRoot,
 			p.cfg.CodexTimeout,
 		)
+		if err == nil {
+			p.recordTokenUsage(cardID, agentName, agent.TokenUsage{
+				AgentName:        agentName,
+				Model:            mustAgentModel(agentName),
+				Tier:             agent.ResolverTierAgente(agentName),
+				PromptTokens:     estimarTokens(input),
+				CompletionTokens: estimarTokens(response),
+				LatencyMS:        time.Since(start).Milliseconds(),
+			})
+		}
+		return response, err
 	}
 
-	return agent.ChamarAgente(agentName, input)
+	response, usage, err := agent.ChamarAgenteComUso(agentName, input)
+	if err == nil {
+		p.recordTokenUsage(cardID, agentName, usage)
+	}
+	return response, err
 }
 
 // ── Processamento de arquivo novo ─────────────────────────────────────────────
@@ -1044,6 +1060,45 @@ func (p *Pipeline) recordCardError(cardID string, err error) {
 		log.Printf("Registrar erro do card %s: %v", cardID, commentErr)
 	}
 	p.updateCardStatus(cardID, "failed")
+}
+
+func (p *Pipeline) recordTokenUsage(cardID, agentName string, usage agent.TokenUsage) {
+	if p.cfg.ContextStore == nil {
+		return
+	}
+	if usage.AgentName == "" {
+		usage.AgentName = agentName
+	}
+	if usage.Model == "" {
+		usage.Model = mustAgentModel(agentName)
+	}
+	if usage.Tier == 0 {
+		usage.Tier = agent.ResolverTierAgente(agentName)
+	}
+	if usage.TotalTokens == 0 {
+		usage.TotalTokens = usage.PromptTokens + usage.CompletionTokens
+	}
+	err := p.cfg.ContextStore.SaveTokenUsage(context_store.TokenUsage{
+		CardID:           cardID,
+		AgentName:        usage.AgentName,
+		Model:            usage.Model,
+		Tier:             usage.Tier,
+		PromptTokens:     usage.PromptTokens,
+		CompletionTokens: usage.CompletionTokens,
+		TotalTokens:      usage.TotalTokens,
+		LatencyMS:        usage.LatencyMS,
+	})
+	if err != nil {
+		log.Printf("Registrar token usage do card %s: %v", cardID, err)
+	}
+}
+
+func mustAgentModel(agentName string) string {
+	model, err := agent.ResolverModeloAgente(agentName)
+	if err != nil {
+		return "unknown"
+	}
+	return model
 }
 
 func (p *Pipeline) retryCardHandoff(path, cardID string, err error) bool {

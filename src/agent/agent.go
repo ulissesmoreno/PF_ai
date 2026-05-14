@@ -15,8 +15,24 @@ import (
 	"sync"
 	"time"
 
+	"pf_ai/context_store"
+
 	"github.com/kballard/go-shellquote"
 )
+
+type ConfigStore interface {
+	GetAgentConfig(name string) (*context_store.AgentConfig, error)
+}
+
+type TokenUsage struct {
+	AgentName        string
+	Model            string
+	Tier             int
+	PromptTokens     int
+	CompletionTokens int
+	TotalTokens      int
+	LatencyMS        int64
+}
 
 var (
 	mu           sync.RWMutex
@@ -24,6 +40,7 @@ var (
 	model        string
 	systemPrompt string // Carregado dinamicamente de AGENTS/
 	agentsDir    = "AGENTS"
+	configStore  ConfigStore
 	client       = &http.Client{Timeout: 60 * time.Minute}
 )
 
@@ -31,6 +48,12 @@ func SetConfigDir(dir string) {
 	mu.Lock()
 	defer mu.Unlock()
 	agentsDir = dir
+}
+
+func SetConfigStore(store ConfigStore) {
+	mu.Lock()
+	defer mu.Unlock()
+	configStore = store
 }
 
 // Init configura o cliente do agente LLM e carrega as definições de AGENTS/.
@@ -55,8 +78,10 @@ type chatRequest struct {
 }
 
 type streamChunk struct {
-	Message message `json:"message"`
-	Done    bool    `json:"done"`
+	Message         message `json:"message"`
+	Done            bool    `json:"done"`
+	PromptEvalCount int     `json:"prompt_eval_count"`
+	EvalCount       int     `json:"eval_count"`
 }
 
 // GerarArquivo transforma chunks de contexto em uma nota estruturada para Obsidian.
@@ -195,7 +220,60 @@ Para wiki/Obsidian, crie arquivos markdown reais em wiki/ usando write_code.
 Handoff recebido:
 %s`, strings.ToUpper(nomeAgente), handoff)
 
-	return callChat(currentURL, modeloResolvido, promptResolvido, userPrompt)
+	result, _, err := callChatWithUsage(currentURL, modeloResolvido, agentTier(nomeAgente), promptResolvido, userPrompt)
+	return result, err
+}
+
+func ChamarAgenteComUso(nomeAgente, handoff string) (string, TokenUsage, error) {
+	modeloResolvido, promptResolvido, err := CarregarConfigAgente(nomeAgente)
+	if err != nil {
+		return "", TokenUsage{}, fmt.Errorf("carregar agente %s: %w", nomeAgente, err)
+	}
+
+	mu.RLock()
+	currentURL := ollamaURL
+	mu.RUnlock()
+	if currentURL == "" {
+		return "", TokenUsage{}, fmt.Errorf("ollama url não inicializada")
+	}
+
+	userPrompt := fmt.Sprintf(`Você recebeu um handoff para execução.
+
+Leia o handoff e responda exclusivamente com um JSON válido.
+
+Quando precisar criar ou atualizar arquivos de código, use este formato:
+{
+  "action": "write_code",
+  "files": [
+    {"path": "caminho/relativo/ao/workspace.ext", "content": "conteúdo completo do arquivo"}
+  ]
+}
+
+O content de write_code deve ser codigo puro, sem markdown, sem crases triplas e sem explicacao.
+
+Quando precisar chamar outro agente, use um handoff estruturado com "header" e "payload" ou:
+{
+  "action": "handoff",
+  "handoffs": [
+    {"header": {"sender": "[%s]", "recipient": "[AGENTE]", "task_ref": "TASK-XXX", "intent": "..."}, "payload": {}}
+  ]
+}
+
+Se não houver arquivo ou handoff a gerar, use:
+{"action":"note","message":"resumo objetivo da execução"}
+
+Quando a resposta for atualização operacional, não escreva arquivos operacionais legados. Use uma ação de banco:
+{"action":"update_context","document_type":"CONTEXT","section":"...","title":"...","content":"...","tags":["..."]}
+{"action":"update_plan","item_type":"plan","reference":"PERSISTENCE://PLAN/...","title":"...","status":"...","priority":"...","content":"..."}
+{"action":"record_test","test_name":"...","status":"PASSED|FAILED|SKIPPED","command":"...","output":"..."}
+{"action":"ask_human","questions":[{"question":"...","priority":"High|Medium|Low","blocking":true}]}
+
+Para wiki/Obsidian, crie arquivos markdown reais em wiki/ usando write_code.
+
+Handoff recebido:
+%s`, strings.ToUpper(nomeAgente), handoff)
+
+	return callChatWithUsage(currentURL, modeloResolvido, agentTier(nomeAgente), promptResolvido, userPrompt)
 }
 
 func ChamarCEOComCodexCLI(handoff, cliCommand, workspaceRoot string, timeout time.Duration) (string, error) {
@@ -285,6 +363,11 @@ func expandCLICommand(cliCommand, modelName string) string {
 }
 
 func callChat(url, modelName, prompt, userPrompt string) (string, error) {
+	result, _, err := callChatWithUsage(url, modelName, 0, prompt, userPrompt)
+	return result, err
+}
+
+func callChatWithUsage(url, modelName string, tier int, prompt, userPrompt string) (string, TokenUsage, error) {
 	body, err := json.Marshal(chatRequest{
 		Model: modelName,
 		Messages: []message{
@@ -294,25 +377,29 @@ func callChat(url, modelName, prompt, userPrompt string) (string, error) {
 		Stream: true,
 	})
 	if err != nil {
-		return "", err
+		return "", TokenUsage{}, err
 	}
 
+	start := time.Now()
 	resp, err := client.Post(
 		url+"/api/chat",
 		"application/json",
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		return "", fmt.Errorf("ollama connection: %w", err)
+		return "", TokenUsage{}, fmt.Errorf("ollama connection: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		detail, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return "", fmt.Errorf("ollama api error: status %d model=%s body=%s", resp.StatusCode, modelName, strings.TrimSpace(string(detail)))
+		return "", TokenUsage{}, fmt.Errorf("ollama api error: status %d model=%s body=%s", resp.StatusCode, modelName, strings.TrimSpace(string(detail)))
 	}
 
 	var sb strings.Builder
+	var usage TokenUsage
+	usage.Model = modelName
+	usage.Tier = tier
 	scanner := bufio.NewScanner(resp.Body)
 	buf := make([]byte, 0, 64*1024)
 	scanner.Buffer(buf, 512*1024)
@@ -330,14 +417,18 @@ func callChat(url, modelName, prompt, userPrompt string) (string, error) {
 
 		sb.WriteString(chunk.Message.Content)
 		if chunk.Done {
+			usage.PromptTokens = chunk.PromptEvalCount
+			usage.CompletionTokens = chunk.EvalCount
 			break
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("ler resposta do modelo: %w", err)
+		return "", usage, fmt.Errorf("ler resposta do modelo: %w", err)
 	}
+	usage.TotalTokens = usage.PromptTokens + usage.CompletionTokens
+	usage.LatencyMS = time.Since(start).Milliseconds()
 
-	return strings.TrimSpace(sb.String()), nil
+	return strings.TrimSpace(sb.String()), usage, nil
 }
 
 func salvarPromptLocal(tema string, conteudo string) error {
@@ -474,10 +565,46 @@ func ResolverModeloAgente(nomeAgente string) (string, error) {
 	if modelFromEnv := strings.TrimSpace(os.Getenv(agentEnvKey(agentUpper, "MODEL"))); modelFromEnv != "" {
 		return modelFromEnv, nil
 	}
+	if config := agentConfigFromStore(agentUpper); config != nil && config.Model != "" {
+		return config.Model, nil
+	}
 	if m, exists := agentModelMap[agentUpper]; exists {
 		return m, nil
 	}
 	return "", fmt.Errorf("agente %q não mapeado", nomeAgente)
+}
+
+func ResolverTierAgente(nomeAgente string) int {
+	return agentTier(nomeAgente)
+}
+
+func agentTier(nomeAgente string) int {
+	agentUpper := strings.ToUpper(strings.TrimSpace(nomeAgente))
+	if config := agentConfigFromStore(agentUpper); config != nil && config.Tier > 0 {
+		return config.Tier
+	}
+	switch agentUpper {
+	case "CEO", "CTO", "SECURITY", "PM", "CODE_REVIEWER":
+		return 3
+	case "QA", "WRITER", "DOCUMENTATION", "ARTIST", "CMO":
+		return 1
+	default:
+		return 2
+	}
+}
+
+func agentConfigFromStore(agentUpper string) *context_store.AgentConfig {
+	mu.RLock()
+	store := configStore
+	mu.RUnlock()
+	if store == nil {
+		return nil
+	}
+	config, err := store.GetAgentConfig(agentUpper)
+	if err != nil || config == nil || !config.Active {
+		return nil
+	}
+	return config
 }
 
 // ResolverProviderAgente retorna "cli" ou "ollama" para o agente informado.
