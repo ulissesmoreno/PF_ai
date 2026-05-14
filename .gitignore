@@ -3,4 +3,5 @@
 TODO.md
 .gocache/
 bin/
+src/.bin/
 data/

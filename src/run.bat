@@ -1,10 +1,12 @@
 @echo off
 setlocal EnableDelayedExpansion
+cd /d "%~dp0"
 
 title PF Agent
 
 set CGO_ENABLED=0
-set BINARY=..\bin\pf-agent.exe
+set GOCACHE=%cd%\.gocache
+set BINARY=.bin\pf-agent_%RANDOM%.exe
 
 echo.
 echo  ================================================
@@ -48,7 +50,7 @@ for %%d in (
     ..\.agent_handoff\success
     ..\.agent_handoff\failed
     ..\AGENTS
-    ..\bin
+    .bin
     ..\output
     ..\data
     ..\logs
@@ -110,8 +112,6 @@ if errorlevel 1 (
 echo.
 
 echo [5/6] Compilando...
-if exist "%BINARY%" del /f /q "%BINARY%"
-
 go build -ldflags="-s -w" -o %BINARY% .
 if errorlevel 1 (
     echo.
