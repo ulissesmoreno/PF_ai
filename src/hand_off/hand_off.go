@@ -84,6 +84,7 @@ func CreateHandoff[T any](dir string, header HandoffHeader, payload T) (string, 
 }
 
 func SaveRawHandoff(dir string, data []byte) (string, error) {
+	data = StripUTF8BOM(data)
 	var handoff HandoffSchema[json.RawMessage]
 	if err := json.Unmarshal(data, &handoff); err != nil {
 		return "", fmt.Errorf("handoff json inválido: %w", err)
@@ -123,4 +124,11 @@ func EnsureCardID(header *HandoffHeader) {
 	if header != nil && strings.TrimSpace(header.CardID) == "" {
 		header.CardID = uuid.NewString()
 	}
+}
+
+func StripUTF8BOM(data []byte) []byte {
+	if len(data) >= 3 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF {
+		return data[3:]
+	}
+	return data
 }

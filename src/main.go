@@ -298,10 +298,12 @@ func main() {
 		}
 	}()
 
-	time.Sleep(250 * time.Millisecond)
-	log.Println("Chamando CEO...")
-	if err := createCEOKickoff(cfg, contextStore); err != nil {
-		log.Printf("Erro ao criar CEO kickoff: %v", err)
+	if !envBool("DISABLE_AUTO_CEO_KICKOFF") {
+		time.Sleep(250 * time.Millisecond)
+		log.Println("Chamando CEO...")
+		if err := createCEOKickoff(cfg, contextStore); err != nil {
+			log.Printf("Erro ao criar CEO kickoff: %v", err)
+		}
 	}
 
 	<-ctx.Done()

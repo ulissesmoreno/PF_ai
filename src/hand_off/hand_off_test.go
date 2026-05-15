@@ -48,3 +48,23 @@ func TestSaveRawHandoffPreservesCardID(t *testing.T) {
 		t.Fatalf("card_id = %q, want card-1", handoff.Header.CardID)
 	}
 }
+
+func TestSaveRawHandoffAcceptsUTF8BOM(t *testing.T) {
+	raw := append([]byte{0xEF, 0xBB, 0xBF}, []byte(`{"header":{"card_id":"card-bom","sender":"[CEO]","recipient":"[DEV_BACKEND]","intent":"IMPLEMENT"},"payload":{"task":"build"}}`)...)
+	path, err := SaveRawHandoff(t.TempDir(), raw)
+	if err != nil {
+		t.Fatalf("SaveRawHandoff: %v", err)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var handoff HandoffSchema[map[string]string]
+	if err := json.Unmarshal(data, &handoff); err != nil {
+		t.Fatal(err)
+	}
+	if handoff.Header.CardID != "card-bom" {
+		t.Fatalf("card_id = %q, want card-bom", handoff.Header.CardID)
+	}
+}

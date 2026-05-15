@@ -167,6 +167,7 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
 	}
+	data = hand_off.StripUTF8BOM(data)
 
 	currentCardID := cardIDFromHandoff(data)
 	if p.cfg.ContextStore != nil {
@@ -233,7 +234,9 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 	}
 
 	p.recordCardResponse(result.CardID, agentName, response)
-	if !result.Blocked {
+	if result.Delegated {
+		p.updateCardStatus(result.CardID, "in_progress")
+	} else if !result.Blocked {
 		p.updateCardStatus(result.CardID, "done")
 	}
 	p.moveFile(procPath, p.cfg.Success) //nolint
@@ -543,8 +546,9 @@ type agentAction struct {
 }
 
 type agentResponseResult struct {
-	Blocked bool
-	CardID  string
+	Blocked   bool
+	Delegated bool
+	CardID    string
 }
 
 type humanQuestion struct {
@@ -612,6 +616,7 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, cardID, response string
 			if err != nil {
 				return result, err
 			}
+			result.Delegated = true
 			if usedCardID != "" {
 				merged, err := mergeReplyCardID(result.CardID, cardID, usedCardID)
 				if err != nil {
@@ -631,6 +636,21 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, cardID, response string
 			files, err := normalizeCodeFiles(action.Files)
 			if err != nil {
 				return result, err
+			}
+			if strings.EqualFold(agentName, "CEO") {
+				usedCardID, err := p.createDeliveryHandoff(taskID, result.CardID, files)
+				if err != nil {
+					return result, err
+				}
+				result.Delegated = true
+				if usedCardID != "" {
+					merged, err := mergeReplyCardID(result.CardID, cardID, usedCardID)
+					if err != nil {
+						return result, err
+					}
+					result.CardID = merged
+				}
+				continue
 			}
 			if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, files); err != nil {
 				return result, err
@@ -686,6 +706,7 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, cardID, response string
 				if err != nil {
 					return result, err
 				}
+				result.Delegated = true
 				if usedCardID != "" {
 					merged, err := mergeReplyCardID(result.CardID, cardID, usedCardID)
 					if err != nil {
@@ -700,6 +721,21 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, cardID, response string
 				if err != nil {
 					return result, err
 				}
+				if strings.EqualFold(agentName, "CEO") {
+					usedCardID, err := p.createDeliveryHandoff(taskID, result.CardID, files)
+					if err != nil {
+						return result, err
+					}
+					result.Delegated = true
+					if usedCardID != "" {
+						merged, err := mergeReplyCardID(result.CardID, cardID, usedCardID)
+						if err != nil {
+							return result, err
+						}
+						result.CardID = merged
+					}
+					continue
+				}
 				if _, err := code_writer.WriteCodeFiles(p.cfg.WorkspaceRoot, files); err != nil {
 					return result, err
 				}
@@ -711,6 +747,7 @@ func (p *Pipeline) applyAgentResponse(agentName, taskID, cardID, response string
 					if err != nil {
 						return result, err
 					}
+					result.Delegated = true
 					if usedCardID != "" {
 						merged, err := mergeReplyCardID(result.CardID, cardID, usedCardID)
 						if err != nil {
@@ -739,6 +776,7 @@ func detectHandoffRecipient(path string) (string, bool) {
 	if err != nil {
 		return "", false
 	}
+	data = hand_off.StripUTF8BOM(data)
 
 	var parsed struct {
 		Header hand_off.HandoffHeader `json:"header"`
@@ -777,8 +815,8 @@ func normalizeCodeFiles(files []code_writer.CodeFile) ([]code_writer.CodeFile, e
 		}
 
 		slashPath := filepath.ToSlash(path)
-		if strings.EqualFold(filepath.Ext(path), ".md") && !strings.HasPrefix(slashPath, "wiki/") {
-			return nil, fmt.Errorf("write_code para .md fora de wiki/ nao permitido: %s", file.Path)
+		if strings.EqualFold(filepath.Ext(path), ".md") && !strings.HasPrefix(slashPath, "wiki/") && !strings.HasPrefix(slashPath, "docs/") {
+			return nil, fmt.Errorf("write_code para .md fora de wiki/ ou docs/ nao permitido: %s", file.Path)
 		}
 
 		content := strings.TrimSpace(file.Content)
@@ -973,6 +1011,71 @@ func (p *Pipeline) createHumanHandoff(agentName, taskID, cardID string, action a
 		}
 	}
 	return nil
+}
+
+func (p *Pipeline) createDeliveryHandoff(taskID, cardID string, files []code_writer.CodeFile) (string, error) {
+	recipient := routeDeliveryAgent(files)
+	payload := map[string]any{
+		"action":       "write_code",
+		"instructions": "Executar a entrega solicitada pelo CEO. Responder com action write_code e conteudo bruto quando houver arquivo a persistir.",
+		"files":        files,
+	}
+	rawPayload, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+	handoff := hand_off.HandoffSchema[json.RawMessage]{
+		Header: hand_off.HandoffHeader{
+			CardID:    cardID,
+			Sender:    "[CEO]",
+			Recipient: fmt.Sprintf("[%s]", recipient),
+			TaskRef:   taskID,
+			Intent:    "DELIVERY_REQUEST",
+		},
+		Payload: rawPayload,
+	}
+	data, err := json.Marshal(handoff)
+	if err != nil {
+		return "", err
+	}
+	usedCardID, err := p.saveRawHandoffForCard(data, cardID)
+	if err != nil {
+		return "", err
+	}
+	p.recordDelegationComment(cardID, recipient, "DELIVERY_REQUEST")
+	return usedCardID, nil
+}
+
+func routeDeliveryAgent(files []code_writer.CodeFile) string {
+	for _, file := range files {
+		path := strings.ToLower(filepath.ToSlash(file.Path))
+		ext := strings.ToLower(filepath.Ext(path))
+		switch {
+		case strings.HasPrefix(path, "wiki/") || strings.HasPrefix(path, "docs/") || strings.HasPrefix(path, "doc/") || ext == ".md" || ext == ".txt":
+			return "DOCUMENTATION"
+		case strings.Contains(path, "frontend") || strings.Contains(path, "web/") || strings.Contains(path, "ui/") || ext == ".tsx" || ext == ".jsx" || ext == ".vue" || ext == ".css" || ext == ".scss" || ext == ".html":
+			return "DEV_FRONTEND"
+		case strings.Contains(path, "migration") || strings.Contains(path, "schema") || ext == ".sql":
+			return "DBA"
+		case strings.Contains(path, "docker") || strings.Contains(path, ".github/workflows") || strings.Contains(path, "deploy") || ext == ".yml" || ext == ".yaml" || ext == ".tf":
+			return "DEVOPS"
+		case strings.Contains(path, "data") || strings.Contains(path, "etl") || strings.Contains(path, "pipeline"):
+			return "DATA_ENGINEER"
+		case strings.Contains(path, "security") || strings.Contains(path, "auth"):
+			return "SECURITY"
+		}
+	}
+	return "DEV_BACKEND"
+}
+
+func (p *Pipeline) recordDelegationComment(cardID, recipient, intent string) {
+	if p.cfg.ContextStore == nil || strings.TrimSpace(cardID) == "" {
+		return
+	}
+	content := fmt.Sprintf(`{"recipient":"[%s]","intent":"%s"}`, recipient, intent)
+	if err := p.cfg.ContextStore.AddCardComment(cardID, "SYSTEM", "delegation", content); err != nil {
+		log.Printf("Registrar delegacao do card %s: %v", cardID, err)
+	}
 }
 
 func sanitizeKey(value string) string {

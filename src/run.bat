@@ -51,6 +51,7 @@ for %%d in (
     ..\.agent_handoff\failed
     ..\AGENTS
     .bin
+    .runtime
     ..\output
     ..\data
     ..\logs
@@ -109,6 +110,11 @@ if errorlevel 1 (
 ) else (
     echo        Ollama acessivel em %OLLAMA_URL%
 )
+echo.
+
+if "%DB_PATH%"=="" set DB_PATH=%cd%\.runtime\wiki.db
+if "%AGENT_TIMEOUT_SECONDS%"=="" set AGENT_TIMEOUT_SECONDS=1800
+echo        DB runtime: %DB_PATH%
 echo.
 
 echo [5/6] Compilando...

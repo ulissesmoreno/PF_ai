@@ -227,6 +227,95 @@ func TestApplyAgentResponseInjectsReplyToCardIDIntoOutgoingHandoff(t *testing.T)
 	}
 }
 
+func TestCEOCodeActionIsDelegatedToBackend(t *testing.T) {
+	workspace := t.TempDir()
+	handoffDir := filepath.Join(workspace, ".agent_handoff")
+	p := New(Config{WorkspaceRoot: workspace, HandoffDir: handoffDir})
+	response := `{
+		"action": "write_code",
+		"reply_to_card_id": "card-1",
+		"files": [{"path": "src/ceo_should_not_write.py", "content": "print(5)"}]
+	}`
+
+	result, err := p.applyAgentResponse("CEO", "TASK-1", "", response)
+	if err != nil {
+		t.Fatalf("applyAgentResponse: %v", err)
+	}
+	if result.CardID != "card-1" {
+		t.Fatalf("cardID = %q, want card-1", result.CardID)
+	}
+	if _, err := os.Stat(filepath.Join(workspace, "src", "ceo_should_not_write.py")); !os.IsNotExist(err) {
+		t.Fatalf("CEO wrote code directly, stat err=%v", err)
+	}
+	handoff := readOnlyPipelineHandoff(t, handoffDir)
+	if handoff.Header.Sender != "[CEO]" || handoff.Header.Recipient != "[DEV_BACKEND]" {
+		t.Fatalf("handoff = %#v", handoff.Header)
+	}
+}
+
+func TestCEODocumentActionIsDelegatedToDocumentation(t *testing.T) {
+	workspace := t.TempDir()
+	handoffDir := filepath.Join(workspace, ".agent_handoff")
+	p := New(Config{WorkspaceRoot: workspace, HandoffDir: handoffDir})
+	response := `{
+		"action": "write_code",
+		"reply_to_card_id": "card-1",
+		"files": [{"path": "wiki/project-overview.md", "content": "# Overview"}]
+	}`
+
+	result, err := p.applyAgentResponse("CEO", "TASK-1", "", response)
+	if err != nil {
+		t.Fatalf("applyAgentResponse: %v", err)
+	}
+	if !result.Delegated || result.CardID != "card-1" {
+		t.Fatalf("result = %#v", result)
+	}
+	handoff := readOnlyPipelineHandoff(t, handoffDir)
+	if handoff.Header.Recipient != "[DOCUMENTATION]" {
+		t.Fatalf("recipient = %q, want [DOCUMENTATION]", handoff.Header.Recipient)
+	}
+}
+
+func TestCEONoteWithFilesIsDelegated(t *testing.T) {
+	workspace := t.TempDir()
+	handoffDir := filepath.Join(workspace, ".agent_handoff")
+	p := New(Config{WorkspaceRoot: workspace, HandoffDir: handoffDir})
+	response := `{
+		"action": "note",
+		"reply_to_card_id": "card-1",
+		"files": [{"path": "frontend/App.tsx", "content": "export default function App(){return null}"}]
+	}`
+
+	result, err := p.applyAgentResponse("CEO", "TASK-1", "", response)
+	if err != nil {
+		t.Fatalf("applyAgentResponse: %v", err)
+	}
+	if !result.Delegated {
+		t.Fatalf("result = %#v", result)
+	}
+	if _, err := os.Stat(filepath.Join(workspace, "frontend", "App.tsx")); !os.IsNotExist(err) {
+		t.Fatalf("CEO wrote frontend directly, stat err=%v", err)
+	}
+	handoff := readOnlyPipelineHandoff(t, handoffDir)
+	if handoff.Header.Recipient != "[DEV_FRONTEND]" {
+		t.Fatalf("recipient = %q, want [DEV_FRONTEND]", handoff.Header.Recipient)
+	}
+}
+
+func TestDetectHandoffRecipientAcceptsUTF8BOM(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "CEO_TO_DEV_BACKEND_TEST.json")
+	data := append([]byte{0xEF, 0xBB, 0xBF}, []byte(`{"header":{"sender":"[CEO]","recipient":"[DEV_BACKEND]","intent":"TEST"},"payload":{}}`)...)
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	recipient, ok := detectHandoffRecipient(path)
+	if !ok || recipient != "DEV_BACKEND" {
+		t.Fatalf("recipient=%q ok=%v, want DEV_BACKEND/true", recipient, ok)
+	}
+}
+
 func TestApplyProjectOnboardingResponseCreatesProject(t *testing.T) {
 	workspace := t.TempDir()
 	store := openPipelineTestStore(t, workspace)

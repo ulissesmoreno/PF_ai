@@ -138,6 +138,11 @@ func envDuration(key string, fallbackMinutes int) time.Duration {
 	return time.Duration(fallbackMinutes)
 }
 
+func envBool(key string) bool {
+	v := strings.ToLower(strings.TrimSpace(os.Getenv(key)))
+	return v == "1" || v == "true" || v == "yes" || v == "sim"
+}
+
 func detectWorkspaceRoot() string {
 	if dirExists("AGENTS") && dirExists("DOC") {
 		return "."
