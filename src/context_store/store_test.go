@@ -47,6 +47,43 @@ func TestImportDocumentIsAppendOnly(t *testing.T) {
 	}
 }
 
+func TestCreateProjectReusesExistingSlug(t *testing.T) {
+	workspace := t.TempDir()
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	first, err := store.CreateProject(Project{
+		Name:        "FIFO de Produtos",
+		Slug:        "fifo-produtos-python",
+		Description: "Primeira descricao",
+	})
+	if err != nil {
+		t.Fatalf("CreateProject first: %v", err)
+	}
+	second, err := store.CreateProject(Project{
+		Name:        "FIFO de Produtos",
+		Slug:        "fifo-produtos-python",
+		Description: "Descricao atualizada",
+	})
+	if err != nil {
+		t.Fatalf("CreateProject second: %v", err)
+	}
+	if second.ID != first.ID {
+		t.Fatalf("second ID = %q, want %q", second.ID, first.ID)
+	}
+
+	var count int
+	if err := store.db.QueryRow("SELECT COUNT(*) FROM projects WHERE slug = ?", "fifo-produtos-python").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("project count = %d, want 1", count)
+	}
+	if second.Description != "Descricao atualizada" {
+		t.Fatalf("description = %q", second.Description)
+	}
+}
+
 func TestImportDocumentSkipsUnchangedSections(t *testing.T) {
 	workspace := t.TempDir()
 	docPath := filepath.Join(workspace, "DOC")

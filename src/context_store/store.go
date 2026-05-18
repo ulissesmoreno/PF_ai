@@ -3,6 +3,7 @@ package context_store
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -192,6 +193,24 @@ func (s *Store) CreateProject(project Project) (*Project, error) {
 	if project.Slug == "" {
 		return nil, fmt.Errorf("projeto sem slug")
 	}
+	if existing, err := s.GetProjectBySlug(project.Slug); err == nil {
+		project.ID = existing.ID
+		project.Name = defaultString(project.Name, existing.Name)
+		project.Domain = defaultString(project.Domain, existing.Domain)
+		project.Description = defaultString(project.Description, existing.Description)
+		project.TargetAudience = defaultString(project.TargetAudience, existing.TargetAudience)
+		project.MainObjective = defaultString(project.MainObjective, existing.MainObjective)
+		project.StackBackend = defaultString(project.StackBackend, existing.StackBackend)
+		project.StackFrontend = defaultString(project.StackFrontend, existing.StackFrontend)
+		project.StackDatabase = defaultString(project.StackDatabase, existing.StackDatabase)
+		project.StackInfra = defaultString(project.StackInfra, existing.StackInfra)
+		project.StackNotes = defaultString(project.StackNotes, existing.StackNotes)
+		project.Status = defaultString(project.Status, "active")
+		project.WorkspaceRoot = defaultString(project.WorkspaceRoot, existing.WorkspaceRoot)
+		return s.UpdateProject(existing.ID, project)
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
 	if project.Status == "" {
 		project.Status = "active"
 	}
@@ -251,6 +270,18 @@ func (s *Store) GetProject(id string) (*Project, error) {
 		   FROM projects
 		  WHERE id = ?`,
 		strings.TrimSpace(id),
+	)
+	return scanProject(row)
+}
+
+func (s *Store) GetProjectBySlug(slug string) (*Project, error) {
+	row := s.db.QueryRow(
+		`SELECT id, name, slug, domain, description, target_audience, main_objective,
+		        stack_backend, stack_frontend, stack_database, stack_infra, stack_notes,
+		        status, workspace_root, created_at, updated_at
+		   FROM projects
+		  WHERE slug = ?`,
+		slugify(slug),
 	)
 	return scanProject(row)
 }
