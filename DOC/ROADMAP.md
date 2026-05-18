@@ -43,7 +43,7 @@ This file must be **started or updated mandatorily** with each reading of `NEW-I
 
 ## 📋 General Notes
 - **Approval:** The OK to advance in the roadmap is given exclusively by the user. Before starting the next stage, the previous stage must mandatorily be marked as completed (`[x]`).
-- **Updates:** Always after NEW-INSTRUCTIONS.md; register in QUESTIONS.md if questions.
+- **Updates:** Always after NEW-INSTRUCTIONS.md; create a clarification handoff/card if questions remain.
 - **Traceability:** Each stage with status, responsible, and dependencies.
 - **Focus:** Delivery with tests and security; speed is secondary.
 - **References:** PROJECT.md (objectives), TESTS.md (validations), STATE.md (progress).

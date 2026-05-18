@@ -32,7 +32,7 @@ The agent explores 5 blocks with the developer, then uses the answers to fill in
   I will automatically fill in all relevant files. You can answer briefly or in detail — I will
   translate your answers into the right structure."*
 - Do not fill any file until the developer has confirmed all 5 blocks are complete.
-- Register any uncertainty in `QUESTIONS.md` before proceeding.
+- Create a human clarification handoff/card for any uncertainty before proceeding.
 
 ---
 
@@ -100,7 +100,7 @@ Key topics to cover:
 - Estimated project timeline and delivery cadence
 - Any process exceptions to the GSD defaults (e.g., no ML layer, no CI/CD yet)
 - Environment readiness: are Docker, database credentials, and API keys available?
-  If not, add entries to `QUESTIONS.md` and `ENV_SETUP.md` as blockers.
+  If not, create human clarification handoffs/cards and update `ENV_SETUP.md` as blockers.
 
 ---
 
@@ -130,7 +130,7 @@ After the developer confirms all 5 blocks:
 6. Update `ENV_SETUP.md §2` with the confirmed stack.
 7. Update `ARCHITECTURE.md §4` if the stack deviates from defaults.
 8. Append to `PLAYBOOK.md` any new recurring preferences revealed (with timestamp).
-9. Register any unresolved items in `QUESTIONS.md`.
+9. Create human clarification handoffs/cards for any unresolved items.
 10. Add an entry to `wiki/log.md` with the project setup timestamp.
 
 > **Confirm with the developer before writing.** Present a brief summary of what will be
@@ -143,7 +143,7 @@ After the developer confirms all 5 blocks:
 The onboarding is complete when:
 - [ ] All 5 blocks have been explored with the developer
 - [ ] All target files have been filled (no `[placeholder]` remaining in the files listed above)
-- [ ] `QUESTIONS.md` has entries for any unresolved items
+- [ ] Human clarification cards exist for any unresolved items
 - [ ] Developer has confirmed the auto-filled content is correct
 - [ ] `wiki/log.md` has a new entry with timestamp
 

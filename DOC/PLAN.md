@@ -73,7 +73,7 @@ This file must be filled **completely and without fail** for each roadmap stage,
 ## 13. Plan Validation
 - **Technical Feasibility:** [Confirm if components and stack support the stage.]
 - **Project Alignment:** [Verify if it meets PROJECT.md objectives.]
-- **Risks Assessed:** [Review mitigations; register in QUESTIONS.md if questions.]
+- **Risks Assessed:** [Review mitigations; create a clarification handoff/card if questions remain.]
 - **Approval:** [Status: Approved / Rejected - Reason.]
 - **ROADMAP.md Reference:** This plan is validated here; ROADMAP.md serves only for development tracking (To Do/Doing/Done status).
 

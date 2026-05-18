@@ -42,7 +42,7 @@
 - **Status:** Blocked
 - **Assigned to:** [Agent:Level]
 - **Reason:** [E.g.: External dependency / Awaiting CLARIFICATION_REQUEST response]
-- **Action:** [Registered in QUESTIONS.md / Handoff sent]
+- **Action:** [Handoff/card sent]
 
 ---
 

@@ -325,27 +325,6 @@ func TestImportTestsCreatesTestRecords(t *testing.T) {
 	}
 }
 
-func TestImportQuestionsCreatesContextEntries(t *testing.T) {
-	workspace := t.TempDir()
-	if err := os.WriteFile(filepath.Join(workspace, "QUESTIONS.md"), []byte("# QUESTIONS\n\n### [2026-05-12 10:00] Question: Choose DB\n- **Status:** Open\n- **Author:** [CTO]\n- **Question:** SQLite or Postgres?\n  > **Response:** [HUMAN fills here]\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	store := openTestStore(t, workspace)
-	defer store.Close()
-
-	if err := store.ImportDocument(DocumentSeed{Path: "QUESTIONS.md", DocumentType: "QUESTIONS", Owner: "Management agents"}); err != nil {
-		t.Fatalf("ImportDocument: %v", err)
-	}
-
-	var count int
-	if err := store.db.QueryRow("SELECT COUNT(*) FROM context_entries WHERE document_type = 'QUESTIONS' AND entry_type = 'question'").Scan(&count); err != nil {
-		t.Fatal(err)
-	}
-	if count != 1 {
-		t.Fatalf("questions = %d, want 1", count)
-	}
-}
-
 func TestImportPlaybookCreatesContextEntries(t *testing.T) {
 	workspace := t.TempDir()
 	content := "# PLAYBOOK\n\n## Preferences\n\n| Timestamp | Principle | Rationale |\n| :--- | :--- | :--- |\n| [2026-05-12 10:00] | Concise chat | Saves tokens |\n"
@@ -412,6 +391,15 @@ func TestProjectLifecycleAndStartedFlag(t *testing.T) {
 	}
 	if project.ID == "" || project.Slug != "pf-ai" {
 		t.Fatalf("project = %#v", project)
+	}
+	wantRoot := filepath.Join(workspace, "projects", "pf-ai")
+	if project.WorkspaceRoot != wantRoot {
+		t.Fatalf("workspace_root = %q, want %q", project.WorkspaceRoot, wantRoot)
+	}
+	for _, dir := range []string{"src", "docs", "raw", "vault", "output"} {
+		if info, err := os.Stat(filepath.Join(wantRoot, dir)); err != nil || !info.IsDir() {
+			t.Fatalf("expected project dir %s, info=%v err=%v", dir, info, err)
+		}
 	}
 
 	started, err = store.ProjectStarted()
@@ -482,6 +470,53 @@ func TestQueryContextForHandoffFiltersByActiveProject(t *testing.T) {
 	}
 	if len(items) != 1 || items[0] != "context from project B" {
 		t.Fatalf("items for B = %#v", items)
+	}
+}
+
+func TestQueryContextForHandoffCanUseExplicitProject(t *testing.T) {
+	workspace := t.TempDir()
+	store := openTestStore(t, workspace)
+	defer store.Close()
+
+	projectA, err := store.CreateProject(Project{Name: "Project A", Slug: "project-a"})
+	if err != nil {
+		t.Fatalf("CreateProject A: %v", err)
+	}
+	if err := store.SaveContextEntry(ContextEntry{
+		ProjectID:    projectA.ID,
+		EntryType:    "decision",
+		DocumentType: "CONTEXT",
+		Title:        "A",
+		Content:      "context from explicit project A",
+		SourceAgent:  "CTO",
+		TaskRef:      "TASK-1",
+	}); err != nil {
+		t.Fatalf("SaveContextEntry A: %v", err)
+	}
+
+	projectB, err := store.CreateProject(Project{Name: "Project B", Slug: "project-b"})
+	if err != nil {
+		t.Fatalf("CreateProject B: %v", err)
+	}
+	if err := store.SaveContextEntry(ContextEntry{
+		ProjectID:    projectB.ID,
+		EntryType:    "decision",
+		DocumentType: "CONTEXT",
+		Title:        "B",
+		Content:      "context from active project B",
+		SourceAgent:  "CTO",
+		TaskRef:      "TASK-1",
+	}); err != nil {
+		t.Fatalf("SaveContextEntry B: %v", err)
+	}
+	store.ActiveProjectID = projectB.ID
+
+	items, err := store.QueryContextForHandoffForProject(projectA.ID, "CEO", "TASK-1", 10)
+	if err != nil {
+		t.Fatalf("QueryContextForHandoffForProject A: %v", err)
+	}
+	if len(items) != 1 || items[0] != "context from explicit project A" {
+		t.Fatalf("items for explicit A = %#v", items)
 	}
 }
 

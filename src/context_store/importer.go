@@ -33,7 +33,6 @@ var OperationalDocuments = []DocumentSeed{
 	{Path: "DOC/TESTS.md", DocumentType: "TESTS", Owner: "QA/SECURITY/Technical agents"},
 	{Path: "DOC/VERSIONS.md", DocumentType: "VERSIONS", Owner: "Phase-closing agent"},
 	{Path: "DOC/WIKI.md", DocumentType: "WIKI_PROTOCOL", Owner: "DOCUMENTATION"},
-	{Path: "QUESTIONS.md", DocumentType: "QUESTIONS", Owner: "Management agents"},
 	{Path: "PLAYBOOK.md", DocumentType: "PLAYBOOK", Owner: "CEO"},
 }
 
@@ -463,12 +462,6 @@ func (s *Store) importPlanningCQRS(tx *sql.Tx, documentType, content, timestamp 
 				return err
 			}
 		}
-	case "QUESTIONS":
-		for _, entry := range parseQuestionContextEntries(content) {
-			if err := s.insertContextEntryTx(tx, entry, timestamp); err != nil {
-				return err
-			}
-		}
 	case "PLAYBOOK":
 		for _, entry := range parsePlaybookContextEntries(content) {
 			if err := s.insertContextEntryTx(tx, entry, timestamp); err != nil {
@@ -667,30 +660,6 @@ func parseTestRecords(content string) []TestRecord {
 		})
 	}
 	return records
-}
-
-func parseQuestionContextEntries(content string) []ContextEntry {
-	var entries []ContextEntry
-	for _, block := range splitHeadingBlocks(content, 3) {
-		if !strings.Contains(strings.ToLower(block.heading), "question") {
-			continue
-		}
-		status := strings.ToLower(fieldValuePlain(block.content, "Status"))
-		entryType := "question"
-		if strings.Contains(block.content, "**Response:**") && !strings.Contains(block.content, "[HUMAN fills here]") {
-			entryType = "answer"
-		}
-		entries = append(entries, ContextEntry{
-			EntryType:    entryType,
-			DocumentType: "QUESTIONS",
-			Section:      status,
-			Title:        block.heading,
-			Content:      strings.TrimSpace(block.content),
-			SourceAgent:  agentFromText(block.content, "IMPORTER"),
-			TaskRef:      "QUESTIONS",
-		})
-	}
-	return entries
 }
 
 func parsePlaybookContextEntries(content string) []ContextEntry {
@@ -921,7 +890,7 @@ func startsBulletEntry(line string) bool {
 
 func isEntryDocument(documentType string) bool {
 	switch documentType {
-	case "TASKS", "STATE", "CONTEXT", "PLAYBOOK", "TESTS", "VERSIONS", "RETROSPECTIVE", "QUESTIONS":
+	case "TASKS", "STATE", "CONTEXT", "PLAYBOOK", "TESTS", "VERSIONS", "RETROSPECTIVE":
 		return true
 	default:
 		return false

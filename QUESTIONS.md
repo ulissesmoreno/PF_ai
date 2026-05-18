@@ -1,12 +1,14 @@
-# QUESTIONS
+﻿# QUESTIONS
 
-> Immutable log of questions and answers. Append only — never delete entries.
-> Timestamps mandatory (YYYY-MM-DD HH:MM). Each question has an inline response line for [HUMAN].
+> Deprecated operational channel.
+> Agents must not append questions here. Human questions must be sent through handoff/cards.
 
 ## Entry Index (For Navigation)
-- [Add entries here as questions are registered]
+- No operational entries. This file is kept only as a legacy placeholder.
 
 ---
+
+## Legacy Template
 
 ### [YYYY-MM-DD HH:MM] Question: Short title
 - **Context:** [Context description]
@@ -15,8 +17,8 @@
 - **Impact:** Architectural / Functional / Security / Business
 - **Status:** Open / Answered / Blocked
 - **Question:** [Full text]
-  > **Response:** [HUMAN fills here]
-- **Decision / Action:** [What was decided or action taken — filled after response]
+  > **Response:** Use handoff/cards instead of this file.
+- **Decision / Action:** [Recorded through handoff/card flow]
 - **References:** [Links to related files]
 
 ---

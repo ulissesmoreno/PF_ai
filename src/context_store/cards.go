@@ -32,6 +32,7 @@ type CardComment struct {
 }
 
 type CardHandoff struct {
+	ProjectID string
 	CardID    string
 	Title     string
 	TaskRef   string
@@ -70,7 +71,7 @@ func (s *Store) SaveCardHandoff(event CardHandoff) (*Card, error) {
 	if title == "" {
 		title = cardID
 	}
-	projectID := s.projectIDOrNil()
+	projectID := s.projectIDValueOrNil(event.ProjectID)
 	timestamp := now()
 
 	_, err := s.db.Exec(
@@ -79,6 +80,7 @@ func (s *Store) SaveCardHandoff(event CardHandoff) (*Card, error) {
 			retry_count, max_retries, created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 3, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
+			project_id = COALESCE(cards.project_id, excluded.project_id),
 			recipient = excluded.recipient,
 			status = excluded.status,
 			updated_at = excluded.updated_at`,

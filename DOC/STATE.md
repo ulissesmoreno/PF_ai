@@ -28,7 +28,7 @@
 
 - **[YYYY-MM-DD HH:MM] — [AGENT:Level]:** [Blocker description]
   - Type: Technical / Scope / External
-  - Action: [CLARIFICATION_REQUEST sent / QUESTIONS.md registered]
+  - Action: [CLARIFICATION_REQUEST handoff/card sent]
 
 ---
 

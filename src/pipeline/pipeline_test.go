@@ -150,6 +150,34 @@ func TestApplyAgentResponseWritesCodeFile(t *testing.T) {
 	}
 }
 
+func TestApplyAgentResponseWritesCodeFileInsideProjectWorkspace(t *testing.T) {
+	workspace := t.TempDir()
+	store := openPipelineTestStore(t, workspace)
+	defer store.Close()
+	project, err := store.CreateProject(context_store.Project{Name: "Mini CRM", Slug: "mini-crm"})
+	if err != nil {
+		t.Fatalf("CreateProject: %v", err)
+	}
+
+	p := New(Config{WorkspaceRoot: workspace, ContextStore: store})
+	response := `{
+		"action": "write_code",
+		"files": [
+			{"path": "src/app.go", "content": "package main\n"}
+		]
+	}`
+
+	if _, err := p.applyAgentResponseForProject(project.ID, "DEV_BACKEND", "TASK-1", "", response); err != nil {
+		t.Fatalf("applyAgentResponseForProject returned error: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(project.WorkspaceRoot, "src", "app.go")); err != nil {
+		t.Fatalf("expected code file in project workspace: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(workspace, "src", "app.go")); !os.IsNotExist(err) {
+		t.Fatalf("unexpected file in root workspace, stat err=%v", err)
+	}
+}
+
 func TestApplyAgentResponseUsesReplyToCardIDForHumanHandoff(t *testing.T) {
 	workspace := t.TempDir()
 	store := openPipelineTestStore(t, workspace)
@@ -224,6 +252,80 @@ func TestApplyAgentResponseInjectsReplyToCardIDIntoOutgoingHandoff(t *testing.T)
 	handoff := readOnlyPipelineHandoff(t, handoffDir)
 	if handoff.Header.CardID != "card-1" {
 		t.Fatalf("card_id = %q, want card-1", handoff.Header.CardID)
+	}
+}
+
+func TestApplyAgentResponseCarriesProjectIDIntoOutgoingHandoff(t *testing.T) {
+	workspace := t.TempDir()
+	handoffDir := filepath.Join(workspace, ".agent_handoff")
+	p := New(Config{WorkspaceRoot: workspace, HandoffDir: handoffDir})
+	response := `{
+		"action": "handoff",
+		"reply_to_card_id": "card-1",
+		"handoff": {
+			"header": {
+				"sender": "[DEV_BACKEND]",
+				"recipient": "[QA]",
+				"task_ref": "TASK-1",
+				"intent": "TEST_REQUEST"
+			},
+			"payload": {"target": "api"}
+		}
+	}`
+
+	if _, err := p.applyAgentResponseForProject("project-a", "DEV_BACKEND", "TASK-1", "", response); err != nil {
+		t.Fatalf("applyAgentResponseForProject: %v", err)
+	}
+	handoff := readOnlyPipelineHandoff(t, handoffDir)
+	if handoff.Header.ProjectID != "project-a" {
+		t.Fatalf("project_id = %q, want project-a", handoff.Header.ProjectID)
+	}
+}
+
+func TestRecordCardHandoffUsesHeaderProjectIDOverActiveProject(t *testing.T) {
+	workspace := t.TempDir()
+	store := openPipelineTestStore(t, workspace)
+	defer store.Close()
+
+	projectA, err := store.CreateProject(context_store.Project{Name: "Project A", Slug: "project-a"})
+	if err != nil {
+		t.Fatalf("CreateProject A: %v", err)
+	}
+	projectB, err := store.CreateProject(context_store.Project{Name: "Project B", Slug: "project-b"})
+	if err != nil {
+		t.Fatalf("CreateProject B: %v", err)
+	}
+	store.ActiveProjectID = projectB.ID
+
+	p := New(Config{ContextStore: store, HandoffDir: filepath.Join(workspace, ".agent_handoff")})
+	data, err := json.Marshal(hand_off.HandoffSchema[map[string]string]{
+		Header: hand_off.HandoffHeader{
+			CardID:    "card-a",
+			ProjectID: projectA.ID,
+			Sender:    "[CEO]",
+			Recipient: "[DEV_BACKEND]",
+			TaskRef:   "TASK-1",
+			Intent:    "IMPLEMENT",
+		},
+		Payload: map[string]string{"task": "build"},
+	})
+	if err != nil {
+		t.Fatalf("marshal handoff: %v", err)
+	}
+
+	cardID, projectID, err := p.recordCardHandoff(filepath.Join(workspace, "handoff.json"), data)
+	if err != nil {
+		t.Fatalf("recordCardHandoff: %v", err)
+	}
+	if cardID != "card-a" || projectID != projectA.ID {
+		t.Fatalf("cardID=%q projectID=%q", cardID, projectID)
+	}
+	card, err := store.GetCard("card-a")
+	if err != nil {
+		t.Fatalf("GetCard: %v", err)
+	}
+	if card.ProjectID != projectA.ID {
+		t.Fatalf("card project_id = %q, want %s", card.ProjectID, projectA.ID)
 	}
 }
 
@@ -321,7 +423,7 @@ func TestApplyProjectOnboardingResponseCreatesProject(t *testing.T) {
 	store := openPipelineTestStore(t, workspace)
 	defer store.Close()
 
-	p := New(Config{ContextStore: store})
+	p := New(Config{ContextStore: store, HandoffDir: filepath.Join(workspace, ".agent_handoff")})
 	data, err := json.Marshal(hand_off.HandoffSchema[map[string]string]{
 		Header: hand_off.HandoffHeader{
 			Sender:    "[HUMAN]",
@@ -355,6 +457,41 @@ func TestApplyProjectOnboardingResponseCreatesProject(t *testing.T) {
 	if project.Slug != "pf-ai" {
 		t.Fatalf("slug = %q, want pf-ai", project.Slug)
 	}
+	handoff := readOnlyPipelineHandoff(t, filepath.Join(workspace, ".agent_handoff"))
+	if handoff.Header.ProjectID != project.ID || handoff.Header.Intent != "PHASE_KICKOFF" {
+		t.Fatalf("kickoff header = %#v, want project %s PHASE_KICKOFF", handoff.Header, project.ID)
+	}
+	if !strings.Contains(string(handoff.Payload), "complexity_gate") {
+		t.Fatalf("kickoff payload missing complexity gate: %s", string(handoff.Payload))
+	}
+}
+
+func TestApplyProjectOnboardingResponseIgnoresPhaseKickoffProjectString(t *testing.T) {
+	workspace := t.TempDir()
+	store := openPipelineTestStore(t, workspace)
+	defer store.Close()
+
+	p := New(Config{ContextStore: store})
+	data := []byte(`{
+		"header": {
+			"sender": "[SYSTEM_INIT]",
+			"recipient": "[CEO]",
+			"task_ref": "CRM-001",
+			"intent": "PHASE_KICKOFF"
+		},
+		"payload": {
+			"project": "Mini CRM pessoal",
+			"goal": "Criar uma API local em Go com SQLite para contatos e oportunidades."
+		}
+	}`)
+
+	handled, err := p.applyProjectOnboardingResponse("CRM-001", data)
+	if err != nil {
+		t.Fatalf("applyProjectOnboardingResponse: %v", err)
+	}
+	if handled {
+		t.Fatal("handled = true, want false for PHASE_KICKOFF")
+	}
 }
 
 func TestNormalizeCodeFilesStripsSingleFence(t *testing.T) {
@@ -378,6 +515,18 @@ func TestNormalizeCodeFilesRejectsMarkdownOutsideWiki(t *testing.T) {
 	}
 }
 
+func TestNormalizeCodeFilesAllowsMarkdownInVault(t *testing.T) {
+	files, err := normalizeCodeFiles([]code_writer.CodeFile{
+		{Path: "vault/raw-summary.md", Content: "# Raw summary"},
+	})
+	if err != nil {
+		t.Fatalf("normalizeCodeFiles returned error: %v", err)
+	}
+	if filepath.ToSlash(files[0].Path) != "vault/raw-summary.md" {
+		t.Fatalf("path = %q, want vault/raw-summary.md", files[0].Path)
+	}
+}
+
 func TestApplyAgentResponseRejectsTextResponse(t *testing.T) {
 	p := New(Config{WorkspaceRoot: t.TempDir()})
 
@@ -387,6 +536,155 @@ func TestApplyAgentResponseRejectsTextResponse(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "sem JSON") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestApplyAgentResponseAcceptsJSONAfterTextPrefix(t *testing.T) {
+	p := New(Config{WorkspaceRoot: t.TempDir()})
+
+	response := `Resposta final:
+{
+  "action": "note",
+  "message": "onboarding needs human input"
+}`
+
+	if _, err := p.applyAgentResponse("CEO", "ONBOARDING-1", "", response); err != nil {
+		t.Fatalf("applyAgentResponse returned error: %v", err)
+	}
+}
+
+func TestApplyAgentResponseIgnoresBracketedTextBeforeJSON(t *testing.T) {
+	p := New(Config{WorkspaceRoot: t.TempDir()})
+
+	response := `[RASCUNHO]
+{
+  "action": "note",
+  "message": "onboarding needs human input"
+}`
+
+	if _, err := p.applyAgentResponse("CEO", "ONBOARDING-1", "", response); err != nil {
+		t.Fatalf("applyAgentResponse returned error: %v", err)
+	}
+}
+
+func TestApplyAgentResponseRejectsNoOpJSONResponse(t *testing.T) {
+	p := New(Config{WorkspaceRoot: t.TempDir()})
+
+	_, err := p.applyAgentResponse("CEO", "ONBOARDING-1", "", `{
+		"name": "Sistema de Gestao Financeira",
+		"slug": "finance-ai"
+	}`)
+	if err == nil {
+		t.Fatal("expected no-op JSON response to be rejected")
+	}
+	if !strings.Contains(err.Error(), "sem action executavel") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestApplyAgentResponseUpdatePlanCanDelegateHandoffs(t *testing.T) {
+	workspace := t.TempDir()
+	handoffDir := filepath.Join(workspace, ".agent_handoff")
+	p := New(Config{WorkspaceRoot: workspace, HandoffDir: handoffDir})
+	response := `{
+		"action": "update_plan",
+		"item_type": "plan",
+		"title": "Complexity decision",
+		"content": "complexity=simple execution_mode=lean",
+		"complexity": "simple",
+		"execution_mode": "lean",
+		"recommended_agents": ["DEV_BACKEND", "QA"],
+		"handoffs": [
+			{
+				"header": {
+					"sender": "[CEO]",
+					"recipient": "[DEV_BACKEND]",
+					"task_ref": "TASK-1",
+					"intent": "IMPLEMENT_LEAN_BACKEND"
+				},
+				"payload": {"task": "build minimal API"}
+			}
+		]
+	}`
+
+	result, err := p.applyAgentResponseForProject("project-1", "CEO", "PHASE-1", "card-1", response)
+	if err != nil {
+		t.Fatalf("applyAgentResponseForProject: %v", err)
+	}
+	if !result.Delegated {
+		t.Fatalf("result = %#v, want delegated", result)
+	}
+	handoff := readOnlyPipelineHandoff(t, handoffDir)
+	if handoff.Header.ProjectID != "project-1" || handoff.Header.Recipient != "[DEV_BACKEND]" {
+		t.Fatalf("handoff header = %#v", handoff.Header)
+	}
+}
+
+func TestApplyAgentResponseInfersUpdatePlanFromComplexity(t *testing.T) {
+	workspace := t.TempDir()
+	store := openPipelineTestStore(t, workspace)
+	defer store.Close()
+	project, err := store.CreateProject(context_store.Project{Name: "FIFO", Slug: "fifo"})
+	if err != nil {
+		t.Fatalf("CreateProject: %v", err)
+	}
+	p := New(Config{WorkspaceRoot: workspace, ContextStore: store})
+
+	response := `{
+		"complexity": "simple",
+		"execution_mode": "lean",
+		"recommended_agents": ["DEV_BACKEND", "QA"]
+	}`
+
+	if _, err := p.applyAgentResponseForProject(project.ID, "CEO", "PHASE-1", "card-1", response); err != nil {
+		t.Fatalf("applyAgentResponseForProject: %v", err)
+	}
+	items, err := store.QueryContextForHandoffForProject(project.ID, "CEO", "PHASE-1", 5)
+	if err != nil {
+		t.Fatalf("QueryContextForHandoffForProject: %v", err)
+	}
+	if len(items) != 1 || !strings.Contains(items[0], "complexity=simple") {
+		t.Fatalf("planning items = %#v", items)
+	}
+}
+
+func TestEnsureProjectFromHandoffRestoresMissingProject(t *testing.T) {
+	workspace := t.TempDir()
+	store := openPipelineTestStore(t, workspace)
+	defer store.Close()
+	p := New(Config{WorkspaceRoot: workspace, ContextStore: store})
+
+	data := []byte(`{
+		"header": {
+			"card_id": "card-1",
+			"project_id": "project-restore",
+			"sender": "[SYSTEM_INIT]",
+			"recipient": "[CEO]",
+			"task_ref": "PHASE-1",
+			"intent": "PHASE_KICKOFF"
+		},
+		"payload": {
+			"project": {
+				"id": "project-restore",
+				"name": "FIFO de Produtos",
+				"slug": "fifo-produtos-python",
+				"status": "active"
+			}
+		}
+	}`)
+
+	if err := p.ensureProjectFromHandoff(data); err != nil {
+		t.Fatalf("ensureProjectFromHandoff: %v", err)
+	}
+	if _, _, err := p.recordCardHandoff(filepath.Join(workspace, "handoff.json"), data); err != nil {
+		t.Fatalf("recordCardHandoff: %v", err)
+	}
+	card, err := store.GetCard("card-1")
+	if err != nil {
+		t.Fatalf("GetCard: %v", err)
+	}
+	if card.ProjectID != "project-restore" {
+		t.Fatalf("card project_id = %q", card.ProjectID)
 	}
 }
 

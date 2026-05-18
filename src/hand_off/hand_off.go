@@ -28,6 +28,7 @@ type PhaseKickoffPayload struct {
 type HandoffHeader struct {
 	Timestamp string `json:"timestamp"`
 	CardID    string `json:"card_id,omitempty"`
+	ProjectID string `json:"project_id,omitempty"`
 	Sender    string `json:"sender"`
 	Recipient string `json:"recipient"`
 	TaskRef   string `json:"task_ref"`

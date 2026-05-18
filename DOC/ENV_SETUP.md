@@ -42,9 +42,9 @@ Configure the API keys, local endpoints, and model placeholders for the specific
    - FINANCIAL_SPECIALIST_MODEL: {{TIER_3_EXPERT_MODEL}} (Financial Analysis & Market Data)
 
 ### LLM Tiering Strategy (Antigravity)
-   - TIER_3_EXPERT_MODEL: qwen3 / deepseek-r1:7b
-   - TIER_2_DEVELOPMENT_MODEL: qwen2.5-coder
-   - TIER_1_EFFICIENCY_MODEL: gemma4:latest
+   - TIER_3_EXPERT_MODEL: qwen3:4b
+   - TIER_2_DEVELOPMENT_MODEL: qwen2.5-coder:7b
+   - TIER_1_EFFICIENCY_MODEL: phi4-mini:latest
    - EMBEDDING_MODEL: nomic-embed-text
 
 ### Connectivity & Keys
@@ -57,7 +57,7 @@ Configure the API keys, local endpoints, and model placeholders for the specific
 
 ## 4. Keys and Credentials
 - **Secure Storage:** Use vaults (e.g.: AWS Secrets, HashiCorp Vault) or encrypted env vars.
-- **Developer Instructions:** [E.g.: Request keys from the security responsible; register in QUESTIONS.md if questions.]
+- **Developer Instructions:** [E.g.: Request keys from the security responsible; create clarification handoffs/cards if questions remain.]
 - **Validation:** Test connections without exposing logs (see GSD-RULES.md 7.6).
 
 ## 5. Local Environment Configuration
@@ -80,7 +80,7 @@ Configure the API keys, local endpoints, and model placeholders for the specific
 
 ## 8. Troubleshooting
 - **Common Error 1:** [Description and solution]
-- Register questions in QUESTIONS.md.
+- Create clarification handoffs/cards for unresolved questions.
 
 ---
 *Reminder: Update this file according to changes in PROJECT.md or ARCHITECTURE.md.*

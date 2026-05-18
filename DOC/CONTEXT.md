@@ -49,7 +49,7 @@ Record decisions and context before execution. Maintain transparency between pha
 ## 6. Integration with Other Files
 
 - **STATE.md:** Technical execution memory (owned by technical agents).
-- **QUESTIONS.md:** Open questions and decisions pending [HUMAN] input.
+- **Human clarification cards:** Open questions and decisions pending [HUMAN] input.
 - **ROADMAP.md:** Phase progress tracking.
 - **RETROSPECTIVE.md:** Phase learnings (owned by CEO).
 

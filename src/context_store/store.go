@@ -40,6 +40,7 @@ type Project struct {
 }
 
 type ContextEntry struct {
+	ProjectID    string   `json:"project_id,omitempty"`
 	EntryType    string   `json:"entry_type"`
 	DocumentType string   `json:"document_type"`
 	Section      string   `json:"section"`
@@ -51,6 +52,7 @@ type ContextEntry struct {
 }
 
 type PlanningItem struct {
+	ProjectID   string `json:"project_id,omitempty"`
 	ItemType    string `json:"item_type"`
 	Reference   string `json:"reference"`
 	Title       string `json:"title"`
@@ -62,6 +64,7 @@ type PlanningItem struct {
 }
 
 type TestRecord struct {
+	ProjectID   string `json:"project_id,omitempty"`
 	TestName    string `json:"test_name"`
 	Status      string `json:"status"`
 	Command     string `json:"command"`
@@ -71,6 +74,7 @@ type TestRecord struct {
 }
 
 type HandoffEvent struct {
+	ProjectID string
 	Path      string
 	Sender    string
 	Recipient string
@@ -192,7 +196,15 @@ func (s *Store) CreateProject(project Project) (*Project, error) {
 		project.Status = "active"
 	}
 	if project.WorkspaceRoot == "" {
-		project.WorkspaceRoot = s.workspaceRoot
+		project.WorkspaceRoot = filepath.Join(s.workspaceRoot, "projects", project.Slug)
+	}
+	if err := os.MkdirAll(project.WorkspaceRoot, 0755); err != nil {
+		return nil, fmt.Errorf("criar diretorio do projeto: %w", err)
+	}
+	for _, dir := range []string{"src", "docs", "raw", "vault", "output"} {
+		if err := os.MkdirAll(filepath.Join(project.WorkspaceRoot, dir), 0755); err != nil {
+			return nil, fmt.Errorf("criar diretorio %s do projeto: %w", dir, err)
+		}
 	}
 	timestamp := now()
 	project.CreatedAt = timestamp
@@ -369,7 +381,7 @@ func (s *Store) SaveContextEntry(entry ContextEntry) error {
 		`INSERT INTO context_entries(
 			project_id, entry_type, document_type, section, title, content, source_agent, task_ref, tags, created_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		s.projectIDOrNil(),
+		s.projectIDValueOrNil(entry.ProjectID),
 		entry.EntryType,
 		strings.ToUpper(entry.DocumentType),
 		entry.Section,
@@ -387,7 +399,7 @@ func (s *Store) SaveContextEntry(entry ContextEntry) error {
 	if err != nil {
 		return fmt.Errorf("obter id de contexto: %w", err)
 	}
-	return s.projectContextItem("context_entries", id, strings.ToUpper(entry.DocumentType), entry.EntryType, entry.TaskRef, entry.SourceAgent, entry.Title, entry.Section, entry.Content)
+	return s.projectContextItem(entry.ProjectID, "context_entries", id, strings.ToUpper(entry.DocumentType), entry.EntryType, entry.TaskRef, entry.SourceAgent, entry.Title, entry.Section, entry.Content)
 }
 
 func (s *Store) SavePlanningItem(item PlanningItem) error {
@@ -402,7 +414,7 @@ func (s *Store) SavePlanningItem(item PlanningItem) error {
 		`INSERT INTO planning_items(
 			project_id, item_type, reference, title, status, priority, content, source_agent, task_ref, created_at, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		s.projectIDOrNil(),
+		s.projectIDValueOrNil(item.ProjectID),
 		item.ItemType,
 		item.Reference,
 		item.Title,
@@ -421,7 +433,7 @@ func (s *Store) SavePlanningItem(item PlanningItem) error {
 	if err != nil {
 		return fmt.Errorf("obter id de planejamento: %w", err)
 	}
-	return s.projectContextItem("planning_items", id, "PLAN", item.ItemType, item.TaskRef, item.SourceAgent, item.Title, item.Reference, item.Content)
+	return s.projectContextItem(item.ProjectID, "planning_items", id, "PLAN", item.ItemType, item.TaskRef, item.SourceAgent, item.Title, item.Reference, item.Content)
 }
 
 func (s *Store) SaveTestRecord(record TestRecord) error {
@@ -433,7 +445,7 @@ func (s *Store) SaveTestRecord(record TestRecord) error {
 		`INSERT INTO test_records(
 			project_id, test_name, status, command, output, source_agent, task_ref, created_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		s.projectIDOrNil(),
+		s.projectIDValueOrNil(record.ProjectID),
 		record.TestName,
 		record.Status,
 		record.Command,
@@ -450,10 +462,14 @@ func (s *Store) SaveTestRecord(record TestRecord) error {
 		return fmt.Errorf("obter id de teste: %w", err)
 	}
 	content := strings.TrimSpace(record.Status + "\n" + record.Command + "\n" + record.Output)
-	return s.projectContextItem("test_records", id, "TESTS", "record_test", record.TaskRef, record.SourceAgent, record.TestName, "", content)
+	return s.projectContextItem(record.ProjectID, "test_records", id, "TESTS", "record_test", record.TaskRef, record.SourceAgent, record.TestName, "", content)
 }
 
 func (s *Store) SaveAgentOutput(agentName, taskID, action, content string) error {
+	return s.SaveAgentOutputForProject("", agentName, taskID, action, content)
+}
+
+func (s *Store) SaveAgentOutputForProject(projectID, agentName, taskID, action, content string) error {
 	if strings.TrimSpace(content) == "" {
 		return nil
 	}
@@ -464,7 +480,7 @@ func (s *Store) SaveAgentOutput(agentName, taskID, action, content string) error
 	res, err := s.db.Exec(
 		`INSERT INTO agent_outputs(project_id, agent_name, task_id, action, content, created_at)
 		 VALUES (?, ?, ?, ?, ?, ?)`,
-		s.projectIDOrNil(),
+		s.projectIDValueOrNil(projectID),
 		strings.ToUpper(agentName),
 		taskID,
 		action,
@@ -478,7 +494,7 @@ func (s *Store) SaveAgentOutput(agentName, taskID, action, content string) error
 	if err != nil {
 		return fmt.Errorf("obter id de saída do agente: %w", err)
 	}
-	return s.projectContextItem("agent_outputs", id, "", action, taskID, agentName, action, "", content)
+	return s.projectContextItem(projectID, "agent_outputs", id, "", action, taskID, agentName, action, "", content)
 }
 
 func (s *Store) SaveHandoffEvent(event HandoffEvent) error {
@@ -486,7 +502,7 @@ func (s *Store) SaveHandoffEvent(event HandoffEvent) error {
 		`INSERT INTO handoff_events(
 			project_id, path, sender, recipient, task_ref, intent, payload, raw_json, created_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		s.projectIDOrNil(),
+		s.projectIDValueOrNil(event.ProjectID),
 		event.Path,
 		event.Sender,
 		event.Recipient,
@@ -503,6 +519,10 @@ func (s *Store) SaveHandoffEvent(event HandoffEvent) error {
 }
 
 func (s *Store) QueryContextForHandoff(agentName, taskRef string, limit int) ([]string, error) {
+	return s.QueryContextForHandoffForProject("", agentName, taskRef, limit)
+}
+
+func (s *Store) QueryContextForHandoffForProject(projectID, agentName, taskRef string, limit int) ([]string, error) {
 	if limit <= 0 {
 		limit = 12
 	}
@@ -527,8 +547,8 @@ func (s *Store) QueryContextForHandoff(agentName, taskRef string, limit int) ([]
 			END DESC,
 			projected_at DESC
 		  LIMIT ?`,
-		s.projectIDOrNil(),
-		s.projectIDOrNil(),
+		s.projectIDValueOrNil(projectID),
+		s.projectIDValueOrNil(projectID),
 		taskRef,
 		taskRef,
 		agentName,
@@ -559,7 +579,7 @@ func (s *Store) ProjectStarted() (bool, error) {
 	return count > 0, nil
 }
 
-func (s *Store) projectContextItem(sourceTable string, sourceID int64, documentType, entryType, taskRef, agentName, title, heading, content string) error {
+func (s *Store) projectContextItem(projectID string, sourceTable string, sourceID int64, documentType, entryType, taskRef, agentName, title, heading, content string) error {
 	if strings.TrimSpace(content) == "" {
 		return nil
 	}
@@ -568,7 +588,7 @@ func (s *Store) projectContextItem(sourceTable string, sourceID int64, documentT
 			project_id, source_table, source_id, document_type, entry_type, task_ref, agent_name,
 			title, heading, content, content_hash, projected_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		s.projectIDOrNil(),
+		s.projectIDValueOrNil(projectID),
 		sourceTable,
 		sourceID,
 		documentType,
@@ -592,6 +612,13 @@ func (s *Store) projectIDOrNil() any {
 		return nil
 	}
 	return s.ActiveProjectID
+}
+
+func (s *Store) projectIDValueOrNil(projectID string) any {
+	if strings.TrimSpace(projectID) == "" {
+		return s.projectIDOrNil()
+	}
+	return strings.TrimSpace(projectID)
 }
 
 type scanner interface {

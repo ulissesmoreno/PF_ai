@@ -139,6 +139,7 @@ func (h *Handler) respondCard(w http.ResponseWriter, r *http.Request) {
 		}
 		path, err := hand_off.CreateHandoff(h.handoffDir, hand_off.HandoffHeader{
 			CardID:    id,
+			ProjectID: card.ProjectID,
 			Sender:    "[HUMAN]",
 			Recipient: card.Recipient,
 			TaskRef:   card.TaskRef,

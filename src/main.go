@@ -84,8 +84,13 @@ func createCEOKickoff(cfg Config, store *context_store.Store) error {
 	}
 
 	if projectStarted {
-		payload.Instructions = "Projeto iniciado detectado na persistencia. Continue o plano usando o contexto persistido. Gere handoffs estruturados para os agentes apropriados. Atualizacoes operacionais devem usar acoes CQRS como update_context, update_plan e record_test. Wiki pode ser criada/atualizada como arquivo em wiki/ quando for documentacao de produto. Perguntas ao humano devem usar ask_human para gerar card bloqueado."
-		payload.PersistedContext, err = store.QueryContextForHandoff("CEO", "", 20)
+		active, err := store.GetActiveProject()
+		if err != nil {
+			return err
+		}
+		header.ProjectID = active.ID
+		payload.Instructions = "Projeto iniciado detectado na persistencia. Antes de delegar, classifique a complexidade como simple, medium ou complex. Se for simple, use execucao lean: poucas etapas, sem arquitetura pesada e somente agentes indispensaveis. Se for medium ou complex, aumente o rigor e a quantidade de handoffs conforme necessidade real. Responda com JSON valido contendo action update_plan ou handoff; inclua complexity, execution_mode, recommended_agents e handoffs quando houver delegacao. Gere handoffs estruturados para os agentes apropriados. Atualizacoes operacionais devem usar acoes CQRS como update_context, update_plan e record_test. Perguntas ao humano devem usar ask_human para gerar card bloqueado."
+		payload.PersistedContext, err = store.QueryContextForHandoffForProject(header.ProjectID, "CEO", "", 20)
 		if err != nil {
 			return err
 		}

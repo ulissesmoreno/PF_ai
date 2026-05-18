@@ -58,7 +58,7 @@ func loadConfig() Config {
 		Success:         env("SUCCESS_DIR", filepathJoin(handoffDir, "success")),
 		Failed:          env("FAILED_DIR", filepathJoin(handoffDir, "failed")),
 		VaultPath:       workspacePath(workspaceRoot, env("VAULT_PATH", "vault")),
-		DBPath:          workspacePath(workspaceRoot, env("DB_PATH", filepathJoin("data", "wiki.db"))),
+		DBPath:          workspacePath(workspaceRoot, env("DB_PATH", filepathJoin("data", "agent_runtime.db"))),
 		WorkspaceRoot:   workspaceRoot,
 		MigrationsDir:   workspacePath(workspaceRoot, env("MIGRATIONS_DIR", filepathJoin("db", "migrations"))),
 
@@ -70,9 +70,9 @@ func loadConfig() Config {
 		EmbedWorkerCount: envInt("EMBED_WORKER_COUNT", 5),
 
 		OllamaURL:        env("OLLAMA_URL", "http://localhost:11434"),
-		OllamaLLMModel:   env("OLLAMA_LLM_MODEL", "deepseek-r1:7b"),
+		OllamaLLMModel:   env("OLLAMA_LLM_MODEL", "qwen3:4b"),
 		OllamaEmbedModel: env("OLLAMA_EMBED_MODEL", "nomic-embed-text"),
-		OllamaGemmaModel: env("OLLAMA_GEMMA_MODEL", "gemma4:latest"),
+		OllamaGemmaModel: env("OLLAMA_GEMMA_MODEL", "phi4-mini:latest"),
 		CodexCLI:         env("CODEX_CLI", "codex exec -"),
 		APIAddr:          env("API_ADDR", "127.0.0.1:8080"),
 

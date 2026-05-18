@@ -43,7 +43,7 @@ func (s *Store) SaveTokenUsage(usage TokenUsage) error {
 			project_id, card_id, agent_name, model, tier, prompt_tokens, completion_tokens,
 			total_tokens, latency_ms, created_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		s.projectIDOrNil(), nilIfEmpty(usage.CardID), strings.ToUpper(usage.AgentName), usage.Model,
+		s.projectIDValueOrNil(usage.ProjectID), nilIfEmpty(usage.CardID), strings.ToUpper(usage.AgentName), usage.Model,
 		usage.Tier, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens, usage.LatencyMS, now(),
 	)
 	if err != nil {

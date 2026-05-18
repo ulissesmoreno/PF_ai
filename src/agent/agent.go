@@ -215,6 +215,8 @@ Quando a resposta for atualização operacional, não escreva arquivos operacion
 {"action":"record_test","test_name":"...","status":"PASSED|FAILED|SKIPPED","command":"...","output":"..."}
 {"action":"ask_human","questions":[{"question":"...","priority":"High|Medium|Low","blocking":true}]}
 
+Ao receber PHASE_KICKOFF, classifique complexidade como simple, medium ou complex antes de delegar. Para projetos simple, use execucao lean e poucos agentes. Inclua complexity, execution_mode e recommended_agents quando registrar plano ou delegar. Nao use skipped_agents.
+
 Para wiki/Obsidian, crie arquivos markdown reais em wiki/ usando write_code.
 
 Handoff recebido:
@@ -268,6 +270,8 @@ Quando a resposta for atualização operacional, não escreva arquivos operacion
 {"action":"record_test","test_name":"...","status":"PASSED|FAILED|SKIPPED","command":"...","output":"..."}
 {"action":"ask_human","questions":[{"question":"...","priority":"High|Medium|Low","blocking":true}]}
 
+Ao receber PHASE_KICKOFF, classifique complexidade como simple, medium ou complex antes de delegar. Para projetos simple, use execucao lean e poucos agentes. Inclua complexity, execution_mode e recommended_agents quando registrar plano ou delegar. Nao use skipped_agents.
+
 Para wiki/Obsidian, crie arquivos markdown reais em wiki/ usando write_code.
 
 Handoff recebido:
@@ -315,6 +319,7 @@ CONTRATO DE RESPOSTA:
 - Para perguntas ao humano, gere uma acao ask_human com questions. O sistema criara um handoff _TO_HUMAN que nao passa pela pipeline ate o humano responder e renomear para o agente destinatario.
 - Para wiki/Obsidian ou codigo, use write_code com paths relativos ao workspace.
 - Para codigo, files[].content deve conter apenas o conteudo bruto do arquivo, sem markdown, sem crases triplas e sem explicacao.
+- Ao receber PHASE_KICKOFF, classifique complexidade como simple, medium ou complex antes de delegar. Para projetos simple, use execucao lean e poucos agentes. Inclua complexity, execution_mode e recommended_agents quando registrar plano ou delegar. Nao use skipped_agents.
 
 HANDOFF RECEBIDO:
 %s`, agentName, agentModel, agentName, agentPrompt, handoff)
@@ -541,24 +546,24 @@ func CarregarVariavel(chave string) (string, error) {
 // Mapeia agentes aos seus respectivos modelos padrão.
 func ResolverModeloAgente(nomeAgente string) (string, error) {
 	agentModelMap := map[string]string{
-		"CEO":           "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
-		"BA":            "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
-		"CTO":           "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
-		"DEV_FRONTEND":  "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
-		"DEV_BACKEND":   "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
-		"DBA":           "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
-		"DS_ML":         "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
-		"SECURITY":      "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
-		"QA":            "gemma4:latest",  // TIER_1_EFFICIENCY_MODEL
-		"DATA_ENGINEER": "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
-		"PM":            "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
-		"UX_RESEARCHER": "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
-		"WRITER":        "gemma4:latest",  // TIER_1_EFFICIENCY_MODEL
-		"DOCUMENTATION": "gemma4:latest",  // TIER_1_EFFICIENCY_MODEL
-		"ARTIST":        "gemma4:latest",  // TIER_1_EFFICIENCY_MODEL
-		"DEVOPS":        "qwen2.5-coder",  // TIER_2_DEVELOPMENT_MODEL
-		"CODE_REVIEWER": "deepseek-r1:7b", // TIER_3_EXPERT_MODEL
-		"CMO":           "gemma4:latest",  // TIER_1_EFFICIENCY_MODEL
+		"CEO":           "qwen3:4b",         // TIER_3_EXPERT_MODEL
+		"BA":            "qwen3:4b",         // TIER_3_EXPERT_MODEL
+		"CTO":           "qwen3:4b",         // TIER_3_EXPERT_MODEL
+		"DEV_FRONTEND":  "qwen2.5-coder:7b", // TIER_2_DEVELOPMENT_MODEL
+		"DEV_BACKEND":   "qwen2.5-coder:7b", // TIER_2_DEVELOPMENT_MODEL
+		"DBA":           "qwen2.5-coder:7b", // TIER_2_DEVELOPMENT_MODEL
+		"DS_ML":         "qwen2.5-coder:7b", // TIER_2_DEVELOPMENT_MODEL
+		"SECURITY":      "qwen3:4b",         // TIER_3_EXPERT_MODEL
+		"QA":            "qwen3:4b",         // TIER_3_EXPERT_MODEL
+		"DATA_ENGINEER": "qwen2.5-coder:7b", // TIER_2_DEVELOPMENT_MODEL
+		"PM":            "qwen3:4b",         // TIER_3_EXPERT_MODEL
+		"UX_RESEARCHER": "phi4-mini:latest", // TIER_1_EFFICIENCY_MODEL
+		"WRITER":        "phi4-mini:latest", // TIER_1_EFFICIENCY_MODEL
+		"DOCUMENTATION": "qwen3:4b",         // TIER_3_EXPERT_MODEL
+		"ARTIST":        "phi4-mini:latest", // TIER_1_EFFICIENCY_MODEL
+		"DEVOPS":        "qwen2.5-coder:7b", // TIER_2_DEVELOPMENT_MODEL
+		"CODE_REVIEWER": "qwen3:4b",         // TIER_3_EXPERT_MODEL
+		"CMO":           "phi4-mini:latest", // TIER_1_EFFICIENCY_MODEL
 	}
 
 	agentUpper := strings.ToUpper(nomeAgente)

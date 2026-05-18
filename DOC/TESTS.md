@@ -205,7 +205,7 @@ npx cypress run
    - Relevant logs (without sensitive data).
    - Planned corrective action.
 3. Register as a blocker in `STATE.md`.
-4. If the cause is a requirement ambiguity, open an entry in `QUESTIONS.md`.
+4. If the cause is a requirement ambiguity, open a human clarification handoff/card.
 5. Fix, re-run the test, and update the status to `Passed` before proceeding.
 
 ---

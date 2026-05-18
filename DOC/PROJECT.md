@@ -59,4 +59,4 @@ The `[HUMAN]` role represents the **final authority** in the GSD ecosystem. This
 - **KPIs:** [E.g.: Test coverage, performance]
 
 ---
-*Reminder for AI: All questions must be registered in the QUESTIONS.md file.*
+*Reminder for AI: All questions must be sent as handoffs/cards; do not fill QUESTIONS.md.*

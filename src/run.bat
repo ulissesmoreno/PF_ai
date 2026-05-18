@@ -112,7 +112,7 @@ if errorlevel 1 (
 )
 echo.
 
-if "%DB_PATH%"=="" set DB_PATH=%cd%\.runtime\wiki.db
+if "%DB_PATH%"=="" set DB_PATH=%cd%\.runtime\agent_runtime.db
 if "%AGENT_TIMEOUT_SECONDS%"=="" set AGENT_TIMEOUT_SECONDS=1800
 echo        DB runtime: %DB_PATH%
 echo.

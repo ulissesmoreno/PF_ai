@@ -19,7 +19,7 @@ The **[CEO] Agent is invariably the first to act** in every new work cycle or se
 4. `DOC/PLAN.md` — Validate business context and acceptance criteria before delegating.
 5. `DOC/ONBOARDING.md` — **Trigger only at the start of a brand-new project** (when `PROJECT.md` still contains placeholder values). Run the full 5-block protocol before any other action.
 
-> **Rule:** If `NEW-INSTRUCTIONS.md` contains pending questions or ambiguities, the CEO MUST register them in `QUESTIONS.md` and halt. Nothing proceeds with open questions.
+> **Rule:** If `NEW-INSTRUCTIONS.md` contains pending questions or ambiguities, the CEO MUST create a human clarification handoff/card and halt. Nothing proceeds with open questions.
 
 ### 0.2 Management Layer — CEO → BA / CTO
 
@@ -71,16 +71,16 @@ Activated on demand by the CEO or CMO when marketing or design output is require
 Development must focus on **consistency**, **traceability**, **documentation**, and **context** over speed. All documents must be filled in **without fail** so that nothing is lost along the way. Documentation is the foundation of execution: without it, progress is invalid.
 
 ### Inviolable Rule: Complete File Population
-All project files (especially .md files such as PROJECT.md, STATE.md, TASKS.md, TESTS.md, CONTEXT.md, QUESTIONS.md, PLAN.md, ROADMAP.md, ARCHITECTURE.md, README.md, and NEW-INSTRUCTIONS.md) must be filled in **completely and without fail** as required by each stage. Placeholders must be replaced with real content, and no file may remain incomplete or with gaps. Any deviation invalidates the "Done" state and halts progress until corrected.
+All project files (especially .md files such as PROJECT.md, STATE.md, TASKS.md, TESTS.md, CONTEXT.md, PLAN.md, ROADMAP.md, ARCHITECTURE.md, README.md, and NEW-INSTRUCTIONS.md) must be filled in **completely and without fail** as required by each stage. Placeholders must be replaced with real content, and no file may remain incomplete or with gaps. Any deviation invalidates the "Done" state and halts progress until corrected.
 
 ### Immutability Rule: History with Timestamps
 No file may have information deleted; everything must maintain cumulative history with timestamps (YYYY-MM-DD HH:MM) and responsible parties. Add "History" sections to relevant files (e.g.: STATE.md, TESTS.md, CONTEXT.md) to track versions without data loss.
 
 ## 1. Pre-Execution Phase (The Stop-Gate)
 1.1 **Mandatory Context:** Before any code, the scope, stack, security, and Antigravity environment must be declared in `.md` files.
-1.2 **QUESTIONS.md:** Sole clarification channel. If there is ambiguity, register the question and **halt execution**. Nothing starts with pending questions.
-1.3 **Immutable History:** Answers in `QUESTIONS.md` must never be deleted; they serve as an architectural decision log.
-1.4 **Decisions and Context:** All decisions, hypotheses, contexts, and intentions must be documented before proceeding. Use `QUESTIONS.md` for questions and `CONTEXT.md` for structured context.
+1.2 **Human clarification handoffs/cards:** Sole clarification channel. If there is ambiguity, create the question as a handoff/card and **halt execution**. Nothing starts with pending questions.
+1.3 **Immutable History:** Answers must be preserved in card comments and handoff events; they serve as an architectural decision log.
+1.4 **Decisions and Context:** All decisions, hypotheses, contexts, and intentions must be documented before proceeding. Use handoffs/cards for questions and `CONTEXT.md` for structured context.
 1.5 **Direct Order:** Development only begins after an explicit user command and clearing of questions.
 
 ## 1.8 Stage Closure Gate
@@ -117,12 +117,9 @@ An MVP (Minimum Viable Product) must be planned at the beginning of development,
 - Scope and deliverables.
 - Constraints, dependencies, and context.
 - Structured markers to ensure readability and traceability.
-1.6.2 **QUESTIONS.md:** Each question and answer must have a timestamp and status, ensuring complete history.
-- Use headers per entry: `### [YYYY-MM-DD HH:MM:SS] Question`
-- Record `Question`, `Context`, `Status`, `Author`, `Answer`, and `Decision / Action`.
-- Never delete old entries; always add new entries to maintain an immutable log.
-1.6.3 **CONTEXT.md:** After each reading of `NEW-INSTRUCTIONS.md` or new answer in `QUESTIONS.md`, update the context and decisions summary.
-1.6.4a **PLAYBOOK.md:** After each new answer in `QUESTIONS.md`, after each new entry in `NEW-INSTRUCTIONS.md`, and after the project definition (`PROJECT.md`) is filled in, the agent must **review PLAYBOOK.md** and append new entries (with timestamp) if any preference, recurring decision, or working pattern has been revealed or confirmed. This step is mandatory and happens *before* the Atomic Commit.
+1.6.2 **Human clarification handoffs/cards:** Each question and answer must have a timestamp and status, ensuring complete history in the card thread and handoff events.
+1.6.3 **CONTEXT.md:** After each reading of `NEW-INSTRUCTIONS.md` or new human answer, update the context and decisions summary.
+1.6.4a **PLAYBOOK.md:** After each new human answer, after each new entry in `NEW-INSTRUCTIONS.md`, and after the project definition (`PROJECT.md`) is filled in, the agent must **review PLAYBOOK.md** and append new entries (with timestamp) if any preference, recurring decision, or working pattern has been revealed or confirmed. This step is mandatory and happens *before* the Atomic Commit.
 1.6.4 **Recommended markers:**
 - `#` for main title
 - `##` for objective, scope, constraints, context, and deliverables sections
@@ -186,7 +183,7 @@ For each delivery, the order is mandatory and **all documents must be filled wit
 7.2 **Zero Leak:** Logging keys, payloads, or transactions in plain text is forbidden.
 7.3 **Sanitization:** Adapters must clean data before sending it to the Domain.
 7.4 **Docker & DB:** Before starting, verify Docker is active. Bring up the database and apply **Migrations** as needed.
-7.5 **Credential Security:** No password, API key, or sensitive credential should be in code or documentation files. The `.env` file must never be committed, nor any information that compromises application security. Everything needed in the environment must be clearly informed in [ENV_SETUP.md or specific section], with a defined location for secure storage (e.g.: external vaults). Register instructions in QUESTIONS.md if there are questions about configuration.
+7.5 **Credential Security:** No password, API key, or sensitive credential should be in code or documentation files. The `.env` file must never be committed, nor any information that compromises application security. Everything needed in the environment must be clearly informed in [ENV_SETUP.md or specific section], with a defined location for secure storage (e.g.: external vaults). Create a clarification handoff/card if there are questions about configuration.
 7.6 **Mandatory Logging:** Every action performed by the solution must have logs for activity and/or error traceability. Configure structured logs (e.g.: INFO, WARN, ERROR levels) without exposing sensitive data. Record logging validations in TESTS.md.
 
 ## 8. Documentation as Code
@@ -197,7 +194,7 @@ The project is guided by the following files — note their locations:
 | `README.md` | Root | Project overview and quick-start |
 | `PLAYBOOK.md` | Root | Developer preferences (project-agnostic) |
 | `NEW-INSTRUCTIONS.md` | **Root** | Current cycle instructions from the user |
-| `QUESTIONS.md` | **Root** | Sole clarification channel; immutable decision log |
+| Human clarification cards | **Database / handoffs** | Sole clarification channel; immutable decision log |
 | `ONBOARDING.md` | `DOC/` | New project setup guide (run once per project) |
 | `GSD-RULES.md` | `DOC/` | Inviolable execution rules |
 | `ARCHITECTURE.md` | `DOC/` | Hexagonal architecture, stack, components |
@@ -214,14 +211,14 @@ The project is guided by the following files — note their locations:
 
 ## 9. Installed Skills & Environment Tools
 
-The Antigravity environment has **skills** (specialized instruction packages) and **external tools** that extend the AI agent's capabilities. The agent **must** consult the available skills before starting any development phase and record in `QUESTIONS.md` which ones can be used and in which context.
+The Antigravity environment has **skills** (specialized instruction packages) and **external tools** that extend the AI agent's capabilities. The agent **must** consult the available skills before starting any development phase and record relevant decisions in context or a handoff/card when human confirmation is needed.
 
 ## 9.1. LLM Tiering Strategy
 | Tier | Model | Purpose & Use Cases |
 | :--- | :--- | :--- | 
 | Tier 1: Efficiency | {{TIER_1_EFFICIENCY_MODEL}} | Atomic & Repetitive Tasks: Log generation, JSON/YAML formatting in .agent_handoff/, syntax linting, and rapid documentation research. |
 | Tier 2: Development | {{TIER_2_DEVELOPMENT_MODEL}} | Standard Implementation: TDD cycles (Red-Green-Refactor), unit test creation in `TESTS.md`, and SQL/infrastructure optimization. |
-| Tier 3: Expert | {{TIER_3_EXPERT_MODEL}} | Architecture & Decision Making: Resolving critical ambiguities in `QUESTIONS.md`, enforcing Hexagonal Architecture patterns, and strategic Roadmap planning. |
+| Tier 3: Expert | {{TIER_3_EXPERT_MODEL}} | Architecture & Decision Making: Resolving critical ambiguities through human clarification handoffs/cards, enforcing Hexagonal Architecture patterns, and strategic Roadmap planning. |
 
 
 ### 9.1 Antigravity Environment Skills
