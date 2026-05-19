@@ -173,6 +173,7 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 
 	currentCardID := cardIDFromHandoff(data)
 	currentProjectID := projectIDFromHandoff(data)
+	currentIntent := intentFromHandoff(data)
 	if p.cfg.ContextStore != nil {
 		if err := p.ensureProjectFromHandoff(data); err != nil {
 			log.Printf("[%s] Restaurar projeto do handoff: %v", id, err)
@@ -240,6 +241,21 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 		}
 		p.moveFile(procPath, p.cfg.Failed) //nolint
 		return
+	}
+	if shouldAutoDelegateKickoff(agentName, currentIntent, result) {
+		usedCardID, err := p.createLeanImplementationHandoff(currentProjectID, id, currentCardID, data, response)
+		if err != nil {
+			log.Printf("[%s] Criar handoff lean apos kickoff: %v", id, err)
+			if p.retryCardHandoff(procPath, currentCardID, err) {
+				return
+			}
+			p.moveFile(procPath, p.cfg.Failed) //nolint
+			return
+		}
+		result.Delegated = true
+		if usedCardID != "" {
+			result.CardID = usedCardID
+		}
 	}
 
 	p.recordCardResponse(result.CardID, agentName, response)
@@ -1152,6 +1168,59 @@ func (p *Pipeline) createDeliveryHandoff(projectID, taskID, cardID string, files
 	return usedCardID, nil
 }
 
+func shouldAutoDelegateKickoff(agentName, intent string, result agentResponseResult) bool {
+	return strings.EqualFold(agentName, "CEO") &&
+		strings.EqualFold(intent, "PHASE_KICKOFF") &&
+		!result.Delegated &&
+		!result.Blocked
+}
+
+func (p *Pipeline) createLeanImplementationHandoff(projectID, taskID, cardID string, sourceHandoff []byte, ceoResponse string) (string, error) {
+	var source struct {
+		Payload json.RawMessage `json:"payload"`
+	}
+	if err := json.Unmarshal(sourceHandoff, &source); err != nil {
+		return "", err
+	}
+	payload := map[string]any{
+		"action": "implement_project",
+		"instructions": strings.Join([]string{
+			"Implementar o projeto simples solicitado em Python.",
+			"Responder obrigatoriamente com JSON valido usando action write_code ou write_files.",
+			"Criar arquivos apenas dentro do diretorio do projeto.",
+			"Manter solucao lean: CLI simples, persistencia JSON local, README curto e testes basicos se fizer sentido.",
+			"Nao devolver apenas nota ou texto livre.",
+		}, " "),
+		"source_payload": source.Payload,
+		"ceo_response":   ceoResponse,
+	}
+	rawPayload, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+	handoff := hand_off.HandoffSchema[json.RawMessage]{
+		Header: hand_off.HandoffHeader{
+			CardID:    cardID,
+			ProjectID: projectID,
+			Sender:    "[CEO]",
+			Recipient: "[DEV_BACKEND]",
+			TaskRef:   taskID,
+			Intent:    "IMPLEMENT_LEAN_BACKEND",
+		},
+		Payload: rawPayload,
+	}
+	data, err := json.Marshal(handoff)
+	if err != nil {
+		return "", err
+	}
+	usedCardID, err := p.saveRawHandoffForCard(projectID, data, cardID)
+	if err != nil {
+		return "", err
+	}
+	p.recordDelegationComment(cardID, "DEV_BACKEND", "IMPLEMENT_LEAN_BACKEND")
+	return usedCardID, nil
+}
+
 func routeDeliveryAgent(files []code_writer.CodeFile) string {
 	for _, file := range files {
 		path := strings.ToLower(filepath.ToSlash(file.Path))
@@ -1417,6 +1486,16 @@ func projectIDFromHandoff(data []byte) string {
 		return ""
 	}
 	return strings.TrimSpace(parsed.Header.ProjectID)
+}
+
+func intentFromHandoff(data []byte) string {
+	var parsed struct {
+		Header hand_off.HandoffHeader `json:"header"`
+	}
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		return ""
+	}
+	return strings.TrimSpace(parsed.Header.Intent)
 }
 
 func projectIDForToken(store *context_store.Store, cardID string) string {

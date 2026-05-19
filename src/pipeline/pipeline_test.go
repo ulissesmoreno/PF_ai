@@ -688,6 +688,40 @@ func TestEnsureProjectFromHandoffRestoresMissingProject(t *testing.T) {
 	}
 }
 
+func TestCreateLeanImplementationHandoffFromKickoffNote(t *testing.T) {
+	workspace := t.TempDir()
+	handoffDir := filepath.Join(workspace, ".agent_handoff")
+	p := New(Config{WorkspaceRoot: workspace, HandoffDir: handoffDir})
+	source := []byte(`{
+		"header": {
+			"card_id": "card-1",
+			"project_id": "project-1",
+			"sender": "[SYSTEM_INIT]",
+			"recipient": "[CEO]",
+			"task_ref": "PHASE-1",
+			"intent": "PHASE_KICKOFF"
+		},
+		"payload": {
+			"project": {"name": "FIFO de Produtos", "slug": "fifo-produtos-python"}
+		}
+	}`)
+
+	usedCardID, err := p.createLeanImplementationHandoff("project-1", "PHASE-1", "card-1", source, "You are assigned to set up the backend environment.")
+	if err != nil {
+		t.Fatalf("createLeanImplementationHandoff: %v", err)
+	}
+	if usedCardID != "card-1" {
+		t.Fatalf("usedCardID = %q", usedCardID)
+	}
+	handoff := readOnlyPipelineHandoff(t, handoffDir)
+	if handoff.Header.ProjectID != "project-1" || handoff.Header.Recipient != "[DEV_BACKEND]" || handoff.Header.Intent != "IMPLEMENT_LEAN_BACKEND" {
+		t.Fatalf("handoff header = %#v", handoff.Header)
+	}
+	if !strings.Contains(string(handoff.Payload), "write_code") {
+		t.Fatalf("handoff payload missing write_code instruction: %s", string(handoff.Payload))
+	}
+}
+
 func openPipelineTestStore(t *testing.T, workspace string) *context_store.Store {
 	t.Helper()
 	wd, err := os.Getwd()
