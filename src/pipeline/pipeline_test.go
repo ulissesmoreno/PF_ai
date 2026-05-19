@@ -722,6 +722,61 @@ func TestCreateLeanImplementationHandoffFromKickoffNote(t *testing.T) {
 	}
 }
 
+func TestCreateTaskCompleteHandoffIncludesEvidence(t *testing.T) {
+	workspace := t.TempDir()
+	handoffDir := filepath.Join(workspace, ".agent_handoff")
+	store := openPipelineTestStore(t, workspace)
+	defer store.Close()
+	project, err := store.CreateProject(context_store.Project{Name: "FIFO", Slug: "fifo"})
+	if err != nil {
+		t.Fatalf("CreateProject: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(project.WorkspaceRoot, "src", "main.py"), []byte("print('ok')\n"), 0644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	p := New(Config{WorkspaceRoot: workspace, HandoffDir: handoffDir, ContextStore: store})
+	response := `{
+		"action": "write_code",
+		"files": [{"path": "src/main.py", "content": "print('ok')\n"}]
+	}`
+
+	usedCardID, err := p.createTaskCompleteHandoff(project.ID, "TASK-1", "card-1", "DEV_BACKEND", "IMPLEMENT_LEAN_BACKEND", response)
+	if err != nil {
+		t.Fatalf("createTaskCompleteHandoff: %v", err)
+	}
+	if usedCardID != "card-1" {
+		t.Fatalf("usedCardID = %q", usedCardID)
+	}
+	handoff := readOnlyPipelineHandoff(t, handoffDir)
+	if handoff.Header.Sender != "[DEV_BACKEND]" || handoff.Header.Recipient != "[CEO]" || handoff.Header.Intent != "TASK_COMPLETE" {
+		t.Fatalf("handoff header = %#v", handoff.Header)
+	}
+	if !strings.Contains(string(handoff.Payload), `"write_code_detected": true`) {
+		t.Fatalf("payload missing write_code evidence: %s", string(handoff.Payload))
+	}
+	if !strings.Contains(string(handoff.Payload), "src/main.py") {
+		t.Fatalf("payload missing physical file evidence: %s", string(handoff.Payload))
+	}
+}
+
+func TestShouldAutoCompleteTaskAvoidsLoops(t *testing.T) {
+	if !shouldAutoCompleteTask("DEV_BACKEND", "IMPLEMENT_LEAN_BACKEND", agentResponseResult{}) {
+		t.Fatal("DEV_BACKEND completion should auto-complete")
+	}
+	if shouldAutoCompleteTask("CEO", "TASK_COMPLETE", agentResponseResult{}) {
+		t.Fatal("CEO should not auto-complete")
+	}
+	if shouldAutoCompleteTask("DEV_BACKEND", "TASK_COMPLETE", agentResponseResult{}) {
+		t.Fatal("TASK_COMPLETE should not generate another TASK_COMPLETE")
+	}
+	if shouldAutoCompleteTask("DEV_BACKEND", "IMPLEMENT_LEAN_BACKEND", agentResponseResult{Delegated: true}) {
+		t.Fatal("delegated result should not auto-complete")
+	}
+	if shouldAutoCompleteTask("DEV_BACKEND", "IMPLEMENT_LEAN_BACKEND", agentResponseResult{Blocked: true}) {
+		t.Fatal("blocked result should not auto-complete")
+	}
+}
+
 func openPipelineTestStore(t *testing.T, workspace string) *context_store.Store {
 	t.Helper()
 	wd, err := os.Getwd()

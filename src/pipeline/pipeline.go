@@ -257,6 +257,21 @@ func (p *Pipeline) handleHandoff(ctx context.Context, path, agentName string) {
 			result.CardID = usedCardID
 		}
 	}
+	if shouldAutoCompleteTask(agentName, currentIntent, result) {
+		usedCardID, err := p.createTaskCompleteHandoff(currentProjectID, id, currentCardID, agentName, currentIntent, response)
+		if err != nil {
+			log.Printf("[%s] Criar handoff de conclusao para CEO: %v", id, err)
+			if p.retryCardHandoff(procPath, currentCardID, err) {
+				return
+			}
+			p.moveFile(procPath, p.cfg.Failed) //nolint
+			return
+		}
+		result.Delegated = true
+		if usedCardID != "" {
+			result.CardID = usedCardID
+		}
+	}
 
 	p.recordCardResponse(result.CardID, agentName, response)
 	if result.Delegated {
@@ -1175,6 +1190,16 @@ func shouldAutoDelegateKickoff(agentName, intent string, result agentResponseRes
 		!result.Blocked
 }
 
+func shouldAutoCompleteTask(agentName, intent string, result agentResponseResult) bool {
+	agentName = strings.Trim(strings.ToUpper(strings.TrimSpace(agentName)), "[]")
+	return agentName != "" &&
+		agentName != "CEO" &&
+		agentName != "HUMAN" &&
+		!strings.EqualFold(intent, "TASK_COMPLETE") &&
+		!result.Delegated &&
+		!result.Blocked
+}
+
 func (p *Pipeline) createLeanImplementationHandoff(projectID, taskID, cardID string, sourceHandoff []byte, ceoResponse string) (string, error) {
 	var source struct {
 		Payload json.RawMessage `json:"payload"`
@@ -1219,6 +1244,166 @@ func (p *Pipeline) createLeanImplementationHandoff(projectID, taskID, cardID str
 	}
 	p.recordDelegationComment(cardID, "DEV_BACKEND", "IMPLEMENT_LEAN_BACKEND")
 	return usedCardID, nil
+}
+
+func (p *Pipeline) createTaskCompleteHandoff(projectID, taskID, cardID, agentName, sourceIntent, response string) (string, error) {
+	evidence := p.collectTaskEvidence(projectID, response)
+	payload := map[string]any{
+		"status":              "completed",
+		"completed_by":        strings.ToUpper(agentName),
+		"source_intent":       sourceIntent,
+		"original_task_ref":   taskID,
+		"agent_response":      truncateForPayload(response, 4000),
+		"evidence":            evidence,
+		"requires_ceo_review": true,
+		"instructions": strings.Join([]string{
+			"Verifique se a atividade foi realmente executada antes de aceitar.",
+			"Compare agent_response com evidence.files_found e evidence.write_code_detected.",
+			"Se nao houver evidencia fisica suficiente, reabra a tarefa ou gere novo handoff corretivo.",
+			"Se houver entrega e faltar validacao, envie para QA.",
+			"Se estiver completa, atualize plano/contexto e decida o proximo passo.",
+		}, " "),
+	}
+	rawPayload, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+	handoff := hand_off.HandoffSchema[json.RawMessage]{
+		Header: hand_off.HandoffHeader{
+			CardID:    cardID,
+			ProjectID: projectID,
+			Sender:    fmt.Sprintf("[%s]", strings.ToUpper(agentName)),
+			Recipient: "[CEO]",
+			TaskRef:   taskID,
+			Intent:    "TASK_COMPLETE",
+		},
+		Payload: rawPayload,
+	}
+	data, err := json.Marshal(handoff)
+	if err != nil {
+		return "", err
+	}
+	usedCardID, err := p.saveRawHandoffForCard(projectID, data, cardID)
+	if err != nil {
+		return "", err
+	}
+	p.recordDelegationComment(cardID, "CEO", "TASK_COMPLETE")
+	return usedCardID, nil
+}
+
+func (p *Pipeline) collectTaskEvidence(projectID, response string) map[string]any {
+	projectRoot := p.workspaceRootForProject(projectID)
+	files, totalFiles := listFilesForEvidence(projectRoot, 200)
+	actions, declaredFiles := responseActionEvidence(response)
+	return map[string]any{
+		"project_root":          projectRoot,
+		"files_found":           files,
+		"files_found_count":     totalFiles,
+		"files_found_truncated": totalFiles > len(files),
+		"actions_detected":      actions,
+		"declared_files":        declaredFiles,
+		"write_code_detected":   containsString(actions, "write_code") || containsString(actions, "write_files") || containsString(actions, "create_file"),
+	}
+}
+
+func listFilesForEvidence(root string, limit int) ([]string, int) {
+	root = strings.TrimSpace(root)
+	if root == "" || limit <= 0 {
+		return nil, 0
+	}
+	var files []string
+	total := 0
+	_ = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil || entry == nil {
+			return nil
+		}
+		if entry.IsDir() {
+			switch strings.ToLower(entry.Name()) {
+			case ".git", ".gocache", "__pycache__", "node_modules", ".venv", "venv":
+				if path != root {
+					return filepath.SkipDir
+				}
+			}
+			return nil
+		}
+		total++
+		if len(files) >= limit {
+			return nil
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			rel = path
+		}
+		files = append(files, filepath.ToSlash(rel))
+		return nil
+	})
+	return files, total
+}
+
+func responseActionEvidence(response string) ([]string, []string) {
+	raw, err := extractJSONPayload(response)
+	if err != nil {
+		return nil, nil
+	}
+	items, err := splitAgentActions(raw)
+	if err != nil {
+		return nil, nil
+	}
+	var actions []string
+	var files []string
+	for _, item := range items {
+		var action struct {
+			Action string                 `json:"action"`
+			File   *code_writer.CodeFile  `json:"file"`
+			Files  []code_writer.CodeFile `json:"files"`
+		}
+		if err := json.Unmarshal(item, &action); err != nil {
+			continue
+		}
+		if strings.TrimSpace(action.Action) != "" {
+			actions = append(actions, strings.ToLower(strings.TrimSpace(action.Action)))
+		}
+		if action.File != nil && strings.TrimSpace(action.File.Path) != "" {
+			files = append(files, filepath.ToSlash(action.File.Path))
+		}
+		for _, file := range action.Files {
+			if strings.TrimSpace(file.Path) != "" {
+				files = append(files, filepath.ToSlash(file.Path))
+			}
+		}
+	}
+	return uniqueStrings(actions), uniqueStrings(files)
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if strings.EqualFold(value, want) {
+			return true
+		}
+	}
+	return false
+}
+
+func uniqueStrings(values []string) []string {
+	seen := map[string]bool{}
+	var unique []string
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" || seen[value] {
+			continue
+		}
+		seen[value] = true
+		unique = append(unique, value)
+	}
+	return unique
+}
+
+func truncateForPayload(value string, limit int) string {
+	value = strings.TrimSpace(value)
+	if limit <= 0 || len(value) <= limit {
+		return value
+	}
+	return value[:limit] + "\n[truncated]"
 }
 
 func routeDeliveryAgent(files []code_writer.CodeFile) string {

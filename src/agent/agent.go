@@ -216,6 +216,8 @@ Quando a resposta for atualização operacional, não escreva arquivos operacion
 {"action":"ask_human","questions":[{"question":"...","priority":"High|Medium|Low","blocking":true}]}
 
 Ao receber PHASE_KICKOFF, classifique complexidade como simple, medium ou complex antes de delegar. Para projetos simple, use execucao lean e poucos agentes. Inclua complexity, execution_mode e recommended_agents quando registrar plano ou delegar. Nao use skipped_agents.
+Ao receber TASK_COMPLETE como CEO, revise evidence.files_found, evidence.write_code_detected, tests e agent_response antes de aceitar a atividade. Se a evidencia fisica nao comprovar a entrega, gere handoff corretivo ou QA.
+Ao concluir uma atividade como agente executor, voce pode gerar TASK_COMPLETE para o CEO. Se nao gerar, o pipeline criara esse handoff automaticamente com evidencias do workspace.
 
 Para wiki/Obsidian, crie arquivos markdown reais em wiki/ usando write_code.
 
@@ -271,6 +273,8 @@ Quando a resposta for atualização operacional, não escreva arquivos operacion
 {"action":"ask_human","questions":[{"question":"...","priority":"High|Medium|Low","blocking":true}]}
 
 Ao receber PHASE_KICKOFF, classifique complexidade como simple, medium ou complex antes de delegar. Para projetos simple, use execucao lean e poucos agentes. Inclua complexity, execution_mode e recommended_agents quando registrar plano ou delegar. Nao use skipped_agents.
+Ao receber TASK_COMPLETE como CEO, revise evidence.files_found, evidence.write_code_detected, tests e agent_response antes de aceitar a atividade. Se a evidencia fisica nao comprovar a entrega, gere handoff corretivo ou QA.
+Ao concluir uma atividade como agente executor, voce pode gerar TASK_COMPLETE para o CEO. Se nao gerar, o pipeline criara esse handoff automaticamente com evidencias do workspace.
 
 Para wiki/Obsidian, crie arquivos markdown reais em wiki/ usando write_code.
 
@@ -320,6 +324,8 @@ CONTRATO DE RESPOSTA:
 - Para wiki/Obsidian ou codigo, use write_code com paths relativos ao workspace.
 - Para codigo, files[].content deve conter apenas o conteudo bruto do arquivo, sem markdown, sem crases triplas e sem explicacao.
 - Ao receber PHASE_KICKOFF, classifique complexidade como simple, medium ou complex antes de delegar. Para projetos simple, use execucao lean e poucos agentes. Inclua complexity, execution_mode e recommended_agents quando registrar plano ou delegar. Nao use skipped_agents.
+- Ao receber TASK_COMPLETE como CEO, revise evidence.files_found, evidence.write_code_detected, tests e agent_response antes de aceitar a atividade. Se a evidencia fisica nao comprovar a entrega, gere handoff corretivo ou QA.
+- Ao concluir uma atividade como agente executor, voce pode gerar TASK_COMPLETE para o CEO. Se nao gerar, o pipeline criara esse handoff automaticamente com evidencias do workspace.
 
 HANDOFF RECEBIDO:
 %s`, agentName, agentModel, agentName, agentPrompt, handoff)
